@@ -1,0 +1,71 @@
+{
+  "nb_joueurs": 7,
+  "jour": 1,
+  "phase": "nuit",
+  "joueurs": {
+    "a": {
+      "role": "loup",
+      "vivant": true,
+      "amoureux": false
+    },
+    "decdxw": {
+      "role": "villageois",
+      "vivant": true,
+      "amoureux": false
+    },
+    "zaza": {
+      "role": "sorciere",
+      "vivant": true,
+      "amoureux": false
+    },
+    "sazsq": {
+      "role": "loup",
+      "vivant": true,
+      "amoureux": false
+    },
+    "decds": {
+      "role": "voyante",
+      "vivant": true,
+      "amoureux": true
+    },
+    "azsaq": {
+      "role": "cupidon",
+      "vivant": true,
+      "amoureux": true
+    },
+    "xsqxw": {
+      "role": "villageois",
+      "vivant": true,
+      "amoureux": false
+    }
+  },
+  "loups": [
+    "a",
+    "sazsq"
+  ],
+  "amoureux": [
+    "decds",
+    "azsaq"
+  ],
+  "potions_sorciere": 2,
+  "visions_voyante": 2,
+  "votes_loups": [
+    "decdxw",
+    "decds"
+  ],
+  "soin_sorciere": false,
+  "ordre_nuit": [
+    "a",
+    "decdxw",
+    "zaza",
+    "sazsq",
+    "decds",
+    "azsaq",
+    "xsqxw"
+  ],
+  "tour": 4,
+  "devoile": true,
+  "transfert": true,
+  "morts_nuit": [],
+  "journal": []
+}

@@ -244,6 +244,12 @@ def css_cartes():
             flex-direction: column;
             min-height: 92vh;
         }
+        [data-testid="stSidebarUserContent"] > div {
+            display: contents;
+        }
+        [data-testid="stSidebarUserContent"] [data-testid="stVerticalBlock"] {
+            flex: 1;
+        }
         div[class*="st-key-abandon"] {
             margin-top: auto;
             display: flex;
@@ -258,15 +264,6 @@ def css_cartes():
             background-color: rgba(179,72,72,.12);
             border-color: #d98080;
             color: #f0a0a0;
-        }
-        div[class*="st-key-voygrid_"] [data-testid="stVerticalBlock"] {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            gap: 0.6rem;
-        }
-        div[class*="st-key-voygrid_"] [data-testid="stVerticalBlock"] > div {
-            width: auto;
         }
         div[class*="st-key-voypick_"] button {
             position: relative;
@@ -404,23 +401,23 @@ def _nuit_loup(s, nom, cle):
 
 
 def _nuit_voyante(s, nom, cle):
+    """La voyante a une vision une nuit sur deux (nuits impaires) : pas de stock à épuiser."""
     deja_vu = st.session_state.get(f"vu_{cle}")
-    peut_voir = s["jour"] > 0 and s["jour"] % 2 == 1 and s["visions_voyante"] > 0
+    peut_voir = s["jour"] > 0 and s["jour"] % 2 == 1
 
     if deja_vu:
         role_vu = s["joueurs"][deja_vu]["role"]
         plaquette(f"{deja_vu} est {ROLES[role_vu].nom.upper()}.", icone="🔮", ton="succes")
         bouton_fin(s, cle)
     elif not peut_voir:
-        plaquette("Pas de vision cette nuit.", icone="🌙")
+        plaquette(f"Pas de vision cette nuit. Prochaine vision : nuit {s['jour'] + 1}.", icone="🌙")
         bouton_fin(s, cle)
     else:
-        st.write(f"Visions restantes : {s['visions_voyante']}")
         candidats = [n for n in vivants(s) if n != nom]
-        with st.container(key=f"voygrid_{cle}"):
-            for candidat in candidats:
+        cols = st.columns(2)
+        for i, candidat in enumerate(candidats):
+            with cols[i % 2]:
                 if st.button(candidat, key=f"voypick_{cle}_{candidat}"):
-                    s["visions_voyante"] -= 1
                     st.session_state[f"vu_{cle}"] = candidat
                     st.rerun()
 
@@ -504,7 +501,6 @@ ROLES = {
         nom="Voyante",
         emoji="🔮",
         degrade="radial-gradient(circle at 50% 30%, #1c2b5c, #090f29 75%)",
-        etat_initial={"visions_voyante": 2},
         nuit=_nuit_voyante,
     ),
     "cupidon": Role(
@@ -960,6 +956,8 @@ def main():
                 <div class="panneau-ligne"><span>👥 Vivants</span><span>{len(vivants(s))} / {s['nb_joueurs']}</span></div>
                 <div class="panneau-ligne"><span>🐺 Loups</span><span>{loups_vivants}</span></div>
                 <div class="panneau-ligne"><span>🧑‍🌾 Village</span><span>{village_vivants}</span></div>
+            </div>
+            <div class="panneau">
                 <div class="panneau-ligne"><span>👑 Maire</span><span>{maire_txt}</span></div>
             </div>
             """,

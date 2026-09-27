@@ -8,27 +8,13 @@ import json
 import os
 import random
 from collections import Counter
+from dataclasses import dataclass, field
+from typing import Callable, Optional
 
 import streamlit as st
 
 SAVE_FILE = "save.json"
 MUSIQUE_FILE = "musique.mp3"
-
-EMOJI = {
-    "loup": "🐺",
-    "sorciere": "🧪",
-    "voyante": "🔮",
-    "cupidon": "🏹",
-    "villageois": "🧑‍🌾",
-}
-
-NOM_ROLE = {
-    "loup": "Loup-Garou",
-    "sorciere": "Sorcière",
-    "voyante": "Voyante",
-    "cupidon": "Cupidon",
-    "villageois": "Villageois",
-}
 
 PHASE_EMOJI = {
     "nuit": "🌙",
@@ -44,14 +30,6 @@ PHASE_LABEL = {
     "election_maire": "Élection du maire",
     "conseil": "Conseil",
     "fin": "Fin",
-}
-
-DEGRADE_ROLE = {
-    "loup": "radial-gradient(circle at 50% 30%, #6b1f22, #2a0a0c 75%)",
-    "sorciere": "radial-gradient(circle at 50% 30%, #3d1f5c, #170a29 75%)",
-    "voyante": "radial-gradient(circle at 50% 30%, #1c2b5c, #090f29 75%)",
-    "cupidon": "radial-gradient(circle at 50% 30%, #6b2748, #29101f 75%)",
-    "villageois": "radial-gradient(circle at 50% 30%, #35431f, #141a0d 75%)",
 }
 
 
@@ -326,12 +304,13 @@ def css_cartes():
 
 
 def carte_role(nom, role):
+    r = ROLES[role]
     st.markdown(
         f"""
-        <div class="carte" style="background: {DEGRADE_ROLE[role]};">
+        <div class="carte" style="background: {r.degrade};">
             <span class="coin-bd"></span><span class="coin-bg"></span>
-            <div class="carte-titre">{NOM_ROLE[role]}</div>
-            <div class="carte-medaillon">{EMOJI[role]}</div>
+            <div class="carte-titre">{r.nom}</div>
+            <div class="carte-medaillon">{r.emoji}</div>
             <div class="carte-nom">{nom}</div>
         </div>
         """,
@@ -389,6 +368,168 @@ def plaquette(texte, icone="🌙", ton="neutre"):
     )
 
 
+def bouton_fin(s, cle):
+    if st.button("Terminer mon tour", type="primary", key=f"fin_{cle}"):
+        fin_de_tour(s)
+        st.rerun()
+
+
+# --------------------------------------------------------------------------
+# Rôles
+#
+# Chaque rôle est décrit une seule fois ci-dessous : son affichage (nom,
+# emoji, dégradé de carte), son camp (qui détermine les conditions de
+# victoire) et sa nuit (une fonction qui affiche l'action du joueur et met
+# à jour l'état de partie ; laisser à None pour un rôle qui dort simplement).
+#
+# Pour ajouter un rôle : lui écrire une fonction `_nuit_xxx(s, nom, cle)` si
+# besoin, puis ajouter une entrée dans ROLES. La composition de partie,
+# l'écran de nuit, l'affichage des cartes et les conditions de victoire
+# s'adaptent automatiquement — aucun autre écran à modifier.
+# --------------------------------------------------------------------------
+
+def _nuit_loup(s, nom, cle):
+    complices = [l for l in s["loups"] if l != nom and s["joueurs"][l]["vivant"]]
+    badge_meute(nom, complices)
+    if s["jour"] == 0:
+        plaquette("Première nuit : vous vous découvrez, personne ne meurt encore.", icone="🐾")
+        bouton_fin(s, cle)
+    else:
+        cibles = [n for n in vivants(s) if ROLES[s["joueurs"][n]["role"]].camp != "loups"]
+        cible = st.radio("Qui dévorez-vous ?", cibles, key=f"loup_{cle}")
+        if st.button("Confirmer la victime", type="primary", key=f"ok_loup_{cle}"):
+            s["votes_loups"].append(cible)
+            fin_de_tour(s)
+            st.rerun()
+
+
+def _nuit_voyante(s, nom, cle):
+    deja_vu = st.session_state.get(f"vu_{cle}")
+    peut_voir = s["jour"] > 0 and s["jour"] % 2 == 1 and s["visions_voyante"] > 0
+
+    if deja_vu:
+        role_vu = s["joueurs"][deja_vu]["role"]
+        plaquette(f"{deja_vu} est {ROLES[role_vu].nom.upper()}.", icone="🔮", ton="succes")
+        bouton_fin(s, cle)
+    elif not peut_voir:
+        plaquette("Pas de vision cette nuit.", icone="🌙")
+        bouton_fin(s, cle)
+    else:
+        st.write(f"Visions restantes : {s['visions_voyante']}")
+        candidats = [n for n in vivants(s) if n != nom]
+        with st.container(key=f"voygrid_{cle}"):
+            for candidat in candidats:
+                if st.button(candidat, key=f"voypick_{cle}_{candidat}"):
+                    s["visions_voyante"] -= 1
+                    st.session_state[f"vu_{cle}"] = candidat
+                    st.rerun()
+
+
+def _nuit_sorciere(s, nom, cle):
+    if s["jour"] == 0 or s["potions_sorciere"] == 0:
+        plaquette("Rien à faire cette nuit.", icone="🌙")
+        bouton_fin(s, cle)
+    else:
+        st.write(f"Potions de soin restantes : {s['potions_sorciere']}")
+        st.caption("Tu ne sais pas encore qui les loups ont désigné.")
+        col1, col2 = st.columns(2)
+        if col1.button("Utiliser une potion", type="primary", key=f"soin_{cle}"):
+            s["soin_sorciere"] = True
+            s["potions_sorciere"] -= 1
+            fin_de_tour(s)
+            st.rerun()
+        if col2.button("Ne rien faire", key=f"rien_{cle}"):
+            fin_de_tour(s)
+            st.rerun()
+
+
+def _nuit_cupidon(s, nom, cle):
+    if s["jour"] > 0:
+        plaquette("Ton travail est fait. Dors.", icone="🏹")
+        bouton_fin(s, cle)
+    else:
+        tous = list(s["joueurs"].keys())
+        premier = st.selectbox("Premier amoureux", tous, index=None, placeholder="Choisir…", key=f"cup1_{cle}")
+        second_options = [n for n in tous if n != premier] if premier else tous
+        second = st.selectbox("Deuxième amoureux", second_options, index=None, placeholder="Choisir…", key=f"cup2_{cle}")
+        couple = [premier, second] if premier and second else []
+        if st.button("Décocher la flèche", type="primary", key=f"ok_cup_{cle}"):
+            if len(couple) != 2:
+                st.error("Il en faut exactement deux.")
+            else:
+                s["amoureux"] = couple
+                for n in couple:
+                    s["joueurs"][n]["amoureux"] = True
+                fin_de_tour(s)
+                st.rerun()
+
+
+def _nuit_villageois(s, nom, cle):
+    plaquette("Tu dors paisiblement.", icone="🌙")
+    bouton_fin(s, cle)
+
+
+@dataclass(frozen=True)
+class Role:
+    key: str
+    nom: str
+    emoji: str
+    degrade: str  # dégradé CSS de fond pour la carte de rôle
+    camp: str = "village"  # "village" ou "loups" : détermine les conditions de victoire
+    unique: bool = True  # au plus un exemplaire proposé par défaut à la composition
+    etat_initial: dict = field(default_factory=dict)  # clés d'état de partie propres à ce rôle
+    nuit: Optional[Callable[[dict, str, str], None]] = None  # rendu du tour de nuit ; None = dort
+
+
+ROLES = {
+    "loup": Role(
+        key="loup",
+        nom="Loup-Garou",
+        emoji="🐺",
+        degrade="radial-gradient(circle at 50% 30%, #6b1f22, #2a0a0c 75%)",
+        camp="loups",
+        unique=False,
+        nuit=_nuit_loup,
+    ),
+    "sorciere": Role(
+        key="sorciere",
+        nom="Sorcière",
+        emoji="🧪",
+        degrade="radial-gradient(circle at 50% 30%, #3d1f5c, #170a29 75%)",
+        etat_initial={"potions_sorciere": 2, "soin_sorciere": False},
+        nuit=_nuit_sorciere,
+    ),
+    "voyante": Role(
+        key="voyante",
+        nom="Voyante",
+        emoji="🔮",
+        degrade="radial-gradient(circle at 50% 30%, #1c2b5c, #090f29 75%)",
+        etat_initial={"visions_voyante": 2},
+        nuit=_nuit_voyante,
+    ),
+    "cupidon": Role(
+        key="cupidon",
+        nom="Cupidon",
+        emoji="🏹",
+        degrade="radial-gradient(circle at 50% 30%, #6b2748, #29101f 75%)",
+        nuit=_nuit_cupidon,
+    ),
+    "villageois": Role(
+        key="villageois",
+        nom="Villageois",
+        emoji="🧑‍🌾",
+        degrade="radial-gradient(circle at 50% 30%, #35431f, #141a0d 75%)",
+        unique=False,
+        nuit=_nuit_villageois,
+    ),
+}
+
+# Rôles proposés (avec un nombre à régler) dans l'écran de composition : tous
+# sauf le loup (obligatoire, quantité libre, traité à part) et le villageois
+# (calculé automatiquement en reste de table).
+ROLES_SPECIAUX = [r for cle, r in ROLES.items() if cle not in ("loup", "villageois")]
+
+
 # --------------------------------------------------------------------------
 # Sauvegarde disque
 # --------------------------------------------------------------------------
@@ -425,17 +566,15 @@ def nouvelle_partie(noms, composition):
         nom: {"role": role, "vivant": True, "amoureux": False}
         for nom, role in zip(noms, roles)
     }
-    return {
+
+    etat = {
         "nb_joueurs": len(noms),
         "jour": 0,
         "phase": "nuit",
         "joueurs": joueurs,
-        "loups": [n for n, d in joueurs.items() if d["role"] == "loup"],
+        "loups": [n for n, d in joueurs.items() if ROLES[d["role"]].camp == "loups"],
         "amoureux": [],
-        "potions_sorciere": 2 if composition.get("sorciere") else 0,
-        "visions_voyante": 2 if composition.get("voyante") else 0,
         "votes_loups": [],
-        "soin_sorciere": False,
         "ordre_nuit": [],
         "tour": 0,
         "devoile": False,
@@ -445,6 +584,9 @@ def nouvelle_partie(noms, composition):
         "maire": None,
         "dernier_maire": None,
     }
+    for role in ROLES.values():
+        etat.update(role.etat_initial)
+    return etat
 
 
 def vivants(s):
@@ -470,8 +612,8 @@ def tuer(s, nom):
 
 def vainqueur(s):
     en_vie = vivants(s)
-    loups = [n for n in en_vie if s["joueurs"][n]["role"] == "loup"]
-    autres = [n for n in en_vie if s["joueurs"][n]["role"] != "loup"]
+    loups = [n for n in en_vie if ROLES[s["joueurs"][n]["role"]].camp == "loups"]
+    autres = [n for n in en_vie if ROLES[s["joueurs"][n]["role"]].camp != "loups"]
 
     if len(en_vie) == 2 and all(s["joueurs"][n]["amoureux"] for n in en_vie):
         return "Les amoureux l'emportent : ils sont les deux derniers survivants."
@@ -497,13 +639,12 @@ def composition_recommandee(nb):
     """Suggestion de départ raisonnable pour un nombre de joueurs donné."""
     loups = max(1, nb // 4)
     reste = nb - loups
-    sorciere = 1 if reste >= 1 else 0
-    reste -= sorciere
-    voyante = 1 if reste >= 1 else 0
-    reste -= voyante
-    cupidon = 1 if reste >= 1 else 0
-    reste -= cupidon
-    return loups, sorciere, voyante, cupidon
+    speciaux = {}
+    for role in ROLES_SPECIAUX:
+        n = 1 if (role.unique and reste >= 1) else 0
+        speciaux[role.key] = n
+        reste -= n
+    return loups, speciaux
 
 
 def ecran_installation():
@@ -531,28 +672,28 @@ def etape_roles():
         key="nb_joueurs_setup",
     )
 
-    loups_defaut, sorciere_defaut, voyante_defaut, cupidon_defaut = composition_recommandee(nb)
+    loups_defaut, speciaux_defaut = composition_recommandee(nb)
 
     st.caption("Répartis les rôles spéciaux. Le reste de la table devient Villageois.")
-    col1, col2 = st.columns(2)
-    with col1:
-        n_loup = st.number_input(
-            "🐺 Loups-Garous", min_value=1, max_value=max(1, nb - 1),
-            value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
-        )
-        n_sorciere = st.number_input(
-            "🧪 Sorcière", min_value=0, max_value=1, value=sorciere_defaut, key="n_sorciere",
-        )
-    with col2:
-        n_voyante = st.number_input(
-            "🔮 Voyante", min_value=0, max_value=1, value=voyante_defaut, key="n_voyante",
-        )
-        n_cupidon = st.number_input(
-            "🏹 Cupidon", min_value=0, max_value=1, value=cupidon_defaut, key="n_cupidon",
-        )
 
-    attribues = n_loup + n_sorciere + n_voyante + n_cupidon
-    n_villageois = nb - attribues
+    n_loup = st.number_input(
+        f"{ROLES['loup'].emoji} {ROLES['loup'].nom}s",
+        min_value=1, max_value=max(1, nb - 1),
+        value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
+    )
+
+    composition = {"loup": n_loup}
+    cols = st.columns(2)
+    for i, role in enumerate(ROLES_SPECIAUX):
+        with cols[i % 2]:
+            composition[role.key] = st.number_input(
+                f"{role.emoji} {role.nom}",
+                min_value=0, max_value=1 if role.unique else nb,
+                value=speciaux_defaut[role.key], key=f"n_{role.key}",
+            )
+
+    n_villageois = nb - sum(composition.values())
+    composition["villageois"] = max(n_villageois, 0)
 
     if n_villageois < 0:
         st.error(
@@ -560,15 +701,15 @@ def etape_roles():
             f"(il en manque {-n_villageois}) : réduis-en un ou augmente le nombre de joueurs."
         )
     else:
+        lignes = "".join(
+            f'<div class="panneau-ligne"><span>{ROLES[cle].emoji} {ROLES[cle].nom}</span><span>{n}</span></div>'
+            for cle, n in composition.items()
+        )
         st.markdown(
             f"""
             <div class="panneau">
                 <div class="panneau-titre">Composition</div>
-                <div class="panneau-ligne"><span>🐺 Loups-Garous</span><span>{n_loup}</span></div>
-                <div class="panneau-ligne"><span>🧪 Sorcière</span><span>{n_sorciere}</span></div>
-                <div class="panneau-ligne"><span>🔮 Voyante</span><span>{n_voyante}</span></div>
-                <div class="panneau-ligne"><span>🏹 Cupidon</span><span>{n_cupidon}</span></div>
-                <div class="panneau-ligne"><span>🧑‍🌾 Villageois</span><span>{n_villageois}</span></div>
+                {lignes}
                 <div class="panneau-ligne"><span><b>Total</b></span><span><b>{nb} / {nb}</b></span></div>
             </div>
             """,
@@ -577,13 +718,7 @@ def etape_roles():
 
     if st.button("Suivant : noms des joueurs →", type="primary", disabled=n_villageois < 0):
         st.session_state.config_nb = nb
-        st.session_state.config_composition = {
-            "loup": n_loup,
-            "sorciere": n_sorciere,
-            "voyante": n_voyante,
-            "cupidon": n_cupidon,
-            "villageois": n_villageois,
-        }
+        st.session_state.config_composition = composition
         st.session_state.config_etape = "noms"
         st.rerun()
 
@@ -660,97 +795,13 @@ def ecran_nuit(s):
     cle = f"{s['jour']}_{s['tour']}"
 
     with st.container(height=250, border=False):
-        # --- Loup ---------------------------------------------------------
-        if role == "loup":
-            complices = [l for l in s["loups"] if l != nom and s["joueurs"][l]["vivant"]]
-            badge_meute(nom, complices)
-            if s["jour"] == 0:
-                plaquette("Première nuit : vous vous découvrez, personne ne meurt encore.", icone="🐾")
-                bouton_fin(s, cle)
-            else:
-                cibles = [n for n in vivants(s) if s["joueurs"][n]["role"] != "loup"]
-                cible = st.radio("Qui dévorez-vous ?", cibles, key=f"loup_{cle}")
-                if st.button("Confirmer la victime", type="primary", key=f"ok_loup_{cle}"):
-                    s["votes_loups"].append(cible)
-                    fin_de_tour(s)
-                    st.rerun()
-
-        # --- Voyante ------------------------------------------------------
-        elif role == "voyante":
-            deja_vu = st.session_state.get(f"vu_{cle}")
-            peut_voir = s["jour"] > 0 and s["jour"] % 2 == 1 and s["visions_voyante"] > 0
-
-            if deja_vu:
-                role_vu = s["joueurs"][deja_vu]["role"]
-                plaquette(f"{deja_vu} est {role_vu.upper()}.", icone="🔮", ton="succes")
-                bouton_fin(s, cle)
-            elif not peut_voir:
-                plaquette("Pas de vision cette nuit.", icone="🌙")
-                bouton_fin(s, cle)
-            else:
-                st.write(f"Visions restantes : {s['visions_voyante']}")
-                candidats = [n for n in vivants(s) if n != nom]
-                with st.container(key=f"voygrid_{cle}"):
-                    for candidat in candidats:
-                        if st.button(candidat, key=f"voypick_{cle}_{candidat}"):
-                            s["visions_voyante"] -= 1
-                            st.session_state[f"vu_{cle}"] = candidat
-                            st.rerun()
-
-        # --- Sorcière -----------------------------------------------------
-        elif role == "sorciere":
-            if s["jour"] == 0 or s["potions_sorciere"] == 0:
-                plaquette("Rien à faire cette nuit.", icone="🌙")
-                bouton_fin(s, cle)
-            else:
-                st.write(f"Potions de soin restantes : {s['potions_sorciere']}")
-                st.caption("Tu ne sais pas encore qui les loups ont désigné.")
-                col1, col2 = st.columns(2)
-                if col1.button("Utiliser une potion", type="primary", key=f"soin_{cle}"):
-                    s["soin_sorciere"] = True
-                    s["potions_sorciere"] -= 1
-                    fin_de_tour(s)
-                    st.rerun()
-                if col2.button("Ne rien faire", key=f"rien_{cle}"):
-                    fin_de_tour(s)
-                    st.rerun()
-
-        # --- Cupidon ------------------------------------------------------
-        elif role == "cupidon":
-            if s["jour"] > 0:
-                plaquette("Ton travail est fait. Dors.", icone="🏹")
-                bouton_fin(s, cle)
-            else:
-                tous = list(s["joueurs"].keys())
-                premier = st.selectbox("Premier amoureux", tous, index=None, placeholder="Choisir…", key=f"cup1_{cle}")
-                second_options = [n for n in tous if n != premier] if premier else tous
-                second = st.selectbox("Deuxième amoureux", second_options, index=None, placeholder="Choisir…", key=f"cup2_{cle}")
-                couple = [premier, second] if premier and second else []
-                if st.button("Décocher la flèche", type="primary", key=f"ok_cup_{cle}"):
-                    if len(couple) != 2:
-                        st.error("Il en faut exactement deux.")
-                    else:
-                        s["amoureux"] = couple
-                        for n in couple:
-                            s["joueurs"][n]["amoureux"] = True
-                        fin_de_tour(s)
-                        st.rerun()
-
-        # --- Villageois ---------------------------------------------------
-        else:
-            plaquette("Tu dors paisiblement.", icone="🌙")
-            bouton_fin(s, cle)
+        gerer_nuit = ROLES[role].nuit or _nuit_villageois
+        gerer_nuit(s, nom, cle)
 
     if donnees["amoureux"] and s["jour"] > 0:
         autre = [n for n in s["amoureux"] if n != nom]
         with st.sidebar:
             badge_amour(autre[0])
-
-
-def bouton_fin(s, cle):
-    if st.button("Terminer mon tour", type="primary", key=f"fin_{cle}"):
-        fin_de_tour(s)
-        st.rerun()
 
 
 def resoudre_nuit(s):
@@ -779,7 +830,7 @@ def ecran_reveil(s):
     if s["morts_nuit"]:
         for mort in s["morts_nuit"]:
             role = s["joueurs"][mort]["role"]
-            texte = "était LOUP-GAROU" if role == "loup" else "n'était pas loup-garou"
+            texte = "était LOUP-GAROU" if ROLES[role].camp == "loups" else "n'était pas loup-garou"
             st.error(f"{mort} est mort. Il {texte}.")
         if len(s["morts_nuit"]) > 1:
             st.caption("Les amoureux sont morts ensemble.")
@@ -843,7 +894,7 @@ def ecran_conseil(s):
     if st.session_state.get(f"resultat_{s['jour']}"):
         for mort in st.session_state[f"resultat_{s['jour']}"]:
             role = s["joueurs"][mort]["role"]
-            if role == "loup":
+            if ROLES[role].camp == "loups":
                 st.success(f"{mort} était LOUP-GAROU.")
             else:
                 st.error(f"{mort} n'était PAS loup-garou.")
@@ -874,7 +925,7 @@ def ecran_fin(s):
     for nom, d in s["joueurs"].items():
         etat = "en vie" if d["vivant"] else "mort"
         coeur = " 💘" if d["amoureux"] else ""
-        st.write(f"{EMOJI[d['role']]} **{nom}** — {d['role']} ({etat}){coeur}")
+        st.write(f"{ROLES[d['role']].emoji} **{nom}** — {d['role']} ({etat}){coeur}")
 
 
 # --------------------------------------------------------------------------
@@ -897,7 +948,7 @@ def main():
 
     with st.sidebar:
         loups_vivants = sum(
-            1 for n in vivants(s) if s["joueurs"][n]["role"] == "loup"
+            1 for n in vivants(s) if ROLES[s["joueurs"][n]["role"]].camp == "loups"
         )
         village_vivants = len(vivants(s)) - loups_vivants
         maire_txt = s.get("maire") or "— (pas encore élu)"

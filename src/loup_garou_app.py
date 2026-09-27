@@ -33,6 +33,7 @@ NOM_ROLE = {
 PHASE_EMOJI = {
     "nuit": "🌙",
     "reveil": "🌅",
+    "election_maire": "👑",
     "conseil": "🗳️",
     "fin": "🏁",
 }
@@ -40,6 +41,7 @@ PHASE_EMOJI = {
 PHASE_LABEL = {
     "nuit": "Nuit",
     "reveil": "Réveil",
+    "election_maire": "Élection du maire",
     "conseil": "Conseil",
     "fin": "Fin",
 }
@@ -440,6 +442,8 @@ def nouvelle_partie(noms, composition):
         "transfert": False,
         "morts_nuit": [],
         "journal": [],
+        "maire": None,
+        "dernier_maire": None,
     }
 
 
@@ -458,6 +462,9 @@ def tuer(s, nom):
             if autre != nom and s["joueurs"][autre]["vivant"]:
                 s["joueurs"][autre]["vivant"] = False
                 morts.append(autre)
+    if s.get("maire") in morts:
+        s["dernier_maire"] = s["maire"]
+        s["maire"] = None
     return morts
 
 
@@ -789,6 +796,32 @@ def ecran_reveil(s):
 
     texte = "Passer au premier conseil" if s["jour"] == 0 else "Ouvrir le conseil du village"
     if st.button(texte, type="primary"):
+        if s["jour"] > 0 and s.get("maire") is None:
+            s["phase"] = "election_maire"
+        else:
+            s["phase"] = "conseil"
+        st.rerun()
+
+
+def ecran_election_maire(s):
+    st.title("👑 Élection du maire")
+
+    if s.get("dernier_maire"):
+        st.warning(
+            f"{s['dernier_maire']} était le maire et il est mort : le village doit élire son successeur."
+        )
+    else:
+        st.info("Avant le premier vote, le village élit son maire.")
+
+    st.caption(
+        "Débattez et votez à voix haute comme d'habitude, puis saisis ici le nom élu."
+    )
+
+    en_vie = vivants(s)
+    elu = st.radio("Le village élit comme maire", en_vie, key=f"election_maire_{s['jour']}")
+    if st.button("Valider l'élection", type="primary"):
+        s["maire"] = elu
+        s["dernier_maire"] = None
         s["phase"] = "conseil"
         st.rerun()
 
@@ -867,6 +900,7 @@ def main():
             1 for n in vivants(s) if s["joueurs"][n]["role"] == "loup"
         )
         village_vivants = len(vivants(s)) - loups_vivants
+        maire_txt = s.get("maire") or "— (pas encore élu)"
 
         st.markdown(
             f"""
@@ -875,6 +909,7 @@ def main():
                 <div class="panneau-ligne"><span>👥 Vivants</span><span>{len(vivants(s))} / {s['nb_joueurs']}</span></div>
                 <div class="panneau-ligne"><span>🐺 Loups</span><span>{loups_vivants}</span></div>
                 <div class="panneau-ligne"><span>🧑‍🌾 Village</span><span>{village_vivants}</span></div>
+                <div class="panneau-ligne"><span>👑 Maire</span><span>{maire_txt}</span></div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -893,6 +928,8 @@ def main():
         ecran_nuit(s)
     elif s["phase"] == "reveil":
         ecran_reveil(s)
+    elif s["phase"] == "election_maire":
+        ecran_election_maire(s)
     elif s["phase"] == "conseil":
         ecran_conseil(s)
     else:

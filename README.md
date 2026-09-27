@@ -27,7 +27,7 @@ Une application web légère pour jouer au Loup-Garou (Les Loups-Garous de Thier
 brew install uv
 
 # Lance directement l'app (uv installe Streamlit et le bon Python à la volée)
-uv run --python 3.12 --with streamlit streamlit run loup_garou_app.py
+uv run --python 3.12 --with streamlit streamlit run src/loup_garou_app.py
 ```
 
 Une seule commande, à chaque fois : pas de venv à créer ni à activer.
@@ -50,14 +50,14 @@ pip install --upgrade pip
 pip install streamlit
 
 # Lance l'app
-streamlit run loup_garou_app.py
+streamlit run src/loup_garou_app.py
 ```
 
 **À chaque nouvelle session**, réactive l'environnement virtuel avant de relancer :
 
 ```bash
 source .venv/bin/activate
-streamlit run loup_garou_app.py
+streamlit run src/loup_garou_app.py
 ```
 
 ---
@@ -68,11 +68,12 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 
 ```
 .
-├── loup_garou_app.py      # L'application Streamlit
-├── musique.mp3             # (optionnel) musique de fond, à ajouter toi-même
-├── save.json                # Sauvegarde de la partie en cours (générée automatiquement)
+├── src/
+│   └── loup_garou_app.py   # L'application Streamlit
+├── musique.mp3              # (optionnel) musique de fond, à ajouter toi-même
+├── save.json                 # Sauvegarde de la partie en cours (générée à la racine, automatiquement)
 └── .streamlit/
-    └── config.toml          # Configuration du thème sombre
+    └── config.toml           # Configuration du thème sombre
 ```
 
 > 💡 `save.json` contient l'état complet d'une partie en cours, y compris les rôles des joueurs. Si tu partages ce dépôt publiquement, pense à l'ajouter à un `.gitignore` pour ne pas exposer une sauvegarde en cours :

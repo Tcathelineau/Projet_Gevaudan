@@ -279,6 +279,15 @@ def css_cartes():
             border-color: #d98080;
             color: #f0a0a0;
         }
+        div[class*="st-key-voygrid_"] [data-testid="stVerticalBlock"] {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+        div[class*="st-key-voygrid_"] [data-testid="stVerticalBlock"] > div {
+            width: auto;
+        }
         div[class*="st-key-voypick_"] button {
             position: relative;
             background: rgba(28,43,92,.35);
@@ -287,7 +296,7 @@ def css_cartes():
             color: #ece3d2;
             font-family: 'Cinzel', serif;
             font-size: 0.95rem;
-            padding: 0.9rem 0.5rem;
+            padding: 0.9rem 1.1rem;
             transition: all .18s ease;
         }
         div[class*="st-key-voypick_"] button:hover {
@@ -674,10 +683,9 @@ def ecran_nuit(s):
             else:
                 st.write(f"Visions restantes : {s['visions_voyante']}")
                 candidats = [n for n in vivants(s) if n != nom]
-                cols = st.columns(3)
-                for i, candidat in enumerate(candidats):
-                    with cols[i % 3]:
-                        if st.button(candidat, key=f"voypick_{cle}_{candidat}", use_container_width=True):
+                with st.container(key=f"voygrid_{cle}"):
+                    for candidat in candidats:
+                        if st.button(candidat, key=f"voypick_{cle}_{candidat}"):
                             s["visions_voyante"] -= 1
                             st.session_state[f"vu_{cle}"] = candidat
                             st.rerun()

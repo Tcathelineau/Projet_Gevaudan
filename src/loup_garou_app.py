@@ -14,9 +14,6 @@ import streamlit as st
 SAVE_FILE = "save.json"
 MUSIQUE_FILE = "musique.mp3"
 
-NB_JOUEURS = 7
-ROLES = ["loup", "loup", "sorciere", "voyante", "cupidon", "villageois", "villageois"]
-
 EMOJI = {
     "loup": "🐺",
     "sorciere": "🧪",
@@ -406,21 +403,26 @@ def clear_save():
 # État du jeu
 # --------------------------------------------------------------------------
 
-def nouvelle_partie(noms):
-    roles = ROLES[:]
+def nouvelle_partie(noms, composition):
+    """noms : liste de noms de joueurs. composition : dict {role: nombre}."""
+    roles = []
+    for role, n in composition.items():
+        roles += [role] * n
     random.shuffle(roles)
+
     joueurs = {
         nom: {"role": role, "vivant": True, "amoureux": False}
         for nom, role in zip(noms, roles)
     }
     return {
+        "nb_joueurs": len(noms),
         "jour": 0,
         "phase": "nuit",
         "joueurs": joueurs,
         "loups": [n for n, d in joueurs.items() if d["role"] == "loup"],
         "amoureux": [],
-        "potions_sorciere": 2,
-        "visions_voyante": 2,
+        "potions_sorciere": 2 if composition.get("sorciere") else 0,
+        "visions_voyante": 2 if composition.get("voyante") else 0,
         "votes_loups": [],
         "soin_sorciere": False,
         "ordre_nuit": [],
@@ -475,27 +477,130 @@ def fin_de_tour(s):
 # Écrans
 # --------------------------------------------------------------------------
 
+def composition_recommandee(nb):
+    """Suggestion de départ raisonnable pour un nombre de joueurs donné."""
+    loups = max(1, nb // 4)
+    reste = nb - loups
+    sorciere = 1 if reste >= 1 else 0
+    reste -= sorciere
+    voyante = 1 if reste >= 1 else 0
+    reste -= voyante
+    cupidon = 1 if reste >= 1 else 0
+    reste -= cupidon
+    return loups, sorciere, voyante, cupidon
+
+
 def ecran_installation():
     st.title("🐺 Loup-Garou")
-    st.write(
-        f"Un jeu à {NB_JOUEURS} joueurs sur un seul écran. "
-        "Vous vous passerez l'appareil à tour de rôle pendant la nuit."
+    st.caption("Configure la partie, puis ajoute les joueurs.")
+
+    if "config_etape" not in st.session_state:
+        st.session_state.config_etape = "roles"
+
+    if st.session_state.config_etape == "roles":
+        etape_roles()
+    else:
+        etape_noms()
+
+
+def etape_roles():
+    st.subheader("1. Composition de la partie")
+
+    nb = st.number_input(
+        "Nombre de joueurs",
+        min_value=5,
+        max_value=18,
+        value=7,
+        step=1,
+        key="nb_joueurs_setup",
     )
 
+    loups_defaut, sorciere_defaut, voyante_defaut, cupidon_defaut = composition_recommandee(nb)
+
+    st.caption("Répartis les rôles spéciaux. Le reste de la table devient Villageois.")
+    col1, col2 = st.columns(2)
+    with col1:
+        n_loup = st.number_input(
+            "🐺 Loups-Garous", min_value=1, max_value=max(1, nb - 1),
+            value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
+        )
+        n_sorciere = st.number_input(
+            "🧪 Sorcière", min_value=0, max_value=1, value=sorciere_defaut, key="n_sorciere",
+        )
+    with col2:
+        n_voyante = st.number_input(
+            "🔮 Voyante", min_value=0, max_value=1, value=voyante_defaut, key="n_voyante",
+        )
+        n_cupidon = st.number_input(
+            "🏹 Cupidon", min_value=0, max_value=1, value=cupidon_defaut, key="n_cupidon",
+        )
+
+    attribues = n_loup + n_sorciere + n_voyante + n_cupidon
+    n_villageois = nb - attribues
+
+    if n_villageois < 0:
+        st.error(
+            f"Trop de rôles spéciaux pour {nb} joueurs "
+            f"(il en manque {-n_villageois}) : réduis-en un ou augmente le nombre de joueurs."
+        )
+    else:
+        st.markdown(
+            f"""
+            <div class="panneau">
+                <div class="panneau-titre">Composition</div>
+                <div class="panneau-ligne"><span>🐺 Loups-Garous</span><span>{n_loup}</span></div>
+                <div class="panneau-ligne"><span>🧪 Sorcière</span><span>{n_sorciere}</span></div>
+                <div class="panneau-ligne"><span>🔮 Voyante</span><span>{n_voyante}</span></div>
+                <div class="panneau-ligne"><span>🏹 Cupidon</span><span>{n_cupidon}</span></div>
+                <div class="panneau-ligne"><span>🧑‍🌾 Villageois</span><span>{n_villageois}</span></div>
+                <div class="panneau-ligne"><span><b>Total</b></span><span><b>{nb} / {nb}</b></span></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    if st.button("Suivant : noms des joueurs →", type="primary", disabled=n_villageois < 0):
+        st.session_state.config_nb = nb
+        st.session_state.config_composition = {
+            "loup": n_loup,
+            "sorciere": n_sorciere,
+            "voyante": n_voyante,
+            "cupidon": n_cupidon,
+            "villageois": n_villageois,
+        }
+        st.session_state.config_etape = "noms"
+        st.rerun()
+
+
+def etape_noms():
+    nb = st.session_state.config_nb
+    st.subheader("2. Qui joue ?")
+    st.caption(f"{nb} joueurs — vous vous passerez l'appareil à tour de rôle pendant la nuit.")
+
     with st.form("noms"):
-        noms = [
-            st.text_input(f"Joueur {i + 1}", key=f"nom_{i}").strip()
-            for i in range(NB_JOUEURS)
-        ]
-        lance = st.form_submit_button("Distribuer les rôles")
+        noms = []
+        cols = st.columns(2)
+        for i in range(nb):
+            with cols[i % 2]:
+                noms.append(st.text_input(f"Joueur {i + 1}", key=f"nom_{i}").strip())
+
+        col_retour, col_lance = st.columns([1, 2])
+        retour = col_retour.form_submit_button("← Retour")
+        lance = col_lance.form_submit_button("Distribuer les rôles", type="primary")
+
+    if retour:
+        st.session_state.config_etape = "roles"
+        st.rerun()
 
     if lance:
         if any(not n for n in noms):
             st.error("Il manque un nom.")
-        elif len(set(noms)) != NB_JOUEURS:
+        elif len(set(noms)) != nb:
             st.error("Deux joueurs portent le même nom.")
         else:
-            st.session_state.partie = nouvelle_partie(noms)
+            st.session_state.partie = nouvelle_partie(noms, st.session_state.config_composition)
+            for cle in ("config_etape", "config_nb", "config_composition"):
+                st.session_state.pop(cle, None)
             st.rerun()
 
 
@@ -759,7 +864,7 @@ def main():
             f"""
             <div class="panneau">
                 <div class="panneau-titre">{PHASE_EMOJI.get(s['phase'], '')} Jour {s['jour']} — {PHASE_LABEL.get(s['phase'], s['phase'])}</div>
-                <div class="panneau-ligne"><span>👥 Vivants</span><span>{len(vivants(s))} / {NB_JOUEURS}</span></div>
+                <div class="panneau-ligne"><span>👥 Vivants</span><span>{len(vivants(s))} / {s['nb_joueurs']}</span></div>
                 <div class="panneau-ligne"><span>🐺 Loups</span><span>{loups_vivants}</span></div>
                 <div class="panneau-ligne"><span>🧑‍🌾 Village</span><span>{village_vivants}</span></div>
             </div>

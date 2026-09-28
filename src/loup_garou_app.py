@@ -239,6 +239,24 @@ def css_cartes():
             color: #ece3d2;
             padding: 0.15rem 0;
         }
+        .pictogramme {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0 1.5rem 0;
+        }
+        .icone-role {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid #c9a44c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 0 12px rgba(201,164,76,.25) inset;
+        }
         [data-testid="stSidebarUserContent"] {
             display: flex;
             flex-direction: column;
@@ -661,8 +679,43 @@ def ecran_installation():
         etape_noms()
 
 
+def afficher_composition(nb, composition, n_villageois):
+    lignes = "".join(
+        f'<div class="panneau-ligne"><span>{ROLES[cle].emoji} {ROLES[cle].nom}</span><span>{n}</span></div>'
+        for cle, n in composition.items()
+    )
+    st.markdown(
+        f"""
+        <div class="panneau">
+            <div class="panneau-titre">Composition</div>
+            {lignes}
+            <div class="panneau-ligne"><span><b>Total</b></span><span><b>{nb} / {nb}</b></span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if n_villageois < 0:
+        st.error(
+            f"Trop de rôles spéciaux pour {nb} joueurs "
+            f"(il en manque {-n_villageois}) : réduis-en un ou augmente le nombre de joueurs."
+        )
+        return
+
+    icones = "".join(
+        f'<div class="icone-role" style="background: {ROLES[cle].degrade};" title="{ROLES[cle].nom}">{ROLES[cle].emoji}</div>'
+        for cle, n in composition.items()
+        for _ in range(n)
+    )
+    st.markdown(f'<div class="pictogramme">{icones}</div>', unsafe_allow_html=True)
+
+
 def etape_roles():
     st.subheader("1. Composition de la partie")
+
+    # Réservé ici pour apparaître avant "Nombre de joueurs", rempli une fois
+    # les rôles ci-dessous connus.
+    apercu = st.empty()
 
     nb = st.number_input(
         "Nombre de joueurs",
@@ -677,45 +730,40 @@ def etape_roles():
 
     st.caption("Répartis les rôles spéciaux. Le reste de la table devient Villageois.")
 
-    n_loup = st.number_input(
+    n_loup = st.slider(
         f"{ROLES['loup'].emoji} {ROLES['loup'].nom}s",
         min_value=1, max_value=max(1, nb - 1),
         value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
     )
-
     composition = {"loup": n_loup}
-    cols = st.columns(2)
-    for i, role in enumerate(ROLES_SPECIAUX):
-        with cols[i % 2]:
-            composition[role.key] = st.number_input(
-                f"{role.emoji} {role.nom}",
-                min_value=0, max_value=1 if role.unique else nb,
+
+    # Rôles uniques (au plus un exemplaire) : une simple case à cocher, en
+    # grille — beaucoup plus compact qu'un réglage numérique par rôle, et ça
+    # tient à l'échelle si d'autres rôles uniques s'ajoutent un jour.
+    uniques = [role for role in ROLES_SPECIAUX if role.unique]
+    for i in range(0, len(uniques), 3):
+        cols = st.columns(3)
+        for col, role in zip(cols, uniques[i:i + 3]):
+            with col:
+                composition[role.key] = int(st.checkbox(
+                    f"{role.emoji} {role.nom}",
+                    value=bool(speciaux_defaut[role.key]), key=f"n_{role.key}",
+                ))
+
+    # Rôles spéciaux en quantité libre (aucun aujourd'hui, mais le prochain
+    # rôle de ce type n'aura besoin que d'une entrée dans ROLES).
+    for role in ROLES_SPECIAUX:
+        if not role.unique:
+            composition[role.key] = st.slider(
+                f"{role.emoji} {role.nom}", min_value=0, max_value=nb,
                 value=speciaux_defaut[role.key], key=f"n_{role.key}",
             )
 
     n_villageois = nb - sum(composition.values())
     composition["villageois"] = max(n_villageois, 0)
 
-    if n_villageois < 0:
-        st.error(
-            f"Trop de rôles spéciaux pour {nb} joueurs "
-            f"(il en manque {-n_villageois}) : réduis-en un ou augmente le nombre de joueurs."
-        )
-    else:
-        lignes = "".join(
-            f'<div class="panneau-ligne"><span>{ROLES[cle].emoji} {ROLES[cle].nom}</span><span>{n}</span></div>'
-            for cle, n in composition.items()
-        )
-        st.markdown(
-            f"""
-            <div class="panneau">
-                <div class="panneau-titre">Composition</div>
-                {lignes}
-                <div class="panneau-ligne"><span><b>Total</b></span><span><b>{nb} / {nb}</b></span></div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    with apercu.container():
+        afficher_composition(nb, composition, n_villageois)
 
     if st.button("Suivant : noms des joueurs →", type="primary", disabled=n_villageois < 0):
         st.session_state.config_nb = nb

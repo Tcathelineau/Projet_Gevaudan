@@ -265,6 +265,10 @@ def css_cartes():
             border-color: #d98080;
             color: #f0a0a0;
         }
+        div[class*="st-key-voygrid_"] {
+            max-width: min(360px, 70vw);
+            margin: 0 auto;
+        }
         div[class*="st-key-voypick_"] button {
             position: relative;
             background: rgba(28,43,92,.35);
@@ -414,12 +418,13 @@ def _nuit_voyante(s, nom, cle):
         bouton_fin(s, cle)
     else:
         candidats = [n for n in vivants(s) if n != nom]
-        cols = st.columns(2)
-        for i, candidat in enumerate(candidats):
-            with cols[i % 2]:
-                if st.button(candidat, key=f"voypick_{cle}_{candidat}"):
-                    st.session_state[f"vu_{cle}"] = candidat
-                    st.rerun()
+        with st.container(key=f"voygrid_{cle}"):
+            cols = st.columns(2)
+            for i, candidat in enumerate(candidats):
+                with cols[i % 2]:
+                    if st.button(candidat, key=f"voypick_{cle}_{candidat}", use_container_width=True):
+                        st.session_state[f"vu_{cle}"] = candidat
+                        st.rerun()
 
 
 def _nuit_sorciere(s, nom, cle):
@@ -964,15 +969,10 @@ def main():
             unsafe_allow_html=True,
         )
 
-        if os.path.exists(MUSIQUE_FILE):
-            if st.checkbox("🎵 Musique de fond", value=True, key="musique_on"):
-                st.audio(MUSIQUE_FILE, format="audio/mp3", loop=True, autoplay=True)
-
-        if st.button("🚪 Abandonner la partie", key="abandon"):
-            clear_save()
-            st.session_state.clear()
-            st.rerun()
-
+    # Les écrans de phase (ex. le badge "en couple avec" pendant la nuit)
+    # peuvent encore ajouter du contenu à la sidebar : on les appelle avant
+    # la musique et le bouton d'abandon pour qu'ils restent en haut, au-dessus
+    # du bouton ancré en bas.
     if s["phase"] == "nuit":
         ecran_nuit(s)
     elif s["phase"] == "reveil":
@@ -983,6 +983,16 @@ def main():
         ecran_conseil(s)
     else:
         ecran_fin(s)
+
+    with st.sidebar:
+        if os.path.exists(MUSIQUE_FILE):
+            if st.checkbox("🎵 Musique de fond", value=True, key="musique_on"):
+                st.audio(MUSIQUE_FILE, format="audio/mp3", loop=True, autoplay=True)
+
+        if st.button("🚪 Abandonner la partie", key="abandon"):
+            clear_save()
+            st.session_state.clear()
+            st.rerun()
 
     save_game(s)
 

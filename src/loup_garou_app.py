@@ -855,6 +855,7 @@ def afficher_composition(nb, total, composition, n_villageois):
     lignes = "".join(
         f'<div class="panneau-ligne"><span>{ROLES[cle].emoji} {ROLES[cle].nom}</span><span>{n}</span></div>'
         for cle, n in composition.items()
+        if n > 0
     )
     st.markdown(
         f"""

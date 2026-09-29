@@ -287,8 +287,12 @@ def css_cartes():
             color: #f0a0a0;
         }
         div[class*="st-key-dalles_"] {
-            max-width: min(360px, 70vw);
+            max-width: min(760px, 95%);
             margin: 0 auto;
+        }
+        div[class*="st-key-dalles_"],
+        div[class*="st-key-dalles_"] [data-testid="stVerticalBlock"] {
+            gap: 0.5rem;
         }
         div[class*="st-key-dalles_"] button {
             position: relative;
@@ -297,8 +301,8 @@ def css_cartes():
             border-radius: 10px;
             color: #ece3d2;
             font-family: 'Cinzel', serif;
-            font-size: 0.95rem;
-            padding: 0.9rem 1.1rem;
+            font-size: 0.85rem;
+            padding: 0.55rem 0.3rem;
             transition: all .18s ease;
         }
         div[class*="st-key-dalles_"] button:hover {
@@ -310,10 +314,11 @@ def css_cartes():
         }
         div[class*="st-key-dalles_"] button::after {
             content: "👁";
-            display: block;
+            position: absolute;
+            top: 2px;
+            right: 5px;
             opacity: 0;
-            font-size: 1.2rem;
-            margin-top: 0.3rem;
+            font-size: 0.8rem;
             transition: opacity .18s ease;
         }
         div[class*="st-key-dalles_"] button:hover::after {
@@ -417,11 +422,13 @@ def plaquette(texte, icone="🌙", ton="neutre"):
 
 def grille_dalles(theme, cle, choix):
     """Dalles cliquables sur 2 colonnes (style selon `theme`, cf. CSS). Renvoie le nom cliqué ou None."""
+    # Plus il y a de choix, plus on élargit la grille : elle reste sur peu de lignes.
+    n_col = 2 if len(choix) <= 4 else 3 if len(choix) <= 9 else 4 if len(choix) <= 14 else 5
     clic = None
     with st.container(key=f"dalles_{theme}_{cle}"):
-        cols = st.columns(2)
+        cols = st.columns(n_col)
         for i, nom in enumerate(choix):
-            with cols[i % 2]:
+            with cols[i % n_col]:
                 if st.button(nom, key=f"pick_{theme}_{cle}_{nom}", use_container_width=True):
                     clic = nom
     return clic
@@ -1016,7 +1023,7 @@ def ecran_nuit(s):
     carte_role(nom, role)
     cle = f"{s['jour']}_{s['tour']}"
 
-    with st.container(height=250, border=False):
+    with st.container(height=340, border=False):
         gerer_nuit = ROLES[role].nuit or _nuit_villageois
         gerer_nuit(s, nom, cle)
 

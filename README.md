@@ -8,7 +8,7 @@ Une application web légère pour jouer au Loup-Garou (Les Loups-Garous de Thier
 - **Écran de passage sécurisé** entre chaque joueur, en deux étapes, pour éviter qu'un rôle soit vu par la mauvaise personne.
 - **Cartes de rôle stylisées**, façon vraie carte de jeu.
 - **Sauvegarde automatique** (`save.json`) : la partie reprend automatiquement là où elle s'est arrêtée, même après avoir fermé le serveur.
-- **Journal de partie** : résumé nuit par nuit affiché à la fin.
+- **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, sauvegardée avec la partie, affichée nuit par nuit à la fin, et archivée dans `parties/partie_AAAAMMJJ_HHMMSS.json` (téléchargeable aussi depuis l'écran de fin).
 - **Musique de fond** optionnelle, en boucle.
 - **Thème sombre** et mise en page compacte.
 
@@ -71,7 +71,8 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 ├── src/
 │   └── loup_garou_app.py   # L'application Streamlit
 ├── musique.mp3              # (optionnel) musique de fond, à ajouter toi-même
-├── save.json                 # Sauvegarde de la partie en cours (générée à la racine, automatiquement)
+├── save.json                 # Sauvegarde de la partie en cours (générée automatiquement)
+├── parties/                  # Archives JSON des parties terminées ou abandonnées
 └── .streamlit/
     └── config.toml           # Configuration du thème sombre
 ```

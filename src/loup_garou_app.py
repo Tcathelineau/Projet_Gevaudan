@@ -8,12 +8,14 @@ import json
 import os
 import random
 from collections import Counter
+from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
 import streamlit as st
 
 SAVE_FILE = "save.json"
+HISTORIQUE_DIR = "parties"
 MUSIQUE_FILE = "musique.mp3"
 
 PHASE_EMOJI = {
@@ -287,8 +289,12 @@ def css_cartes():
             color: #f0a0a0;
         }
         div[class*="st-key-dalles_"] {
-            max-width: min(360px, 70vw);
+            max-width: min(760px, 95%);
             margin: 0 auto;
+        }
+        div[class*="st-key-dalles_"],
+        div[class*="st-key-dalles_"] [data-testid="stVerticalBlock"] {
+            gap: 0.5rem;
         }
         div[class*="st-key-dalles_"] button {
             position: relative;
@@ -297,8 +303,8 @@ def css_cartes():
             border-radius: 10px;
             color: #ece3d2;
             font-family: 'Cinzel', serif;
-            font-size: 0.95rem;
-            padding: 0.9rem 1.1rem;
+            font-size: 0.85rem;
+            padding: 0.55rem 0.3rem;
             transition: all .18s ease;
         }
         div[class*="st-key-dalles_"] button:hover {
@@ -310,10 +316,11 @@ def css_cartes():
         }
         div[class*="st-key-dalles_"] button::after {
             content: "👁";
-            display: block;
+            position: absolute;
+            top: 2px;
+            right: 5px;
             opacity: 0;
-            font-size: 1.2rem;
-            margin-top: 0.3rem;
+            font-size: 0.8rem;
             transition: opacity .18s ease;
         }
         div[class*="st-key-dalles_"] button:hover::after {
@@ -417,11 +424,13 @@ def plaquette(texte, icone="🌙", ton="neutre"):
 
 def grille_dalles(theme, cle, choix):
     """Dalles cliquables sur 2 colonnes (style selon `theme`, cf. CSS). Renvoie le nom cliqué ou None."""
+    # Plus il y a de choix, plus on élargit la grille : elle reste sur peu de lignes.
+    n_col = 2 if len(choix) <= 4 else 3 if len(choix) <= 9 else 4 if len(choix) <= 14 else 5
     clic = None
     with st.container(key=f"dalles_{theme}_{cle}"):
-        cols = st.columns(2)
+        cols = st.columns(n_col)
         for i, nom in enumerate(choix):
-            with cols[i % 2]:
+            with cols[i % n_col]:
                 if st.button(nom, key=f"pick_{theme}_{cle}_{nom}", use_container_width=True):
                     clic = nom
     return clic
@@ -461,6 +470,7 @@ def _nuit_loup(s, nom, cle):
         cible = grille_dalles("loup", cle, cibles)
         if cible:
             s["votes_loups"].append(cible)
+            log(s, f"{nom} (Loup-Garou) désigne {cible}.")
             fin_de_tour(s)
             st.rerun()
 
@@ -481,6 +491,7 @@ def _nuit_voyante(s, nom, cle):
         candidats = [n for n in vivants(s) if n != nom]
         vu = grille_dalles("voy", cle, candidats)
         if vu:
+            log(s, f"La voyante {nom} sonde {vu} : {ROLES[s['joueurs'][vu]['role']].nom}.")
             st.session_state[f"vu_{cle}"] = vu
             st.rerun()
 
@@ -496,6 +507,7 @@ def _nuit_sorciere(s, nom, cle):
         if col1.button("Utiliser une potion", type="primary", key=f"soin_{cle}"):
             s["soin_sorciere"] = True
             s["potions_sorciere"] -= 1
+            log(s, f"La sorcière {nom} utilise une potion de soin.")
             fin_de_tour(s)
             st.rerun()
         if col2.button("Ne rien faire", key=f"rien_{cle}"):
@@ -518,6 +530,7 @@ def _nuit_cupidon(s, nom, cle):
                 st.error("Il en faut exactement deux.")
             else:
                 s["amoureux"] = couple
+                log(s, f"Cupidon {nom} lie {couple[0]} et {couple[1]}.")
                 for n in couple:
                     s["joueurs"][n]["amoureux"] = True
                 fin_de_tour(s)
@@ -536,6 +549,7 @@ def _nuit_salvateur(s, nom, cle):
         st.caption(f"Tu ne peux pas protéger {precedent} deux nuits de suite.")
     protege = grille_dalles("salv", cle, [n for n in vivants(s) if n != precedent])
     if protege:
+        log(s, f"Le salvateur {nom} protège {protege}.")
         s["protege_nuit"] = protege
         fin_de_tour(s)
         st.rerun()
@@ -548,6 +562,7 @@ def _nuit_enfant_sauvage(s, nom, cle):
         st.caption("Il ignorera son rôle. S'il meurt, tu deviens loup-garou.")
         choix = grille_dalles("mentor", cle, [n for n in vivants(s) if n != nom])
         if choix:
+            log(s, f"{nom} (Enfant sauvage) choisit {choix} comme mentor.")
             s["mentor_enfant"] = choix
             st.rerun()
     else:
@@ -562,6 +577,7 @@ def _nuit_voleur(s, nom, cle):
     st.caption("Choisis-en une pour en prendre le rôle, ou garde ton sort : tu seras alors simple Villageois.")
 
     nouveau_role = None
+    garde = False
     with st.container(key=f"dalles_vol_{cle}"):
         cols = st.columns(2)
         for i, role in enumerate(milieu):
@@ -573,8 +589,13 @@ def _nuit_voleur(s, nom, cle):
                     nouveau_role = role
     if st.button("Garder mon rôle (Villageois)", key=f"vol_garde_{cle}"):
         nouveau_role = "villageois"
+        garde = True
 
     if nouveau_role:
+        if garde:
+            log(s, f"{nom} (Voleur) garde son sort et devient simple Villageois.")
+        else:
+            log(s, f"{nom} (Voleur) prend la carte {ROLES[nouveau_role].nom}.")
         s["joueurs"][nom]["role"] = nouveau_role
         s["joueurs"][nom]["voleur"] = True
         if ROLES[nouveau_role].camp == "loups":
@@ -712,6 +733,38 @@ def clear_save():
         os.remove(SAVE_FILE)
 
 
+def log(s, texte, moment=None):
+    """Ajoute un événement au journal. `moment` vaut la phase courante par défaut."""
+    s.setdefault("journal", []).append(
+        {"jour": s["jour"], "moment": moment or s["phase"], "texte": texte}
+    )
+
+
+def archiver_partie(s, issue):
+    """Écrit le journal complet dans parties/ (une seule fois par partie)."""
+    if s.get("archive"):
+        return
+    os.makedirs(HISTORIQUE_DIR, exist_ok=True)
+    maintenant = datetime.now()
+    fichier = os.path.join(HISTORIQUE_DIR, f"partie_{maintenant:%Y%m%d_%H%M%S}.json")
+    donnees = {
+        "date": maintenant.isoformat(timespec="seconds"),
+        "issue": issue,
+        "joueurs": s["joueurs"],
+        "journal": s["journal"],
+    }
+    with open(fichier, "w", encoding="utf-8") as f:
+        json.dump(donnees, f, indent=2, ensure_ascii=False)
+    s["archive"] = fichier
+
+
+def terminer_partie(s, message):
+    log(s, message, "fin")
+    s["phase"] = "fin"
+    s["message_fin"] = message
+    archiver_partie(s, message)
+
+
 # --------------------------------------------------------------------------
 # État du jeu
 # --------------------------------------------------------------------------
@@ -752,6 +805,11 @@ def nouvelle_partie(noms, composition):
     }
     for role in ROLES.values():
         etat.update(role.etat_initial)
+    paquet = ", ".join(f"{ROLES[cle].nom} ×{n}" for cle, n in composition.items() if n > 0)
+    log(etat, f"{len(noms)} joueurs. Paquet : {paquet}.", "debut")
+    log(etat, "Distribution : " + ", ".join(
+        f"{n} ({ROLES[d['role']].nom})" for n, d in joueurs.items()
+    ) + ".", "debut")
     return etat
 
 
@@ -770,10 +828,11 @@ def _convertir_enfant_sauvage(s, morts):
         if d["role"] == "enfant_sauvage":
             d["role"] = "loup"
             d["enfant_sauvage"] = True
+            log(s, f"Le mentor {mentor} est mort : {n} (Enfant sauvage) devient loup-garou.")
             s["loups"].append(n)
 
 
-def tuer(s, nom):
+def tuer(s, nom, cause="meurt"):
     """Tue un joueur et entraîne son amoureux dans la mort. Renvoie la liste des morts."""
     if nom not in s["joueurs"] or not s["joueurs"][nom]["vivant"]:
         return []
@@ -787,6 +846,9 @@ def tuer(s, nom):
     if s.get("maire") in morts:
         s["dernier_maire"] = s["maire"]
         s["maire"] = None
+    for i, mort in enumerate(morts):
+        raison = cause if i == 0 else "meurt de chagrin (amoureux)"
+        log(s, f"{mort} ({ROLES[s['joueurs'][mort]['role']].nom}) {raison}.")
     _convertir_enfant_sauvage(s, morts)
     for mort in morts:
         if ROLES[s["joueurs"][mort]["role"]].tir_a_la_mort:
@@ -848,6 +910,7 @@ def afficher_composition(nb, total, composition, n_villageois):
     lignes = "".join(
         f'<div class="panneau-ligne"><span>{ROLES[cle].emoji} {ROLES[cle].nom}</span><span>{n}</span></div>'
         for cle, n in composition.items()
+        if n > 0
     )
     st.markdown(
         f"""
@@ -1016,7 +1079,7 @@ def ecran_nuit(s):
     carte_role(nom, role)
     cle = f"{s['jour']}_{s['tour']}"
 
-    with st.container(height=250, border=False):
+    with st.container(height=340, border=False):
         gerer_nuit = ROLES[role].nuit or _nuit_villageois
         gerer_nuit(s, nom, cle)
 
@@ -1031,12 +1094,22 @@ def resoudre_nuit(s):
     if s["jour"] > 0:
         comptes = Counter(s["votes_loups"]).most_common()
         victime = None
-        if comptes and not (len(comptes) > 1 and comptes[0][1] == comptes[1][1]):
+        if len(comptes) > 1 and comptes[0][1] == comptes[1][1]:
+            log(s, "Les loups ne s'accordent pas : personne n'est dévoré.")
+        elif comptes:
             victime = comptes[0][0]
-        if s["soin_sorciere"] or victime == s.get("protege_nuit"):
+        sauveurs = []
+        if victime and s["soin_sorciere"]:
+            sauveurs.append("la potion de la sorcière")
+        if victime and victime == s.get("protege_nuit"):
+            sauveurs.append("le salvateur")
+        if sauveurs:
+            log(s, f"{victime} était la cible des loups mais est sauvé par {' et '.join(sauveurs)}.")
             victime = None
         if victime:
-            morts = tuer(s, victime)
+            morts = tuer(s, victime, "est dévoré par les loups")
+        if not morts:
+            log(s, "Personne ne meurt cette nuit.")
 
     s["morts_nuit"] = morts
     s["morts_tir"] = []
@@ -1088,8 +1161,7 @@ def ecran_reveil(s):
     gagnant = vainqueur(s)
     if gagnant:
         if st.button("Voir le résultat", type="primary"):
-            s["phase"] = "fin"
-            s["message_fin"] = gagnant
+            terminer_partie(s, gagnant)
             st.rerun()
         return
 
@@ -1121,6 +1193,7 @@ def ecran_election_maire(s):
     elu = st.radio("Le village élit comme maire", en_vie, key=f"election_maire_{s['jour']}")
     if st.button("Valider l'élection", type="primary"):
         s["maire"] = elu
+        log(s, f"{elu} est élu maire.")
         s["dernier_maire"] = None
         s["phase"] = "conseil"
         st.rerun()
@@ -1154,8 +1227,7 @@ def ecran_conseil(s):
             bouton_tir(s, "conseil")
         elif gagnant:
             if st.button("Voir le résultat", type="primary"):
-                s["phase"] = "fin"
-                s["message_fin"] = gagnant
+                terminer_partie(s, gagnant)
                 st.rerun()
         elif st.button("La nuit tombe", type="primary"):
             s["jour"] += 1
@@ -1166,7 +1238,7 @@ def ecran_conseil(s):
         st.caption("Débattez à voix haute, puis le capitaine saisit le résultat du vote.")
         condamne = st.radio("Le village élimine", en_vie, key=f"vote_{s['jour']}")
         if st.button("Valider le vote", type="primary"):
-            st.session_state[f"resultat_{s['jour']}"] = tuer(s, condamne)
+            st.session_state[f"resultat_{s['jour']}"] = tuer(s, condamne, "est éliminé par le village")
             st.rerun()
 
 
@@ -1201,7 +1273,9 @@ def ecran_tir_chasseur(s):
     if tirer or renoncer:
         s["tirs_en_attente"].pop(0)
         if tirer:
-            s["morts_tir"] += tuer(s, choix)
+            s["morts_tir"] += tuer(s, choix, f"est abattu par le chasseur {chasseur}")
+        else:
+            log(s, f"Le chasseur {chasseur} renonce à tirer.")
         st.session_state.pop(cle_cible, None)
         if not s["tirs_en_attente"]:
             s["phase"] = s["retour_tir"]
@@ -1217,7 +1291,53 @@ def ecran_fin(s):
         coeur = " 💘" if d["amoureux"] else ""
         ancien = " (ex-enfant sauvage)" if d.get("enfant_sauvage") else ""
         ancien += " (ex-voleur)" if d.get("voleur") else ""
-        st.write(f"{ROLES[d['role']].emoji} **{nom}** — {d['role']}{ancien} ({etat}){coeur}")
+        st.write(f"{ROLES[d['role']].emoji} **{nom}** — {ROLES[d['role']].nom}{ancien} ({etat}){coeur}")
+
+    st.subheader("Historique de la partie")
+    afficher_historique(s)
+    st.download_button(
+        "Télécharger l'historique (JSON)",
+        data=json.dumps(
+            {"issue": s["message_fin"], "joueurs": s["joueurs"], "journal": s["journal"]},
+            indent=2, ensure_ascii=False,
+        ),
+        file_name="historique_partie.json",
+        mime="application/json",
+    )
+    if s.get("archive"):
+        st.caption(f"Archive enregistrée dans {s['archive']}")
+
+
+def afficher_historique(s):
+    """Journal regroupé par nuit / jour, dans l'ordre chronologique."""
+    def bloc(e):
+        if e["moment"] in ("debut", "fin"):
+            return e["moment"], None
+        return ("nuit" if e["moment"] == "nuit" else "jour"), e["jour"]
+
+    titres = {"debut": "🎲 Début de partie", "fin": "🏁 Fin"}
+    courant = None
+    lignes = []
+
+    def vider():
+        if lignes:
+            st.markdown("\n".join(lignes))
+            lignes.clear()
+
+    for e in s["journal"]:
+        b = bloc(e)
+        if b != courant:
+            vider()
+            courant = b
+            kind, jour = b
+            if kind == "nuit":
+                st.markdown(f"##### 🌙 Nuit {jour}" + (" (première nuit)" if jour == 0 else ""))
+            elif kind == "jour":
+                st.markdown(f"##### ☀️ Jour {jour}")
+            else:
+                st.markdown(f"##### {titres[kind]}")
+        lignes.append(f"- {e['texte']}")
+    vider()
 
 
 # --------------------------------------------------------------------------
@@ -1283,6 +1403,9 @@ def main():
                 st.audio(MUSIQUE_FILE, format="audio/mp3", loop=True, autoplay=True)
 
         if st.button("🚪 Abandonner la partie", key="abandon"):
+            if s["phase"] != "fin":
+                log(s, "Partie abandonnée.", "fin")
+                archiver_partie(s, "Partie abandonnée")
             clear_save()
             st.session_state.clear()
             st.rerun()

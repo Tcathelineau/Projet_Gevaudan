@@ -286,15 +286,11 @@ def css_cartes():
             border-color: #d98080;
             color: #f0a0a0;
         }
-        div[class*="st-key-voygrid_"],
-        div[class*="st-key-loupgrid_"],
-        div[class*="st-key-tirgrid_"] {
+        div[class*="st-key-dalles_"] {
             max-width: min(360px, 70vw);
             margin: 0 auto;
         }
-        div[class*="st-key-voypick_"] button,
-        div[class*="st-key-louppick_"] button,
-        div[class*="st-key-tirpick_"] button {
+        div[class*="st-key-dalles_"] button {
             position: relative;
             background: rgba(28,43,92,.35);
             border: 2px solid rgba(201,164,76,.45);
@@ -305,18 +301,14 @@ def css_cartes():
             padding: 0.9rem 1.1rem;
             transition: all .18s ease;
         }
-        div[class*="st-key-voypick_"] button:hover,
-        div[class*="st-key-louppick_"] button:hover,
-        div[class*="st-key-tirpick_"] button:hover {
+        div[class*="st-key-dalles_"] button:hover {
             background: rgba(28,43,92,.8);
             border-color: #c9a44c;
             color: #ffffff;
             transform: translateY(-3px);
             box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(201,164,76,.4);
         }
-        div[class*="st-key-voypick_"] button::after,
-        div[class*="st-key-louppick_"] button::after,
-        div[class*="st-key-tirpick_"] button::after {
+        div[class*="st-key-dalles_"] button::after {
             content: "👁";
             display: block;
             opacity: 0;
@@ -324,28 +316,34 @@ def css_cartes():
             margin-top: 0.3rem;
             transition: opacity .18s ease;
         }
-        div[class*="st-key-voypick_"] button:hover::after,
-        div[class*="st-key-louppick_"] button:hover::after,
-        div[class*="st-key-tirpick_"] button:hover::after {
+        div[class*="st-key-dalles_"] button:hover::after {
             opacity: 1;
         }
-        div[class*="st-key-louppick_"] button,
-        div[class*="st-key-tirpick_"] button {
+        div[class*="st-key-dalles_loup_"] button,
+        div[class*="st-key-dalles_tir_"] button {
             background: rgba(120,20,28,.4);
             border-color: rgba(200,60,60,.55);
         }
-        div[class*="st-key-louppick_"] button:hover,
-        div[class*="st-key-tirpick_"] button:hover {
+        div[class*="st-key-dalles_loup_"] button:hover,
+        div[class*="st-key-dalles_tir_"] button:hover {
             background: rgba(160,28,36,.75);
             border-color: #e05555;
             box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(224,85,85,.45);
         }
-        div[class*="st-key-louppick_"] button::after {
-            content: "🍖";
+        div[class*="st-key-dalles_loup_"] button::after { content: "🍖"; }
+        div[class*="st-key-dalles_tir_"] button::after { content: "🎯"; }
+        div[class*="st-key-dalles_salv_"] button {
+            background: rgba(20,90,84,.4);
+            border-color: rgba(80,190,175,.55);
         }
-        div[class*="st-key-tirpick_"] button::after {
-            content: "🎯";
+        div[class*="st-key-dalles_salv_"] button:hover {
+            background: rgba(28,120,110,.75);
+            border-color: #55d0bf;
+            box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(85,208,191,.45);
         }
+        div[class*="st-key-dalles_salv_"] button::after { content: "🛡️"; }
+        div[class*="st-key-dalles_mentor_"] button::after { content: "🐾"; }
+        div[class*="st-key-dalles_vol_"] button::after { content: "🃏"; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -417,6 +415,18 @@ def plaquette(texte, icone="🌙", ton="neutre"):
     )
 
 
+def grille_dalles(theme, cle, choix):
+    """Dalles cliquables sur 2 colonnes (style selon `theme`, cf. CSS). Renvoie le nom cliqué ou None."""
+    clic = None
+    with st.container(key=f"dalles_{theme}_{cle}"):
+        cols = st.columns(2)
+        for i, nom in enumerate(choix):
+            with cols[i % 2]:
+                if st.button(nom, key=f"pick_{theme}_{cle}_{nom}", use_container_width=True):
+                    clic = nom
+    return clic
+
+
 def bouton_fin(s, cle):
     if st.button("Terminer mon tour", type="primary", key=f"fin_{cle}"):
         fin_de_tour(s)
@@ -438,6 +448,8 @@ def bouton_fin(s, cle):
 # --------------------------------------------------------------------------
 
 def _nuit_loup(s, nom, cle):
+    if s["joueurs"][nom].get("enfant_sauvage"):
+        plaquette("Ton mentor est mort : tu as rejoint la meute.", icone="🐾")
     complices = [l for l in s["loups"] if l != nom and s["joueurs"][l]["vivant"]]
     badge_meute(nom, complices)
     if s["jour"] == 0:
@@ -446,14 +458,11 @@ def _nuit_loup(s, nom, cle):
     else:
         cibles = [n for n in vivants(s) if ROLES[s["joueurs"][n]["role"]].camp != "loups"]
         st.markdown("**Qui dévorez-vous ?**")
-        with st.container(key=f"loupgrid_{cle}"):
-            cols = st.columns(2)
-            for i, cible in enumerate(cibles):
-                with cols[i % 2]:
-                    if st.button(cible, key=f"louppick_{cle}_{cible}", use_container_width=True):
-                        s["votes_loups"].append(cible)
-                        fin_de_tour(s)
-                        st.rerun()
+        cible = grille_dalles("loup", cle, cibles)
+        if cible:
+            s["votes_loups"].append(cible)
+            fin_de_tour(s)
+            st.rerun()
 
 
 def _nuit_voyante(s, nom, cle):
@@ -470,13 +479,10 @@ def _nuit_voyante(s, nom, cle):
         bouton_fin(s, cle)
     else:
         candidats = [n for n in vivants(s) if n != nom]
-        with st.container(key=f"voygrid_{cle}"):
-            cols = st.columns(2)
-            for i, candidat in enumerate(candidats):
-                with cols[i % 2]:
-                    if st.button(candidat, key=f"voypick_{cle}_{candidat}", use_container_width=True):
-                        st.session_state[f"vu_{cle}"] = candidat
-                        st.rerun()
+        vu = grille_dalles("voy", cle, candidats)
+        if vu:
+            st.session_state[f"vu_{cle}"] = vu
+            st.rerun()
 
 
 def _nuit_sorciere(s, nom, cle):
@@ -518,6 +524,65 @@ def _nuit_cupidon(s, nom, cle):
                 st.rerun()
 
 
+def _nuit_salvateur(s, nom, cle):
+    if s["jour"] == 0:
+        plaquette("Première nuit : personne ne meurt, rien à protéger.", icone="🛡️")
+        bouton_fin(s, cle)
+        return
+
+    precedent = s.get("protege_precedent")
+    st.markdown("**Qui protèges-tu cette nuit ?**")
+    if precedent and s["joueurs"][precedent]["vivant"]:
+        st.caption(f"Tu ne peux pas protéger {precedent} deux nuits de suite.")
+    protege = grille_dalles("salv", cle, [n for n in vivants(s) if n != precedent])
+    if protege:
+        s["protege_nuit"] = protege
+        fin_de_tour(s)
+        st.rerun()
+
+
+def _nuit_enfant_sauvage(s, nom, cle):
+    mentor = s.get("mentor_enfant")
+    if mentor is None:
+        st.markdown("**Choisis ton mentor**")
+        st.caption("Il ignorera son rôle. S'il meurt, tu deviens loup-garou.")
+        choix = grille_dalles("mentor", cle, [n for n in vivants(s) if n != nom])
+        if choix:
+            s["mentor_enfant"] = choix
+            st.rerun()
+    else:
+        plaquette(f"Ton mentor est {mentor}. S'il meurt, tu deviens loup-garou.", icone="🐾")
+        bouton_fin(s, cle)
+
+
+def _nuit_voleur(s, nom, cle):
+    """Première nuit : le voleur prend l'un des deux rôles du milieu, ou reste simple villageois."""
+    milieu = s["cartes_milieu"]
+    st.markdown("**Deux cartes sont restées au milieu**")
+    st.caption("Choisis-en une pour en prendre le rôle, ou garde ton sort : tu seras alors simple Villageois.")
+
+    nouveau_role = None
+    with st.container(key=f"dalles_vol_{cle}"):
+        cols = st.columns(2)
+        for i, role in enumerate(milieu):
+            with cols[i % 2]:
+                if st.button(
+                    f"{ROLES[role].emoji} {ROLES[role].nom}",
+                    key=f"pick_vol_{cle}_{i}", use_container_width=True,
+                ):
+                    nouveau_role = role
+    if st.button("Garder mon rôle (Villageois)", key=f"vol_garde_{cle}"):
+        nouveau_role = "villageois"
+
+    if nouveau_role:
+        s["joueurs"][nom]["role"] = nouveau_role
+        s["joueurs"][nom]["voleur"] = True
+        if ROLES[nouveau_role].camp == "loups":
+            s["loups"].append(nom)
+        s["cartes_milieu"] = []
+        st.rerun()
+
+
 def _nuit_chasseur(s, nom, cle):
     plaquette("Tu es le chasseur : si tu meurs, tu pourras tirer une dernière balle. Dors.", icone="🔫")
     bouton_fin(s, cle)
@@ -538,6 +603,8 @@ class Role:
     unique: bool = True  # au plus un exemplaire proposé par défaut à la composition
     etat_initial: dict = field(default_factory=dict)  # clés d'état de partie propres à ce rôle
     nuit: Optional[Callable[[dict, str, str], None]] = None  # rendu du tour de nuit ; None = dort
+    cartes_en_plus: int = 0  # cartes ajoutées au paquet et laissées au milieu de la table
+    recommande: bool = True  # coché par défaut dans la composition suggérée
     tir_a_la_mort: bool = False  # à sa mort, ce rôle peut emporter un autre joueur avec lui
 
 
@@ -580,6 +647,33 @@ ROLES = {
         degrade="radial-gradient(circle at 50% 30%, #6b4a1f, #291b0a 75%)",
         tir_a_la_mort=True,
         nuit=_nuit_chasseur,
+    ),
+    "salvateur": Role(
+        key="salvateur",
+        nom="Salvateur",
+        emoji="🛡️",
+        degrade="radial-gradient(circle at 50% 30%, #1f5c55, #0a2925 75%)",
+        etat_initial={"protege_nuit": None, "protege_precedent": None},
+        recommande=False,
+        nuit=_nuit_salvateur,
+    ),
+    "enfant_sauvage": Role(
+        key="enfant_sauvage",
+        nom="Enfant sauvage",
+        emoji="🧒",
+        degrade="radial-gradient(circle at 50% 30%, #4a5c1f, #1c260a 75%)",
+        etat_initial={"mentor_enfant": None},
+        recommande=False,
+        nuit=_nuit_enfant_sauvage,
+    ),
+    "voleur": Role(
+        key="voleur",
+        nom="Voleur",
+        emoji="🃏",
+        degrade="radial-gradient(circle at 50% 30%, #5c4a1f, #261d0a 75%)",
+        cartes_en_plus=2,
+        recommande=False,
+        nuit=_nuit_voleur,
     ),
     "villageois": Role(
         key="villageois",
@@ -633,6 +727,7 @@ def nouvelle_partie(noms, composition):
         nom: {"role": role, "vivant": True, "amoureux": False}
         for nom, role in zip(noms, roles)
     }
+    cartes_milieu = roles[len(noms):]
 
     etat = {
         "nb_joueurs": len(noms),
@@ -647,6 +742,7 @@ def nouvelle_partie(noms, composition):
         "devoile": False,
         "transfert": False,
         "morts_nuit": [],
+        "cartes_milieu": cartes_milieu,
         "morts_tir": [],
         "tirs_en_attente": [],
         "retour_tir": None,
@@ -663,6 +759,20 @@ def vivants(s):
     return [n for n, d in s["joueurs"].items() if d["vivant"]]
 
 
+def _convertir_enfant_sauvage(s, morts):
+    """Si le mentor de l'enfant sauvage est mort, l'enfant (s'il vit encore) devient loup-garou."""
+    mentor = s.get("mentor_enfant")
+    if mentor is None or mentor not in morts:
+        return
+    s["mentor_enfant"] = None
+    for n in vivants(s):
+        d = s["joueurs"][n]
+        if d["role"] == "enfant_sauvage":
+            d["role"] = "loup"
+            d["enfant_sauvage"] = True
+            s["loups"].append(n)
+
+
 def tuer(s, nom):
     """Tue un joueur et entraîne son amoureux dans la mort. Renvoie la liste des morts."""
     if nom not in s["joueurs"] or not s["joueurs"][nom]["vivant"]:
@@ -677,6 +787,7 @@ def tuer(s, nom):
     if s.get("maire") in morts:
         s["dernier_maire"] = s["maire"]
         s["maire"] = None
+    _convertir_enfant_sauvage(s, morts)
     for mort in morts:
         if ROLES[s["joueurs"][mort]["role"]].tir_a_la_mort:
             s.setdefault("tirs_en_attente", []).append(mort)
@@ -714,7 +825,7 @@ def composition_recommandee(nb):
     reste = nb - loups
     speciaux = {}
     for role in ROLES_SPECIAUX:
-        n = 1 if (role.unique and reste >= 1) else 0
+        n = 1 if (role.unique and role.recommande and reste >= 1) else 0
         speciaux[role.key] = n
         reste -= n
     return loups, speciaux
@@ -733,7 +844,7 @@ def ecran_installation():
         etape_noms()
 
 
-def afficher_composition(nb, composition, n_villageois):
+def afficher_composition(nb, total, composition, n_villageois):
     lignes = "".join(
         f'<div class="panneau-ligne"><span>{ROLES[cle].emoji} {ROLES[cle].nom}</span><span>{n}</span></div>'
         for cle, n in composition.items()
@@ -743,7 +854,7 @@ def afficher_composition(nb, composition, n_villageois):
         <div class="panneau">
             <div class="panneau-titre">Composition</div>
             {lignes}
-            <div class="panneau-ligne"><span><b>Total</b></span><span><b>{nb} / {nb}</b></span></div>
+            <div class="panneau-ligne"><span><b>Total</b></span><span><b>{total} / {total}</b></span></div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -751,7 +862,7 @@ def afficher_composition(nb, composition, n_villageois):
 
     if n_villageois < 0:
         st.error(
-            f"Trop de rôles spéciaux pour {nb} joueurs "
+            f"Trop de rôles spéciaux pour {total} cartes "
             f"(il en manque {-n_villageois}) : réduis-en un ou augmente le nombre de joueurs."
         )
         return
@@ -762,6 +873,8 @@ def afficher_composition(nb, composition, n_villageois):
         for _ in range(n)
     )
     st.markdown(f'<div class="pictogramme">{icones}</div>', unsafe_allow_html=True)
+    if total > nb:
+        st.caption(f"{total - nb} cartes restent au milieu de la table ({nb} joueurs, {total} cartes).")
 
 
 def etape_roles():
@@ -816,11 +929,12 @@ def etape_roles():
                 value=speciaux_defaut[role.key], key=f"n_{role.key}",
             )
 
-    n_villageois = nb - sum(composition.values())
+    total = nb + sum(ROLES[cle].cartes_en_plus * n for cle, n in composition.items())
+    n_villageois = total - sum(composition.values())
     composition["villageois"] = max(n_villageois, 0)
 
     with apercu.container():
-        afficher_composition(nb, composition, n_villageois)
+        afficher_composition(nb, total, composition, n_villageois)
 
     if st.button("Suivant : noms des joueurs →", type="primary", disabled=n_villageois < 0):
         st.session_state.config_nb = nb
@@ -863,7 +977,9 @@ def etape_noms():
 
 def ecran_nuit(s):
     if not s["ordre_nuit"]:
-        s["ordre_nuit"] = vivants(s)
+        # Le voleur joue en premier : son nouveau rôle agit (et se découvre des
+        # complices) comme s'il l'avait eu dès la distribution.
+        s["ordre_nuit"] = sorted(vivants(s), key=lambda n: s["joueurs"][n]["role"] != "voleur")
         s["tour"] = 0
         s["devoile"] = False
         s["transfert"] = False
@@ -917,7 +1033,7 @@ def resoudre_nuit(s):
         victime = None
         if comptes and not (len(comptes) > 1 and comptes[0][1] == comptes[1][1]):
             victime = comptes[0][0]
-        if s["soin_sorciere"]:
+        if s["soin_sorciere"] or victime == s.get("protege_nuit"):
             victime = None
         if victime:
             morts = tuer(s, victime)
@@ -925,6 +1041,8 @@ def resoudre_nuit(s):
     s["morts_nuit"] = morts
     s["morts_tir"] = []
     s["votes_loups"] = []
+    s["protege_precedent"] = s.get("protege_nuit")
+    s["protege_nuit"] = None
     s["soin_sorciere"] = False
     s["ordre_nuit"] = []
     s["tour"] = 0
@@ -1062,13 +1180,10 @@ def ecran_tir_chasseur(s):
 
     cibles = vivants(s)
     cle_cible = f"tir_cible_{s['jour']}_{chasseur}"
-    with st.container(key=f"tirgrid_{chasseur}"):
-        cols = st.columns(2)
-        for i, cible in enumerate(cibles):
-            with cols[i % 2]:
-                if st.button(cible, key=f"tirpick_{chasseur}_{cible}", use_container_width=True):
-                    st.session_state[cle_cible] = cible
-                    st.rerun()
+    clic = grille_dalles("tir", s["jour"], cibles)
+    if clic:
+        st.session_state[cle_cible] = clic
+        st.rerun()
 
     choix = st.session_state.get(cle_cible)
     if choix not in cibles:
@@ -1100,7 +1215,9 @@ def ecran_fin(s):
     for nom, d in s["joueurs"].items():
         etat = "en vie" if d["vivant"] else "mort"
         coeur = " 💘" if d["amoureux"] else ""
-        st.write(f"{ROLES[d['role']].emoji} **{nom}** — {d['role']} ({etat}){coeur}")
+        ancien = " (ex-enfant sauvage)" if d.get("enfant_sauvage") else ""
+        ancien += " (ex-voleur)" if d.get("voleur") else ""
+        st.write(f"{ROLES[d['role']].emoji} **{nom}** — {d['role']}{ancien} ({etat}){coeur}")
 
 
 # --------------------------------------------------------------------------

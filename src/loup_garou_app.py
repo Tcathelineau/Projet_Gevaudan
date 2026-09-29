@@ -342,6 +342,7 @@ def css_cartes():
             box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(85,208,191,.45);
         }
         div[class*="st-key-dalles_salv_"] button::after { content: "🛡️"; }
+        div[class*="st-key-dalles_mentor_"] button::after { content: "🐾"; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -446,6 +447,8 @@ def bouton_fin(s, cle):
 # --------------------------------------------------------------------------
 
 def _nuit_loup(s, nom, cle):
+    if s["joueurs"][nom].get("enfant_sauvage"):
+        plaquette("Ton mentor est mort : tu as rejoint la meute.", icone="🐾")
     complices = [l for l in s["loups"] if l != nom and s["joueurs"][l]["vivant"]]
     badge_meute(nom, complices)
     if s["jour"] == 0:
@@ -537,6 +540,20 @@ def _nuit_salvateur(s, nom, cle):
         st.rerun()
 
 
+def _nuit_enfant_sauvage(s, nom, cle):
+    mentor = s.get("mentor_enfant")
+    if mentor is None:
+        st.markdown("**Choisis ton mentor**")
+        st.caption("Il ignorera son rôle. S'il meurt, tu deviens loup-garou.")
+        choix = grille_dalles("mentor", cle, [n for n in vivants(s) if n != nom])
+        if choix:
+            s["mentor_enfant"] = choix
+            st.rerun()
+    else:
+        plaquette(f"Ton mentor est {mentor}. S'il meurt, tu deviens loup-garou.", icone="🐾")
+        bouton_fin(s, cle)
+
+
 def _nuit_chasseur(s, nom, cle):
     plaquette("Tu es le chasseur : si tu meurs, tu pourras tirer une dernière balle. Dors.", icone="🔫")
     bouton_fin(s, cle)
@@ -609,6 +626,15 @@ ROLES = {
         etat_initial={"protege_nuit": None, "protege_precedent": None},
         recommande=False,
         nuit=_nuit_salvateur,
+    ),
+    "enfant_sauvage": Role(
+        key="enfant_sauvage",
+        nom="Enfant sauvage",
+        emoji="🧒",
+        degrade="radial-gradient(circle at 50% 30%, #4a5c1f, #1c260a 75%)",
+        etat_initial={"mentor_enfant": None},
+        recommande=False,
+        nuit=_nuit_enfant_sauvage,
     ),
     "villageois": Role(
         key="villageois",
@@ -692,6 +718,20 @@ def vivants(s):
     return [n for n, d in s["joueurs"].items() if d["vivant"]]
 
 
+def _convertir_enfant_sauvage(s, morts):
+    """Si le mentor de l'enfant sauvage est mort, l'enfant (s'il vit encore) devient loup-garou."""
+    mentor = s.get("mentor_enfant")
+    if mentor is None or mentor not in morts:
+        return
+    s["mentor_enfant"] = None
+    for n in vivants(s):
+        d = s["joueurs"][n]
+        if d["role"] == "enfant_sauvage":
+            d["role"] = "loup"
+            d["enfant_sauvage"] = True
+            s["loups"].append(n)
+
+
 def tuer(s, nom):
     """Tue un joueur et entraîne son amoureux dans la mort. Renvoie la liste des morts."""
     if nom not in s["joueurs"] or not s["joueurs"][nom]["vivant"]:
@@ -706,6 +746,7 @@ def tuer(s, nom):
     if s.get("maire") in morts:
         s["dernier_maire"] = s["maire"]
         s["maire"] = None
+    _convertir_enfant_sauvage(s, morts)
     for mort in morts:
         if ROLES[s["joueurs"][mort]["role"]].tir_a_la_mort:
             s.setdefault("tirs_en_attente", []).append(mort)
@@ -1128,7 +1169,8 @@ def ecran_fin(s):
     for nom, d in s["joueurs"].items():
         etat = "en vie" if d["vivant"] else "mort"
         coeur = " 💘" if d["amoureux"] else ""
-        st.write(f"{ROLES[d['role']].emoji} **{nom}** — {d['role']} ({etat}){coeur}")
+        ancien = " (ex-enfant sauvage)" if d.get("enfant_sauvage") else ""
+        st.write(f"{ROLES[d['role']].emoji} **{nom}** — {d['role']}{ancien} ({etat}){coeur}")
 
 
 # --------------------------------------------------------------------------

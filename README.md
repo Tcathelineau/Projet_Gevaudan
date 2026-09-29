@@ -4,7 +4,7 @@ Une application web légère pour jouer au Loup-Garou (Les Loups-Garous de Thier
 
 ## Fonctionnalités
 
-- **Composition personnalisable** : nombre de joueurs et répartition des rôles (Loups-Garous, Sorcière, Voyante, Cupidon, Villageois) réglables avant chaque partie.
+- **Composition personnalisable** : nombre de joueurs et répartition des rôles (Loups-Garous, Sorcière, Voyante, Cupidon, Chasseur, Villageois) réglables avant chaque partie.
 - **Écran de passage sécurisé** entre chaque joueur, en deux étapes, pour éviter qu'un rôle soit vu par la mauvaise personne.
 - **Cartes de rôle stylisées**, façon vraie carte de jeu.
 - **Sauvegarde automatique** (`save.json`) : la partie reprend automatiquement là où elle s'est arrêtée, même après avoir fermé le serveur.

@@ -728,18 +728,21 @@ def etape_roles():
 
     loups_defaut, speciaux_defaut = composition_recommandee(nb)
 
-    st.caption("Répartis les rôles spéciaux. Le reste de la table devient Villageois.")
-
-    n_loup = st.slider(
+    st.markdown(f"**{ROLES['loup'].emoji} {ROLES['loup'].nom}**")
+    n_loup = st.number_input(
         f"{ROLES['loup'].emoji} {ROLES['loup'].nom}s",
         min_value=1, max_value=max(1, nb - 1),
         value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
+        label_visibility="collapsed",
     )
     composition = {"loup": n_loup}
 
     # Rôles uniques (au plus un exemplaire) : une simple case à cocher, en
     # grille — beaucoup plus compact qu'un réglage numérique par rôle, et ça
     # tient à l'échelle si d'autres rôles uniques s'ajoutent un jour.
+    st.markdown("**Autres rôles**")
+    st.caption("Coche les rôles spéciaux présents. Le reste de la table devient Villageois.")
+
     uniques = [role for role in ROLES_SPECIAUX if role.unique]
     for i in range(0, len(uniques), 3):
         cols = st.columns(3)

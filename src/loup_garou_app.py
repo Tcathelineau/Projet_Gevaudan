@@ -21,6 +21,7 @@ PHASE_EMOJI = {
     "reveil": "🌅",
     "election_maire": "👑",
     "conseil": "🗳️",
+    "tir_chasseur": "🔫",
     "fin": "🏁",
 }
 
@@ -29,6 +30,7 @@ PHASE_LABEL = {
     "reveil": "Réveil",
     "election_maire": "Élection du maire",
     "conseil": "Conseil",
+    "tir_chasseur": "Dernière balle",
     "fin": "Fin",
 }
 
@@ -285,12 +287,14 @@ def css_cartes():
             color: #f0a0a0;
         }
         div[class*="st-key-voygrid_"],
-        div[class*="st-key-loupgrid_"] {
+        div[class*="st-key-loupgrid_"],
+        div[class*="st-key-tirgrid_"] {
             max-width: min(360px, 70vw);
             margin: 0 auto;
         }
         div[class*="st-key-voypick_"] button,
-        div[class*="st-key-louppick_"] button {
+        div[class*="st-key-louppick_"] button,
+        div[class*="st-key-tirpick_"] button {
             position: relative;
             background: rgba(28,43,92,.35);
             border: 2px solid rgba(201,164,76,.45);
@@ -302,7 +306,8 @@ def css_cartes():
             transition: all .18s ease;
         }
         div[class*="st-key-voypick_"] button:hover,
-        div[class*="st-key-louppick_"] button:hover {
+        div[class*="st-key-louppick_"] button:hover,
+        div[class*="st-key-tirpick_"] button:hover {
             background: rgba(28,43,92,.8);
             border-color: #c9a44c;
             color: #ffffff;
@@ -310,7 +315,8 @@ def css_cartes():
             box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(201,164,76,.4);
         }
         div[class*="st-key-voypick_"] button::after,
-        div[class*="st-key-louppick_"] button::after {
+        div[class*="st-key-louppick_"] button::after,
+        div[class*="st-key-tirpick_"] button::after {
             content: "👁";
             display: block;
             opacity: 0;
@@ -319,20 +325,26 @@ def css_cartes():
             transition: opacity .18s ease;
         }
         div[class*="st-key-voypick_"] button:hover::after,
-        div[class*="st-key-louppick_"] button:hover::after {
+        div[class*="st-key-louppick_"] button:hover::after,
+        div[class*="st-key-tirpick_"] button:hover::after {
             opacity: 1;
         }
-        div[class*="st-key-louppick_"] button {
+        div[class*="st-key-louppick_"] button,
+        div[class*="st-key-tirpick_"] button {
             background: rgba(120,20,28,.4);
             border-color: rgba(200,60,60,.55);
         }
-        div[class*="st-key-louppick_"] button:hover {
+        div[class*="st-key-louppick_"] button:hover,
+        div[class*="st-key-tirpick_"] button:hover {
             background: rgba(160,28,36,.75);
             border-color: #e05555;
             box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(224,85,85,.45);
         }
         div[class*="st-key-louppick_"] button::after {
             content: "🍖";
+        }
+        div[class*="st-key-tirpick_"] button::after {
+            content: "🎯";
         }
         </style>
         """,
@@ -506,6 +518,11 @@ def _nuit_cupidon(s, nom, cle):
                 st.rerun()
 
 
+def _nuit_chasseur(s, nom, cle):
+    plaquette("Tu es le chasseur : si tu meurs, tu pourras tirer une dernière balle. Dors.", icone="🔫")
+    bouton_fin(s, cle)
+
+
 def _nuit_villageois(s, nom, cle):
     plaquette("Tu dors paisiblement.", icone="🌙")
     bouton_fin(s, cle)
@@ -521,6 +538,7 @@ class Role:
     unique: bool = True  # au plus un exemplaire proposé par défaut à la composition
     etat_initial: dict = field(default_factory=dict)  # clés d'état de partie propres à ce rôle
     nuit: Optional[Callable[[dict, str, str], None]] = None  # rendu du tour de nuit ; None = dort
+    tir_a_la_mort: bool = False  # à sa mort, ce rôle peut emporter un autre joueur avec lui
 
 
 ROLES = {
@@ -554,6 +572,14 @@ ROLES = {
         emoji="🏹",
         degrade="radial-gradient(circle at 50% 30%, #6b2748, #29101f 75%)",
         nuit=_nuit_cupidon,
+    ),
+    "chasseur": Role(
+        key="chasseur",
+        nom="Chasseur",
+        emoji="🔫",
+        degrade="radial-gradient(circle at 50% 30%, #6b4a1f, #291b0a 75%)",
+        tir_a_la_mort=True,
+        nuit=_nuit_chasseur,
     ),
     "villageois": Role(
         key="villageois",
@@ -621,6 +647,9 @@ def nouvelle_partie(noms, composition):
         "devoile": False,
         "transfert": False,
         "morts_nuit": [],
+        "morts_tir": [],
+        "tirs_en_attente": [],
+        "retour_tir": None,
         "journal": [],
         "maire": None,
         "dernier_maire": None,
@@ -648,6 +677,9 @@ def tuer(s, nom):
     if s.get("maire") in morts:
         s["dernier_maire"] = s["maire"]
         s["maire"] = None
+    for mort in morts:
+        if ROLES[s["joueurs"][mort]["role"]].tir_a_la_mort:
+            s.setdefault("tirs_en_attente", []).append(mort)
     return morts
 
 
@@ -891,6 +923,7 @@ def resoudre_nuit(s):
             morts = tuer(s, victime)
 
     s["morts_nuit"] = morts
+    s["morts_tir"] = []
     s["votes_loups"] = []
     s["soin_sorciere"] = False
     s["ordre_nuit"] = []
@@ -899,17 +932,40 @@ def resoudre_nuit(s):
     s["phase"] = "reveil"
 
 
+def _camp_txt(s, nom):
+    role = s["joueurs"][nom]["role"]
+    return "était LOUP-GAROU" if ROLES[role].camp == "loups" else "n'était pas loup-garou"
+
+
+def annonce_tirs(s):
+    for mort in s.get("morts_tir", []):
+        st.error(f"🔫 {mort} a été abattu par le chasseur. Il {_camp_txt(s, mort)}.")
+
+
+def bouton_tir(s, retour):
+    """Bouton menant à l'écran de tir s'il reste un chasseur à faire tirer."""
+    chasseur = s["tirs_en_attente"][0]
+    st.warning(f"{chasseur} était le chasseur : il peut tirer sa dernière balle.")
+    if st.button("🔫 Le chasseur décide", type="primary", key=f"bouton_tir_{retour}"):
+        s["retour_tir"] = retour
+        s["phase"] = "tir_chasseur"
+        st.rerun()
+
+
 def ecran_reveil(s):
     st.title(f"☀️ Réveil — jour {s['jour']}")
     if s["morts_nuit"]:
         for mort in s["morts_nuit"]:
-            role = s["joueurs"][mort]["role"]
-            texte = "était LOUP-GAROU" if ROLES[role].camp == "loups" else "n'était pas loup-garou"
-            st.error(f"{mort} est mort. Il {texte}.")
+            st.error(f"{mort} est mort. Il {_camp_txt(s, mort)}.")
         if len(s["morts_nuit"]) > 1:
             st.caption("Les amoureux sont morts ensemble.")
     else:
         st.success("Personne n'est mort cette nuit.")
+    annonce_tirs(s)
+
+    if s.get("tirs_en_attente"):
+        bouton_tir(s, "reveil")
+        return
 
     gagnant = vainqueur(s)
     if gagnant:
@@ -921,6 +977,7 @@ def ecran_reveil(s):
 
     texte = "Passer au premier conseil" if s["jour"] == 0 else "Ouvrir le conseil du village"
     if st.button(texte, type="primary"):
+        s["morts_tir"] = []
         if s["jour"] > 0 and s.get("maire") is None:
             s["phase"] = "election_maire"
         else:
@@ -972,9 +1029,12 @@ def ecran_conseil(s):
                 st.success(f"{mort} était LOUP-GAROU.")
             else:
                 st.error(f"{mort} n'était PAS loup-garou.")
+        annonce_tirs(s)
 
         gagnant = vainqueur(s)
-        if gagnant:
+        if s.get("tirs_en_attente"):
+            bouton_tir(s, "conseil")
+        elif gagnant:
             if st.button("Voir le résultat", type="primary"):
                 s["phase"] = "fin"
                 s["message_fin"] = gagnant
@@ -990,6 +1050,47 @@ def ecran_conseil(s):
         if st.button("Valider le vote", type="primary"):
             st.session_state[f"resultat_{s['jour']}"] = tuer(s, condamne)
             st.rerun()
+
+
+def ecran_tir_chasseur(s):
+    chasseur = s["tirs_en_attente"][0]
+    st.title("🔫 Dernière balle")
+    st.warning(
+        f"{chasseur} était le chasseur et vient de mourir. "
+        "Il peut désigner quelqu'un qui mourra sur-le-champ, ou renoncer à tirer."
+    )
+
+    cibles = vivants(s)
+    cle_cible = f"tir_cible_{s['jour']}_{chasseur}"
+    with st.container(key=f"tirgrid_{chasseur}"):
+        cols = st.columns(2)
+        for i, cible in enumerate(cibles):
+            with cols[i % 2]:
+                if st.button(cible, key=f"tirpick_{chasseur}_{cible}", use_container_width=True):
+                    st.session_state[cle_cible] = cible
+                    st.rerun()
+
+    choix = st.session_state.get(cle_cible)
+    if choix not in cibles:
+        choix = None
+    if choix:
+        plaquette(f"Cible choisie : {choix}", icone="🎯")
+
+    col1, col2 = st.columns(2)
+    tirer = col1.button(
+        f"🔫 Tirer sur {choix}" if choix else "🔫 Tirer",
+        type="primary", disabled=choix is None, key="tir_confirmer",
+    )
+    renoncer = col2.button("Renoncer à tirer", key="tir_renoncer")
+
+    if tirer or renoncer:
+        s["tirs_en_attente"].pop(0)
+        if tirer:
+            s["morts_tir"] += tuer(s, choix)
+        st.session_state.pop(cle_cible, None)
+        if not s["tirs_en_attente"]:
+            s["phase"] = s["retour_tir"]
+        st.rerun()
 
 
 def ecran_fin(s):
@@ -1054,6 +1155,8 @@ def main():
         ecran_election_maire(s)
     elif s["phase"] == "conseil":
         ecran_conseil(s)
+    elif s["phase"] == "tir_chasseur":
+        ecran_tir_chasseur(s)
     else:
         ecran_fin(s)
 

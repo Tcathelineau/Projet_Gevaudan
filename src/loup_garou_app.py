@@ -243,22 +243,39 @@ def css_cartes():
             color: #ece3d2;
             padding: 0.15rem 0;
         }
+        .panneau-dense { padding: 0.6rem 0.9rem; margin-bottom: 0.6rem; }
+        .panneau-dense .panneau-titre {
+            font-size: 0.95rem;
+            padding-bottom: 0.3rem;
+            margin-bottom: 0.35rem;
+        }
+        .panneau-dense .panneau-ligne { font-size: 0.92rem; padding: 0.05rem 0; }
+        .panneau-grille {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            column-gap: 1.4rem;
+        }
+        .panneau-total {
+            border-top: 1px solid rgba(201,164,76,.35);
+            margin-top: 0.35rem;
+            padding-top: 0.3rem;
+        }
         .pictogramme {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 0.5rem;
-            margin: 1rem 0 1.5rem 0;
+            gap: 0.35rem;
+            margin: 0.4rem 0 0.7rem 0;
         }
         .icone-role {
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             border: 2px solid #c9a44c;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: 1.05rem;
             box-shadow: 0 0 12px rgba(201,164,76,.25) inset;
         }
         [data-testid="stSidebarUserContent"] {
@@ -288,6 +305,8 @@ def css_cartes():
             border-color: #d98080;
             color: #f0a0a0;
         }
+        div[class*="st-key-setup_roles"] [data-testid="stVerticalBlock"] { gap: 0.55rem; }
+        div[class*="st-key-setup_roles"] [data-testid="stHorizontalBlock"] { gap: 0.6rem; }
         div[class*="st-key-dalles_"] {
             max-width: min(760px, 95%);
             margin: 0 auto;
@@ -1059,8 +1078,7 @@ def composition_recommandee(nb):
 
 
 def ecran_installation():
-    st.title("🐺 Loup-Garou")
-    st.caption("Configure la partie, puis ajoute les joueurs.")
+    st.markdown("#### 🐺 Loup-Garou")
 
     if "config_etape" not in st.session_state:
         st.session_state.config_etape = "roles"
@@ -1079,10 +1097,10 @@ def afficher_composition(nb, total, composition, n_villageois):
     )
     st.markdown(
         f"""
-        <div class="panneau">
+        <div class="panneau panneau-dense">
             <div class="panneau-titre">Composition</div>
-            {lignes}
-            <div class="panneau-ligne"><span><b>Total</b></span><span><b>{total} / {total}</b></span></div>
+            <div class="panneau-grille">{lignes}</div>
+            <div class="panneau-ligne panneau-total"><span><b>Total</b></span><span><b>{total} / {total}</b></span></div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1106,69 +1124,71 @@ def afficher_composition(nb, total, composition, n_villageois):
 
 
 def etape_roles():
-    st.subheader("1. Composition de la partie")
+    """Tout tient sans scroller : réglages à gauche, aperçu de la composition et bouton à droite."""
+    with st.container(key="setup_roles"):
+        st.markdown("##### 1. Composition de la partie")
+        gauche, droite = st.columns([3, 2], gap="large")
 
-    # Réservé ici pour apparaître avant "Nombre de joueurs", rempli une fois
-    # les rôles ci-dessous connus.
-    apercu = st.empty()
+        # Réservé ici, rempli une fois les rôles de la colonne de gauche connus.
+        with droite:
+            apercu = st.empty()
 
-    nb = st.number_input(
-        "Nombre de joueurs",
-        min_value=5,
-        max_value=18,
-        value=7,
-        step=1,
-        key="nb_joueurs_setup",
-    )
-
-    loups_defaut, speciaux_defaut = composition_recommandee(nb)
-
-    st.markdown(f"**{ROLES['loup'].emoji} {ROLES['loup'].nom}**")
-    n_loup = st.number_input(
-        f"{ROLES['loup'].emoji} {ROLES['loup'].nom}s",
-        min_value=1, max_value=max(1, nb - 1),
-        value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
-        label_visibility="collapsed",
-    )
-    composition = {"loup": n_loup}
-
-    # Rôles uniques (au plus un exemplaire) : une simple case à cocher, en
-    # grille — beaucoup plus compact qu'un réglage numérique par rôle, et ça
-    # tient à l'échelle si d'autres rôles uniques s'ajoutent un jour.
-    st.markdown("**Autres rôles**")
-    st.caption("Coche les rôles spéciaux présents. Le reste de la table devient Villageois.")
-
-    uniques = [role for role in ROLES_SPECIAUX if role.unique]
-    for i in range(0, len(uniques), 3):
-        cols = st.columns(3)
-        for col, role in zip(cols, uniques[i:i + 3]):
-            with col:
-                composition[role.key] = int(st.checkbox(
-                    f"{role.emoji} {role.nom}",
-                    value=bool(speciaux_defaut[role.key]), key=f"n_{role.key}",
-                ))
-
-    # Rôles spéciaux en quantité libre (aucun aujourd'hui, mais le prochain
-    # rôle de ce type n'aura besoin que d'une entrée dans ROLES).
-    for role in ROLES_SPECIAUX:
-        if not role.unique:
-            composition[role.key] = st.slider(
-                f"{role.emoji} {role.nom}", min_value=0, max_value=nb,
-                value=speciaux_defaut[role.key], key=f"n_{role.key}",
+        with gauche:
+            col_nb, col_loup = st.columns(2)
+            nb = col_nb.number_input(
+                "Nombre de joueurs",
+                min_value=5,
+                max_value=18,
+                value=7,
+                step=1,
+                key="nb_joueurs_setup",
             )
+            loups_defaut, speciaux_defaut = composition_recommandee(nb)
+            n_loup = col_loup.number_input(
+                f"{ROLES['loup'].emoji} {ROLES['loup'].nom}s",
+                min_value=1, max_value=max(1, nb - 1),
+                value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
+            )
+            composition = {"loup": n_loup}
 
-    total = nb + sum(ROLES[cle].cartes_en_plus * n for cle, n in composition.items())
-    n_villageois = total - sum(composition.values())
-    composition["villageois"] = max(n_villageois, 0)
+            # Rôles uniques (au plus un exemplaire) : une simple case à cocher, en
+            # grille de 3 colonnes ; le reste de la table devient Villageois.
+            st.markdown("**Autres rôles** · coche ceux qui jouent")
+            uniques = [role for role in ROLES_SPECIAUX if role.unique]
+            for i in range(0, len(uniques), 3):
+                cols = st.columns(3)
+                for col, role in zip(cols, uniques[i:i + 3]):
+                    with col:
+                        composition[role.key] = int(st.checkbox(
+                            f"{role.emoji} {role.nom}",
+                            value=bool(speciaux_defaut[role.key]), key=f"n_{role.key}",
+                        ))
 
-    with apercu.container():
-        afficher_composition(nb, total, composition, n_villageois)
+            # Rôles spéciaux en quantité libre (aucun aujourd'hui, mais le prochain
+            # rôle de ce type n'aura besoin que d'une entrée dans ROLES).
+            for role in ROLES_SPECIAUX:
+                if not role.unique:
+                    composition[role.key] = st.slider(
+                        f"{role.emoji} {role.nom}", min_value=0, max_value=nb,
+                        value=speciaux_defaut[role.key], key=f"n_{role.key}",
+                    )
 
-    if st.button("Suivant : noms des joueurs →", type="primary", disabled=n_villageois < 0):
-        st.session_state.config_nb = nb
-        st.session_state.config_composition = composition
-        st.session_state.config_etape = "noms"
-        st.rerun()
+        total = nb + sum(ROLES[cle].cartes_en_plus * n for cle, n in composition.items())
+        n_villageois = total - sum(composition.values())
+        composition["villageois"] = max(n_villageois, 0)
+
+        with apercu.container():
+            afficher_composition(nb, total, composition, n_villageois)
+
+        with droite:
+            if st.button(
+                "Suivant : noms des joueurs →", type="primary",
+                disabled=n_villageois < 0, use_container_width=True,
+            ):
+                st.session_state.config_nb = nb
+                st.session_state.config_composition = composition
+                st.session_state.config_etape = "noms"
+                st.rerun()
 
 
 def etape_noms():

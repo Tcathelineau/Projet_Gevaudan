@@ -270,6 +270,7 @@ def css_cartes():
         }
         div[class*="st-key-abandon"] {
             margin-top: auto;
+            margin-bottom: -1.5rem;
             display: flex;
             justify-content: flex-start;
         }
@@ -283,11 +284,13 @@ def css_cartes():
             border-color: #d98080;
             color: #f0a0a0;
         }
-        div[class*="st-key-voygrid_"] {
+        div[class*="st-key-voygrid_"],
+        div[class*="st-key-loupgrid_"] {
             max-width: min(360px, 70vw);
             margin: 0 auto;
         }
-        div[class*="st-key-voypick_"] button {
+        div[class*="st-key-voypick_"] button,
+        div[class*="st-key-louppick_"] button {
             position: relative;
             background: rgba(28,43,92,.35);
             border: 2px solid rgba(201,164,76,.45);
@@ -298,14 +301,16 @@ def css_cartes():
             padding: 0.9rem 1.1rem;
             transition: all .18s ease;
         }
-        div[class*="st-key-voypick_"] button:hover {
+        div[class*="st-key-voypick_"] button:hover,
+        div[class*="st-key-louppick_"] button:hover {
             background: rgba(28,43,92,.8);
             border-color: #c9a44c;
             color: #ffffff;
             transform: translateY(-3px);
             box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(201,164,76,.4);
         }
-        div[class*="st-key-voypick_"] button::after {
+        div[class*="st-key-voypick_"] button::after,
+        div[class*="st-key-louppick_"] button::after {
             content: "👁";
             display: block;
             opacity: 0;
@@ -313,8 +318,21 @@ def css_cartes():
             margin-top: 0.3rem;
             transition: opacity .18s ease;
         }
-        div[class*="st-key-voypick_"] button:hover::after {
+        div[class*="st-key-voypick_"] button:hover::after,
+        div[class*="st-key-louppick_"] button:hover::after {
             opacity: 1;
+        }
+        div[class*="st-key-louppick_"] button {
+            background: rgba(120,20,28,.4);
+            border-color: rgba(200,60,60,.55);
+        }
+        div[class*="st-key-louppick_"] button:hover {
+            background: rgba(160,28,36,.75);
+            border-color: #e05555;
+            box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(224,85,85,.45);
+        }
+        div[class*="st-key-louppick_"] button::after {
+            content: "🍖";
         }
         </style>
         """,
@@ -415,11 +433,15 @@ def _nuit_loup(s, nom, cle):
         bouton_fin(s, cle)
     else:
         cibles = [n for n in vivants(s) if ROLES[s["joueurs"][n]["role"]].camp != "loups"]
-        cible = st.radio("Qui dévorez-vous ?", cibles, key=f"loup_{cle}")
-        if st.button("Confirmer la victime", type="primary", key=f"ok_loup_{cle}"):
-            s["votes_loups"].append(cible)
-            fin_de_tour(s)
-            st.rerun()
+        st.markdown("**Qui dévorez-vous ?**")
+        with st.container(key=f"loupgrid_{cle}"):
+            cols = st.columns(2)
+            for i, cible in enumerate(cibles):
+                with cols[i % 2]:
+                    if st.button(cible, key=f"louppick_{cle}_{cible}", use_container_width=True):
+                        s["votes_loups"].append(cible)
+                        fin_de_tour(s)
+                        st.rerun()
 
 
 def _nuit_voyante(s, nom, cle):

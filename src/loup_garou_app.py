@@ -351,6 +351,16 @@ def css_cartes():
         div[class*="st-key-dalles_salv_"] button::after { content: "🛡️"; }
         div[class*="st-key-dalles_mentor_"] button::after { content: "🐾"; }
         div[class*="st-key-dalles_vol_"] button::after { content: "🃏"; }
+        div[class*="st-key-dalles_lb_"] button {
+            background: rgba(190,190,205,.14);
+            border-color: rgba(220,220,235,.55);
+        }
+        div[class*="st-key-dalles_lb_"] button:hover {
+            background: rgba(210,210,225,.3);
+            border-color: #e6e6f2;
+            box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(230,230,242,.4);
+        }
+        div[class*="st-key-dalles_lb_"] button::after { content: "🦴"; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -456,23 +466,133 @@ def bouton_fin(s, cle):
 # s'adaptent automatiquement — aucun autre écran à modifier.
 # --------------------------------------------------------------------------
 
-def _nuit_loup(s, nom, cle):
+def _afficher_meute(s, nom):
     if s["joueurs"][nom].get("enfant_sauvage"):
         plaquette("Ton mentor est mort : tu as rejoint la meute.", icone="🐾")
     complices = [l for l in s["loups"] if l != nom and s["joueurs"][l]["vivant"]]
     badge_meute(nom, complices)
+
+
+def _cibles_loups(s):
+    return [n for n in vivants(s) if camp(s, n) != "loups"]
+
+
+def _vote_loups(s, nom, cle, cibles):
+    """Grille de vote de la meute. Renvoie True quand la victime vient d'être désignée."""
+    st.markdown("**Qui dévorez-vous ?**")
+    cible = grille_dalles("loup", cle, cibles)
+    if cible:
+        s["votes_loups"].append(cible)
+        log(s, f"{nom} ({ROLES[s['joueurs'][nom]['role']].nom}) désigne {cible}.")
+    return bool(cible)
+
+
+def _nuit_loup(s, nom, cle):
+    _afficher_meute(s, nom)
+    cibles = _cibles_loups(s)
     if s["jour"] == 0:
         plaquette("Première nuit : vous vous découvrez, personne ne meurt encore.", icone="🐾")
         bouton_fin(s, cle)
+    elif not cibles:
+        plaquette("Il ne reste que des loups : personne à dévorer.", icone="🐾")
+        bouton_fin(s, cle)
+    elif _vote_loups(s, nom, cle, cibles):
+        fin_de_tour(s)
+        st.rerun()
+
+
+def _nuit_loup_blanc(s, nom, cle):
+    """Vote avec la meute, puis une nuit sur deux (nuits impaires) il peut dévorer l'un des siens."""
+    _afficher_meute(s, nom)
+    if s["jour"] == 0:
+        plaquette("Première nuit : vous vous découvrez, personne ne meurt encore.", icone="🐾")
+        bouton_fin(s, cle)
+        return
+
+    cibles = _cibles_loups(s)
+    if cibles and s.get("vote_loup_blanc") != cle:
+        if _vote_loups(s, nom, cle, cibles):
+            s["vote_loup_blanc"] = cle
+            st.rerun()
+        return
+
+    freres = [n for n in vivants(s) if n != nom and camp(s, n) == "loups"]
+    if not freres:
+        plaquette("Tu es le dernier loup : plus aucun frère à dévorer.", icone="🌕")
+        bouton_fin(s, cle)
+    elif s["jour"] % 2 == 0:
+        plaquette(f"Pas de festin cette nuit. Prochain festin : nuit {s['jour'] + 1}.", icone="🌕")
+        bouton_fin(s, cle)
     else:
-        cibles = [n for n in vivants(s) if ROLES[s["joueurs"][n]["role"]].camp != "loups"]
-        st.markdown("**Qui dévorez-vous ?**")
-        cible = grille_dalles("loup", cle, cibles)
+        st.markdown("**Un de tes frères est-il de trop ?**")
+        st.caption("Tu gagnes seul : élimine le village, puis la meute. Tu peux aussi les épargner cette nuit.")
+        cible = grille_dalles("lb", cle, freres)
+        epargne = st.button("Épargner la meute", key=f"lb_epargne_{cle}")
         if cible:
-            s["votes_loups"].append(cible)
-            log(s, f"{nom} (Loup-Garou) désigne {cible}.")
+            s["cible_loup_blanc"] = cible
+            log(s, f"Le Loup Blanc {nom} dévore {cible}.")
+        elif epargne:
+            log(s, f"Le Loup Blanc {nom} épargne la meute.")
+        if cible or epargne:
             fin_de_tour(s)
             st.rerun()
+
+
+def _nuit_chien_loup(s, nom, cle):
+    """Première nuit : choix définitif du camp ; ensuite il agit comme un loup ou comme un villageois."""
+    choix = s["joueurs"][nom].get("camp_choisi")
+    if choix is None:
+        st.markdown("**Que choisis-tu d'être ?**")
+        st.caption("Choix définitif : tu gagnes avec ce camp. Les autres ne le sauront qu'à la fin de la partie.")
+        col1, col2 = st.columns(2)
+        villageois = col1.button("🧑‍🌾 Simple Villageois", use_container_width=True, key=f"chien_vil_{cle}")
+        loup = col2.button("🐺 Loup-Garou", use_container_width=True, key=f"chien_loup_{cle}")
+        if villageois or loup:
+            s["joueurs"][nom]["camp_choisi"] = "loups" if loup else "village"
+            log(s, f"Le Chien-Loup {nom} choisit d'être {'Loup-Garou' if loup else 'simple Villageois'}.")
+            if loup:
+                s["loups"].append(nom)
+            st.rerun()
+    elif choix == "loups":
+        _nuit_loup(s, nom, cle)
+    else:
+        plaquette("Tu as choisi d'être simple Villageois. Dors.", icone="🐕")
+        bouton_fin(s, cle)
+
+
+def _nuit_renard(s, nom, cle):
+    """Chaque nuit où il a encore du flair : il flaire 3 personnes et apprend si un loup s'y trouve."""
+    resultat = s.get("resultat_renard")
+    if resultat and resultat["cle"] == cle:
+        if resultat["loup"]:
+            plaquette("Un Loup-Garou se cache dans ce groupe. Tu gardes ton flair : à la nuit prochaine.",
+                      icone="🦊", ton="succes")
+        else:
+            plaquette("Aucun Loup-Garou dans ce groupe. Tu perds ton flair et deviens simple Villageois.",
+                      icone="🦊")
+        st.caption("Groupe flairé : " + ", ".join(resultat["groupe"]))
+        if st.button("Terminer mon tour", type="primary", key=f"fin_{cle}"):
+            if not resultat["loup"]:
+                s["joueurs"][nom]["role"] = "villageois"
+                s["joueurs"][nom]["renard"] = True
+                log(s, f"{nom} (Renard) devient simple Villageois.")
+            fin_de_tour(s)
+            st.rerun()
+        return
+
+    candidats = [n for n in vivants(s) if n != nom]
+    k = min(3, len(candidats))
+    st.markdown(f"**Flaire {k} personnes**")
+    groupe = st.multiselect(
+        "Groupe à flairer", candidats, max_selections=k, key=f"flair_{cle}",
+        placeholder="Choisir…", label_visibility="collapsed",
+    )
+    if st.button("Flairer", type="primary", disabled=len(groupe) != k, key=f"flairer_{cle}"):
+        loup = any(camp(s, n) == "loups" for n in groupe)
+        log(s, f"Le renard {nom} flaire {', '.join(groupe)} : "
+               + ("un loup-garou s'y trouve." if loup else "aucun loup-garou, il perd son flair."))
+        s["resultat_renard"] = {"cle": cle, "groupe": groupe, "loup": loup}
+        st.rerun()
 
 
 def _nuit_voyante(s, nom, cle):
@@ -627,6 +747,9 @@ class Role:
     cartes_en_plus: int = 0  # cartes ajoutées au paquet et laissées au milieu de la table
     recommande: bool = True  # coché par défaut dans la composition suggérée
     tir_a_la_mort: bool = False  # à sa mort, ce rôle peut emporter un autre joueur avec lui
+    solitaire: bool = False  # gagne seul, en éliminant tout le monde (village et loups compris)
+    camp_secret: bool = False  # son camp n'est pas révélé à sa mort (le joueur a choisi le sien)
+    priorite_nuit: int = 2  # plus petit = joue plus tôt dans la nuit (à égalité : ordre des joueurs)
 
 
 ROLES = {
@@ -694,7 +817,37 @@ ROLES = {
         degrade="radial-gradient(circle at 50% 30%, #5c4a1f, #261d0a 75%)",
         cartes_en_plus=2,
         recommande=False,
+        priorite_nuit=0,
         nuit=_nuit_voleur,
+    ),
+    "renard": Role(
+        key="renard",
+        nom="Renard",
+        emoji="🦊",
+        degrade="radial-gradient(circle at 50% 30%, #8a3f12, #33150a 75%)",
+        recommande=False,
+        nuit=_nuit_renard,
+    ),
+    "loup_blanc": Role(
+        key="loup_blanc",
+        nom="Loup Blanc",
+        emoji="🌕",
+        degrade="radial-gradient(circle at 50% 30%, #6e6e78, #24242b 75%)",
+        camp="loups",
+        etat_initial={"cible_loup_blanc": None, "vote_loup_blanc": None},
+        recommande=False,
+        solitaire=True,
+        nuit=_nuit_loup_blanc,
+    ),
+    "chien_loup": Role(
+        key="chien_loup",
+        nom="Chien-Loup",
+        emoji="🐕",
+        degrade="radial-gradient(circle at 50% 30%, #5a4632, #1e1710 75%)",
+        recommande=False,
+        camp_secret=True,
+        priorite_nuit=1,
+        nuit=_nuit_chien_loup,
     ),
     "villageois": Role(
         key="villageois",
@@ -817,6 +970,12 @@ def vivants(s):
     return [n for n, d in s["joueurs"].items() if d["vivant"]]
 
 
+def camp(s, nom):
+    """Camp effectif d'un joueur : celui qu'il a choisi (Chien-Loup) sinon celui de son rôle."""
+    d = s["joueurs"][nom]
+    return d.get("camp_choisi") or ROLES[d["role"]].camp
+
+
 def _convertir_enfant_sauvage(s, morts):
     """Si le mentor de l'enfant sauvage est mort, l'enfant (s'il vit encore) devient loup-garou."""
     mentor = s.get("mentor_enfant")
@@ -858,11 +1017,17 @@ def tuer(s, nom, cause="meurt"):
 
 def vainqueur(s):
     en_vie = vivants(s)
-    loups = [n for n in en_vie if ROLES[s["joueurs"][n]["role"]].camp == "loups"]
-    autres = [n for n in en_vie if ROLES[s["joueurs"][n]["role"]].camp != "loups"]
+    loups = [n for n in en_vie if camp(s, n) == "loups"]
+    autres = [n for n in en_vie if camp(s, n) != "loups"]
+    solitaires = [n for n in en_vie if ROLES[s["joueurs"][n]["role"]].solitaire]
 
     if len(en_vie) == 2 and all(s["joueurs"][n]["amoureux"] for n in en_vie):
         return "Les amoureux l'emportent : ils sont les deux derniers survivants."
+    if solitaires:
+        # Tant qu'il vit, ni le village ni la meute ne peuvent conclure : il doit rester seul.
+        if len(en_vie) == 1:
+            return f"{solitaires[0]} ({ROLES[s['joueurs'][solitaires[0]]['role']].nom}) l'emporte seul."
+        return None
     if not loups:
         return "Le village a gagné : tous les loups sont morts."
     if len(loups) >= len(autres):
@@ -1040,9 +1205,9 @@ def etape_noms():
 
 def ecran_nuit(s):
     if not s["ordre_nuit"]:
-        # Le voleur joue en premier : son nouveau rôle agit (et se découvre des
-        # complices) comme s'il l'avait eu dès la distribution.
-        s["ordre_nuit"] = sorted(vivants(s), key=lambda n: s["joueurs"][n]["role"] != "voleur")
+        # Voleur puis Chien-Loup jouent en premier (cf. priorite_nuit) : leur choix de
+        # rôle ou de camp doit être fait avant que les autres ne découvrent la meute.
+        s["ordre_nuit"] = sorted(vivants(s), key=lambda n: ROLES[s["joueurs"][n]["role"]].priorite_nuit)
         s["tour"] = 0
         s["devoile"] = False
         s["transfert"] = False
@@ -1108,12 +1273,16 @@ def resoudre_nuit(s):
             victime = None
         if victime:
             morts = tuer(s, victime, "est dévoré par les loups")
+        # Le festin du Loup Blanc échappe à la sorcière et au salvateur.
+        if s.get("cible_loup_blanc"):
+            morts += tuer(s, s["cible_loup_blanc"], "est dévoré par le Loup Blanc")
         if not morts:
             log(s, "Personne ne meurt cette nuit.")
 
     s["morts_nuit"] = morts
     s["morts_tir"] = []
     s["votes_loups"] = []
+    s["cible_loup_blanc"] = None
     s["protege_precedent"] = s.get("protege_nuit")
     s["protege_nuit"] = None
     s["soin_sorciere"] = False
@@ -1124,8 +1293,10 @@ def resoudre_nuit(s):
 
 
 def _camp_txt(s, nom):
-    role = s["joueurs"][nom]["role"]
-    return "était LOUP-GAROU" if ROLES[role].camp == "loups" else "n'était pas loup-garou"
+    role = ROLES[s["joueurs"][nom]["role"]]
+    if role.camp_secret:
+        return f"était le {role.nom.upper()} : son camp reste secret jusqu'à la fin"
+    return "était LOUP-GAROU" if camp(s, nom) == "loups" else "n'était pas loup-garou"
 
 
 def annonce_tirs(s):
@@ -1148,7 +1319,7 @@ def ecran_reveil(s):
     if s["morts_nuit"]:
         for mort in s["morts_nuit"]:
             st.error(f"{mort} est mort. Il {_camp_txt(s, mort)}.")
-        if len(s["morts_nuit"]) > 1:
+        if len(s["amoureux"]) == 2 and set(s["amoureux"]) <= set(s["morts_nuit"]):
             st.caption("Les amoureux sont morts ensemble.")
     else:
         st.success("Personne n'est mort cette nuit.")
@@ -1215,8 +1386,9 @@ def ecran_conseil(s):
 
     if st.session_state.get(f"resultat_{s['jour']}"):
         for mort in st.session_state[f"resultat_{s['jour']}"]:
-            role = s["joueurs"][mort]["role"]
-            if ROLES[role].camp == "loups":
+            if ROLES[s["joueurs"][mort]["role"]].camp_secret:
+                st.warning(f"{mort} {_camp_txt(s, mort)}.")
+            elif camp(s, mort) == "loups":
                 st.success(f"{mort} était LOUP-GAROU.")
             else:
                 st.error(f"{mort} n'était PAS loup-garou.")
@@ -1291,6 +1463,9 @@ def ecran_fin(s):
         coeur = " 💘" if d["amoureux"] else ""
         ancien = " (ex-enfant sauvage)" if d.get("enfant_sauvage") else ""
         ancien += " (ex-voleur)" if d.get("voleur") else ""
+        ancien += " (ex-renard)" if d.get("renard") else ""
+        if d.get("camp_choisi"):
+            ancien += " (loup-garou)" if d["camp_choisi"] == "loups" else " (villageois)"
         st.write(f"{ROLES[d['role']].emoji} **{nom}** — {ROLES[d['role']].nom}{ancien} ({etat}){coeur}")
 
     st.subheader("Historique de la partie")
@@ -1359,10 +1534,15 @@ def main():
     s = st.session_state.partie
 
     with st.sidebar:
+        secrets = [n for n in vivants(s) if ROLES[s["joueurs"][n]["role"]].camp_secret]
         loups_vivants = sum(
-            1 for n in vivants(s) if ROLES[s["joueurs"][n]["role"]].camp == "loups"
+            1 for n in vivants(s) if n not in secrets and camp(s, n) == "loups"
         )
-        village_vivants = len(vivants(s)) - loups_vivants
+        village_vivants = len(vivants(s)) - loups_vivants - len(secrets)
+        ligne_secret = (
+            f'<div class="panneau-ligne"><span>❓ Camp secret</span><span>{len(secrets)}</span></div>'
+            if secrets else ""
+        )
         maire_txt = s.get("maire") or "— (pas encore élu)"
 
         st.markdown(
@@ -1372,6 +1552,7 @@ def main():
                 <div class="panneau-ligne"><span>👥 Vivants</span><span>{len(vivants(s))} / {s['nb_joueurs']}</span></div>
                 <div class="panneau-ligne"><span>🐺 Loups</span><span>{loups_vivants}</span></div>
                 <div class="panneau-ligne"><span>🧑‍🌾 Village</span><span>{village_vivants}</span></div>
+                {ligne_secret}
             </div>
             <div class="panneau">
                 <div class="panneau-ligne"><span>👑 Maire</span><span>{maire_txt}</span></div>

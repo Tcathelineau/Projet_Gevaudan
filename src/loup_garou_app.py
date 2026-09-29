@@ -343,6 +343,7 @@ def css_cartes():
         }
         div[class*="st-key-dalles_salv_"] button::after { content: "🛡️"; }
         div[class*="st-key-dalles_mentor_"] button::after { content: "🐾"; }
+        div[class*="st-key-dalles_vol_"] button::after { content: "🃏"; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -554,6 +555,34 @@ def _nuit_enfant_sauvage(s, nom, cle):
         bouton_fin(s, cle)
 
 
+def _nuit_voleur(s, nom, cle):
+    """Première nuit : le voleur prend l'un des deux rôles du milieu, ou reste simple villageois."""
+    milieu = s["cartes_milieu"]
+    st.markdown("**Deux cartes sont restées au milieu**")
+    st.caption("Choisis-en une pour en prendre le rôle, ou garde ton sort : tu seras alors simple Villageois.")
+
+    nouveau_role = None
+    with st.container(key=f"dalles_vol_{cle}"):
+        cols = st.columns(2)
+        for i, role in enumerate(milieu):
+            with cols[i % 2]:
+                if st.button(
+                    f"{ROLES[role].emoji} {ROLES[role].nom}",
+                    key=f"pick_vol_{cle}_{i}", use_container_width=True,
+                ):
+                    nouveau_role = role
+    if st.button("Garder mon rôle (Villageois)", key=f"vol_garde_{cle}"):
+        nouveau_role = "villageois"
+
+    if nouveau_role:
+        s["joueurs"][nom]["role"] = nouveau_role
+        s["joueurs"][nom]["voleur"] = True
+        if ROLES[nouveau_role].camp == "loups":
+            s["loups"].append(nom)
+        s["cartes_milieu"] = []
+        st.rerun()
+
+
 def _nuit_chasseur(s, nom, cle):
     plaquette("Tu es le chasseur : si tu meurs, tu pourras tirer une dernière balle. Dors.", icone="🔫")
     bouton_fin(s, cle)
@@ -574,6 +603,7 @@ class Role:
     unique: bool = True  # au plus un exemplaire proposé par défaut à la composition
     etat_initial: dict = field(default_factory=dict)  # clés d'état de partie propres à ce rôle
     nuit: Optional[Callable[[dict, str, str], None]] = None  # rendu du tour de nuit ; None = dort
+    cartes_en_plus: int = 0  # cartes ajoutées au paquet et laissées au milieu de la table
     recommande: bool = True  # coché par défaut dans la composition suggérée
     tir_a_la_mort: bool = False  # à sa mort, ce rôle peut emporter un autre joueur avec lui
 
@@ -636,6 +666,15 @@ ROLES = {
         recommande=False,
         nuit=_nuit_enfant_sauvage,
     ),
+    "voleur": Role(
+        key="voleur",
+        nom="Voleur",
+        emoji="🃏",
+        degrade="radial-gradient(circle at 50% 30%, #5c4a1f, #261d0a 75%)",
+        cartes_en_plus=2,
+        recommande=False,
+        nuit=_nuit_voleur,
+    ),
     "villageois": Role(
         key="villageois",
         nom="Villageois",
@@ -688,6 +727,7 @@ def nouvelle_partie(noms, composition):
         nom: {"role": role, "vivant": True, "amoureux": False}
         for nom, role in zip(noms, roles)
     }
+    cartes_milieu = roles[len(noms):]
 
     etat = {
         "nb_joueurs": len(noms),
@@ -702,6 +742,7 @@ def nouvelle_partie(noms, composition):
         "devoile": False,
         "transfert": False,
         "morts_nuit": [],
+        "cartes_milieu": cartes_milieu,
         "morts_tir": [],
         "tirs_en_attente": [],
         "retour_tir": None,
@@ -803,7 +844,7 @@ def ecran_installation():
         etape_noms()
 
 
-def afficher_composition(nb, composition, n_villageois):
+def afficher_composition(nb, total, composition, n_villageois):
     lignes = "".join(
         f'<div class="panneau-ligne"><span>{ROLES[cle].emoji} {ROLES[cle].nom}</span><span>{n}</span></div>'
         for cle, n in composition.items()
@@ -813,7 +854,7 @@ def afficher_composition(nb, composition, n_villageois):
         <div class="panneau">
             <div class="panneau-titre">Composition</div>
             {lignes}
-            <div class="panneau-ligne"><span><b>Total</b></span><span><b>{nb} / {nb}</b></span></div>
+            <div class="panneau-ligne"><span><b>Total</b></span><span><b>{total} / {total}</b></span></div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -821,7 +862,7 @@ def afficher_composition(nb, composition, n_villageois):
 
     if n_villageois < 0:
         st.error(
-            f"Trop de rôles spéciaux pour {nb} joueurs "
+            f"Trop de rôles spéciaux pour {total} cartes "
             f"(il en manque {-n_villageois}) : réduis-en un ou augmente le nombre de joueurs."
         )
         return
@@ -832,6 +873,8 @@ def afficher_composition(nb, composition, n_villageois):
         for _ in range(n)
     )
     st.markdown(f'<div class="pictogramme">{icones}</div>', unsafe_allow_html=True)
+    if total > nb:
+        st.caption(f"{total - nb} cartes restent au milieu de la table ({nb} joueurs, {total} cartes).")
 
 
 def etape_roles():
@@ -886,11 +929,12 @@ def etape_roles():
                 value=speciaux_defaut[role.key], key=f"n_{role.key}",
             )
 
-    n_villageois = nb - sum(composition.values())
+    total = nb + sum(ROLES[cle].cartes_en_plus * n for cle, n in composition.items())
+    n_villageois = total - sum(composition.values())
     composition["villageois"] = max(n_villageois, 0)
 
     with apercu.container():
-        afficher_composition(nb, composition, n_villageois)
+        afficher_composition(nb, total, composition, n_villageois)
 
     if st.button("Suivant : noms des joueurs →", type="primary", disabled=n_villageois < 0):
         st.session_state.config_nb = nb
@@ -933,7 +977,9 @@ def etape_noms():
 
 def ecran_nuit(s):
     if not s["ordre_nuit"]:
-        s["ordre_nuit"] = vivants(s)
+        # Le voleur joue en premier : son nouveau rôle agit (et se découvre des
+        # complices) comme s'il l'avait eu dès la distribution.
+        s["ordre_nuit"] = sorted(vivants(s), key=lambda n: s["joueurs"][n]["role"] != "voleur")
         s["tour"] = 0
         s["devoile"] = False
         s["transfert"] = False
@@ -1170,6 +1216,7 @@ def ecran_fin(s):
         etat = "en vie" if d["vivant"] else "mort"
         coeur = " 💘" if d["amoureux"] else ""
         ancien = " (ex-enfant sauvage)" if d.get("enfant_sauvage") else ""
+        ancien += " (ex-voleur)" if d.get("voleur") else ""
         st.write(f"{ROLES[d['role']].emoji} **{nom}** — {d['role']}{ancien} ({etat}){coeur}")
 
 

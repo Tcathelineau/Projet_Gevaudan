@@ -864,9 +864,9 @@ CSS_PASSAGE = """
 <style>
 div[class*="st-key-scene_passage"] {
     position: relative;
-    max-width: 1000px;
+    max-width: 1150px;
     margin: 0.4rem auto 1rem;
-    padding: 1.4rem 1.6rem 132px;
+    padding: 2.2rem 1.6rem 150px;
     border-radius: 16px;
     overflow: hidden;
     border: 2px solid rgba(201,164,76,.55);

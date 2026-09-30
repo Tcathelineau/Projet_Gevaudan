@@ -43,7 +43,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 | 🛡️ | **Salvateur** | Village | Protège un joueur chaque nuit, jamais le même deux nuits de suite. |
 | 🧒 | **Enfant sauvage** | Village | Choisit un mentor ; si celui-ci meurt, il devient loup-garou. |
 | 🃏 | **Voleur** | Village | Deux cartes restent au milieu de la table : il peut prendre le rôle de l'une d'elles. |
-| 🦊 | **Renard** | Village | Flaire trois joueurs et apprend si un loup s'y cache ; sans loup, il perd son flair. |
+| 🦊 | **Renard** | Village | Dès la deuxième nuit, flaire trois joueurs et apprend si un loup s'y cache ; sans loup, il perd son flair. |
 | 🌕 | **Loup Blanc** | Loups, solitaire | Une nuit sur deux, peut dévorer l'un de ses frères ; il gagne seul. |
 | 🐕 | **Chien-Loup** | Au choix | Choisit son camp en secret la première nuit : villageois ou loup-garou. |
 

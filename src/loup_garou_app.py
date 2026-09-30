@@ -236,33 +236,36 @@ def css_cartes():
             padding: 0.25rem 0.1rem 0.1rem;
         }
         .chrono-pas { display: flex; align-items: flex-start; }
-        .chrono-etape { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 30px; }
+        .chrono-etape { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 24px; }
         .chrono-noeud {
-            width: 28px;
-            height: 28px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
+            font-size: 0.62rem;
         }
+        .chrono-start { background: #6b5a2e; color: #f0d890; font-size: 0.55rem; }
         .chrono-nuit { background: #44589a; }
         .chrono-jour { background: #abc4d0; }
         .chrono-actuel { box-shadow: 0 0 0 2px #c9a44c, 0 0 10px rgba(201,164,76,.6); }
         .chrono-lien {
-            width: 8px;
-            height: 4px;
-            margin: 12px 1px 0;
+            width: 5px;
+            height: 3px;
+            margin: 9px 1px 0;
             border-radius: 2px;
             background: #d9d9d9;
         }
         .chrono-label {
             font-family: 'EB Garamond', serif;
-            font-size: 0.72rem;
+            font-size: 0.65rem;
             line-height: 1;
             color: #b9b09c;
+            white-space: nowrap;
         }
         .chrono-actuel + .chrono-label { color: #f0d890; font-weight: 600; }
+        .chrono-etape.chrono-debut { width: 30px; }
         .panneau-dense { padding: 0.6rem 0.9rem; margin-bottom: 0.6rem; }
         .panneau-dense .panneau-titre {
             font-size: 0.95rem;
@@ -304,11 +307,9 @@ def css_cartes():
         [data-testid="stSidebarUserContent"] [data-testid="stVerticalBlock"] {
             flex: 1;
         }
-        div[class*="st-key-abandon"] {
+        div[class*="st-key-options"] {
             margin-top: auto;
             margin-bottom: -1.5rem;
-            display: flex;
-            justify-content: flex-start;
         }
         div[class*="st-key-abandon"] button {
             background-color: transparent;
@@ -1039,9 +1040,9 @@ def recharger_etape(s, cle):
 
 
 def etapes_chronologie(s):
-    """Étapes vécues jusqu'ici, dans l'ordre : [("nuit", 0), ("jour", 0), ("nuit", 1), ...]."""
-    etapes = []
-    for j in range(s["jour"] + 1):
+    """Étapes à afficher : le départ (nuit 0 et jour 0 regroupés), puis chaque nuit et chaque jour."""
+    etapes = [("start", 0)]
+    for j in range(1, s["jour"] + 1):
         etapes.append(("nuit", j))
         if j < s["jour"] or s["phase"] != "nuit":
             etapes.append(("jour", j))
@@ -1053,12 +1054,17 @@ def chronologie_html(s):
     pas = []
     for i, (genre, jour) in enumerate(etapes):
         actuel = " chrono-actuel" if i == len(etapes) - 1 else ""
-        icone, nom = ("🌙", "Nuit") if genre == "nuit" else ("☀️", "Jour")
+        if genre == "start":
+            icone, nom, etiquette, debut = "▶", "Départ", "start", " chrono-debut"
+        else:
+            icone, nom = ("🌙", "Nuit") if genre == "nuit" else ("☀️", "Jour")
+            etiquette, debut = str(jour), ""
+        titre = nom if genre == "start" else f"{nom} {jour}"
         lien = '<div class="chrono-lien"></div>' if i < len(etapes) - 1 else ""
         pas.append(
-            f'<div class="chrono-pas"><div class="chrono-etape" title="{nom} {jour}">'
+            f'<div class="chrono-pas"><div class="chrono-etape{debut}" title="{titre}">'
             f'<div class="chrono-noeud chrono-{genre}{actuel}">{icone}</div>'
-            f'<span class="chrono-label">{jour}</span></div>{lien}</div>'
+            f'<span class="chrono-label">{etiquette}</span></div>{lien}</div>'
         )
     return '<div class="chrono">' + "".join(pas) + "</div>"
 
@@ -1720,14 +1726,14 @@ def panneau_rechargement(s):
     if not instantanes:
         return
     libelles = {inst["id"]: inst["libelle"] for inst in instantanes}
-    with st.expander("⏪ Recharger une étape"):
-        st.caption("En cas de plantage ou d'erreur : revient au début de la nuit ou à l'annonce du jour choisi. Ce qui a suivi est oublié.")
-        cle = st.selectbox(
-            "Étape", list(reversed(libelles)), index=None, placeholder="Choisir une étape…",
-            format_func=libelles.get, label_visibility="collapsed", key="reload_choix",
-        )
-        if st.button("Recharger cette étape", disabled=cle is None, key="reload_ok"):
-            recharger_etape(s, cle)
+    st.markdown("**⏪ Recharger une étape**")
+    st.caption("Revient au début de la nuit ou à l'annonce du jour choisi. Ce qui a suivi est oublié.")
+    cle = st.selectbox(
+        "Étape", list(reversed(libelles)), index=None, placeholder="Choisir une étape…",
+        format_func=libelles.get, label_visibility="collapsed", key="reload_choix",
+    )
+    if st.button("Recharger cette étape", disabled=cle is None, key="reload_ok"):
+        recharger_etape(s, cle)
 
 
 def main():
@@ -1800,20 +1806,20 @@ def main():
         ecran_fin(s)
 
     with st.sidebar:
-        st.markdown("#### ⚙️ Option")
         if os.path.exists(MUSIQUE_FILE):
             if st.checkbox("🎵 Musique de fond", value=True, key="musique_on"):
                 st.audio(MUSIQUE_FILE, format="audio/mp3", loop=True, autoplay=True)
 
-        panneau_rechargement(s)
-
-        if st.button("🚪 Abandonner la partie", key="abandon"):
-            if s["phase"] != "fin":
-                log(s, "Partie abandonnée.", "fin")
-                archiver_partie(s, "Partie abandonnée")
-            clear_save()
-            st.session_state.clear()
-            st.rerun()
+        with st.container(key="options"):
+            with st.expander("⚙️ Option"):
+                panneau_rechargement(s)
+                if st.button("🚪 Abandonner la partie", key="abandon"):
+                    if s["phase"] != "fin":
+                        log(s, "Partie abandonnée.", "fin")
+                        archiver_partie(s, "Partie abandonnée")
+                    clear_save()
+                    st.session_state.clear()
+                    st.rerun()
 
     save_game(s)
 

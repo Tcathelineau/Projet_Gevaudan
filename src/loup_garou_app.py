@@ -32,8 +32,15 @@ def css_cartes():
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=EB+Garamond:ital@0;1&display=swap');
 
         .block-container {
-            padding-top: 2rem;
+            padding-top: 1rem;
             padding-bottom: 1rem;
+        }
+        /* Les blocs <style> seuls et l'iframe utilitaire occupent chacun un interstice de 1rem en haut de page. */
+        div[data-testid="stElementContainer"]:has(> [data-testid="stMarkdown"] [data-testid="stMarkdownContainer"] > style):not(:has(> [data-testid="stMarkdown"] [data-testid="stMarkdownContainer"] > :not(style))) {
+            display: none;
+        }
+        div[data-testid="stElementContainer"]:has(> iframe[data-testid="stIFrame"]) {
+            position: absolute; width: 1px; height: 1px; pointer-events: none;
         }
         #MainMenu, footer, header[data-testid="stHeader"] {
             visibility: hidden;
@@ -1849,9 +1856,10 @@ def composition_recommandee(nb):
 
 
 def ecran_installation():
-    if st.button("← Menu", key="retour_menu_installation"):
-        aller_a("accueil")
-    st.markdown("#### 🐺 Loup-Garou")
+    with st.container(horizontal=True, vertical_alignment="center"):
+        if st.button("← Menu", key="retour_menu_installation"):
+            aller_a("accueil")
+        st.markdown("#### 🐺 Loup-Garou")
 
     if "config_etape" not in st.session_state:
         st.session_state.config_etape = "roles"

@@ -1,0 +1,251 @@
+{
+  "date": "2026-09-30T11:53:43",
+  "issue": "Le village a gagné : tous les loups sont morts.",
+  "joueurs": {
+    "eaes": {
+      "role": "salvateur",
+      "vivant": false,
+      "amoureux": false
+    },
+    "qsxqxqsqq": {
+      "role": "loup_blanc",
+      "vivant": false,
+      "amoureux": false,
+      "voleur": true
+    },
+    "sasa": {
+      "role": "voyante",
+      "vivant": false,
+      "amoureux": true
+    },
+    "qsqqsdd": {
+      "role": "chasseur",
+      "vivant": false,
+      "amoureux": false
+    },
+    "azsqsx": {
+      "role": "sorciere",
+      "vivant": false,
+      "amoureux": true
+    },
+    "qsqq": {
+      "role": "villageois",
+      "vivant": true,
+      "amoureux": false,
+      "renard": true
+    },
+    "qsxsqsxq": {
+      "role": "enfant_sauvage",
+      "vivant": false,
+      "amoureux": false
+    },
+    "xqsqxq": {
+      "role": "cupidon",
+      "vivant": true,
+      "amoureux": false
+    },
+    "xqxsqqq": {
+      "role": "villageois",
+      "vivant": true,
+      "amoureux": false
+    },
+    "xqxsq": {
+      "role": "villageois",
+      "vivant": false,
+      "amoureux": false
+    },
+    "xqxs": {
+      "role": "chien_loup",
+      "vivant": false,
+      "amoureux": false,
+      "camp_choisi": "loups"
+    }
+  },
+  "journal": [
+    {
+      "jour": 0,
+      "moment": "debut",
+      "texte": "11 joueurs. Paquet : Loup-Garou ×1, Sorcière ×1, Voyante ×1, Cupidon ×1, Chasseur ×1, Salvateur ×1, Enfant sauvage ×1, Voleur ×1, Renard ×1, Loup Blanc ×1, Chien-Loup ×1, Villageois ×2."
+    },
+    {
+      "jour": 0,
+      "moment": "debut",
+      "texte": "Distribution : eaes (Salvateur), qsxqxqsqq (Voleur), sasa (Voyante), qsqqsdd (Chasseur), azsqsx (Sorcière), qsqq (Renard), qsxsqsxq (Enfant sauvage), xqsqxq (Cupidon), xqxsqqq (Villageois), xqxsq (Villageois), xqxs (Chien-Loup)."
+    },
+    {
+      "jour": 0,
+      "moment": "nuit",
+      "texte": "qsxqxqsqq (Voleur) prend la carte Loup Blanc."
+    },
+    {
+      "jour": 0,
+      "moment": "nuit",
+      "texte": "Le Chien-Loup xqxs choisit d'être Loup-Garou."
+    },
+    {
+      "jour": 0,
+      "moment": "nuit",
+      "texte": "Le renard qsqq flaire sasa, qsxqxqsqq, xqsqxq : un loup-garou s'y trouve."
+    },
+    {
+      "jour": 0,
+      "moment": "nuit",
+      "texte": "qsxsqsxq (Enfant sauvage) choisit qsqq comme mentor."
+    },
+    {
+      "jour": 0,
+      "moment": "nuit",
+      "texte": "Cupidon xqsqxq lie sasa et azsqsx."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "xqxs (Chien-Loup) désigne azsqsx."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "Le salvateur eaes protège qsxqxqsqq."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "qsxqxqsqq (Loup Blanc) désigne eaes."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "Le Loup Blanc qsxqxqsqq épargne la meute."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "La voyante sasa sonde qsxsqsxq : Enfant sauvage."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "La sorcière azsqsx utilise une potion de soin."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "Le renard qsqq flaire sasa, qsxsqsxq, qsqqsdd : aucun loup-garou, il perd son flair."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "qsqq (Renard) devient simple Villageois."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "Les loups ne s'accordent pas : personne n'est dévoré."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "Personne ne meurt cette nuit."
+    },
+    {
+      "jour": 1,
+      "moment": "election_maire",
+      "texte": "qsqq est élu maire."
+    },
+    {
+      "jour": 1,
+      "moment": "conseil",
+      "texte": "eaes (Salvateur) est éliminé par le village."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "xqxs (Chien-Loup) désigne sasa."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "qsxqxqsqq (Loup Blanc) désigne qsqqsdd."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "La sorcière azsqsx utilise une potion de soin."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "Les loups ne s'accordent pas : personne n'est dévoré."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "Personne ne meurt cette nuit."
+    },
+    {
+      "jour": 2,
+      "moment": "conseil",
+      "texte": "xqxsq (Villageois) est éliminé par le village."
+    },
+    {
+      "jour": 3,
+      "moment": "nuit",
+      "texte": "xqxs (Chien-Loup) désigne sasa."
+    },
+    {
+      "jour": 3,
+      "moment": "nuit",
+      "texte": "qsxqxqsqq (Loup Blanc) désigne sasa."
+    },
+    {
+      "jour": 3,
+      "moment": "nuit",
+      "texte": "Le Loup Blanc qsxqxqsqq dévore xqxs."
+    },
+    {
+      "jour": 3,
+      "moment": "nuit",
+      "texte": "La voyante sasa sonde qsqq : Villageois."
+    },
+    {
+      "jour": 3,
+      "moment": "nuit",
+      "texte": "sasa (Voyante) est dévoré par les loups."
+    },
+    {
+      "jour": 3,
+      "moment": "nuit",
+      "texte": "azsqsx (Sorcière) meurt de chagrin (amoureux)."
+    },
+    {
+      "jour": 3,
+      "moment": "nuit",
+      "texte": "xqxs (Chien-Loup) est dévoré par le Loup Blanc."
+    },
+    {
+      "jour": 3,
+      "moment": "conseil",
+      "texte": "qsxsqsxq (Enfant sauvage) est éliminé par le village."
+    },
+    {
+      "jour": 4,
+      "moment": "nuit",
+      "texte": "qsxqxqsqq (Loup Blanc) désigne qsqqsdd."
+    },
+    {
+      "jour": 4,
+      "moment": "nuit",
+      "texte": "qsqqsdd (Chasseur) est dévoré par les loups."
+    },
+    {
+      "jour": 4,
+      "moment": "tir_chasseur",
+      "texte": "qsxqxqsqq (Loup Blanc) est abattu par le chasseur qsqqsdd."
+    },
+    {
+      "jour": 4,
+      "moment": "fin",
+      "texte": "Le village a gagné : tous les loups sont morts."
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "date": "2026-09-30T14:56:25",
+  "issue": "Le village a gagné : tous les loups sont morts.",
+  "joueurs": {
+    "azea": {
+      "role": "chasseur",
+      "vivant": false,
+      "amoureux": true
+    },
+    "qsddaa": {
+      "role": "villageois",
+      "vivant": true,
+      "amoureux": false
+    },
+    "dsd": {
+      "role": "loup",
+      "vivant": false,
+      "amoureux": false
+    },
+    "qsdq": {
+      "role": "voyante",
+      "vivant": true,
+      "amoureux": false
+    },
+    "qqqs": {
+      "role": "villageois",
+      "vivant": false,
+      "amoureux": true
+    },
+    "qsdqs": {
+      "role": "cupidon",
+      "vivant": true,
+      "amoureux": false
+    },
+    "dqsdq": {
+      "role": "sorciere",
+      "vivant": true,
+      "amoureux": false
+    }
+  },
+  "journal": [
+    {
+      "jour": 0,
+      "moment": "debut",
+      "texte": "7 joueurs. Paquet : Loup-Garou ×1, Sorcière ×1, Voyante ×1, Cupidon ×1, Chasseur ×1, Villageois ×2."
+    },
+    {
+      "jour": 0,
+      "moment": "debut",
+      "texte": "Distribution : azea (Chasseur), qsddaa (Villageois), dsd (Loup-Garou), qsdq (Voyante), qqqs (Villageois), qsdqs (Cupidon), dqsdq (Sorcière)."
+    },
+    {
+      "jour": 0,
+      "moment": "nuit",
+      "texte": "Cupidon qsdqs lie azea et qqqs."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "dsd (Loup-Garou) désigne azea."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "La voyante qsdq sonde azea : Chasseur."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "azea (Chasseur) est dévoré par les loups."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "qqqs (Villageois) meurt de chagrin (amoureux)."
+    },
+    {
+      "jour": 1,
+      "moment": "tir_chasseur",
+      "texte": "dsd (Loup-Garou) est abattu par le chasseur azea."
+    },
+    {
+      "jour": 1,
+      "moment": "fin",
+      "texte": "Le village a gagné : tous les loups sont morts."
+    }
+  ]
+}

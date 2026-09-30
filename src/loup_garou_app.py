@@ -171,6 +171,35 @@ def css_cartes():
             letter-spacing: 0.03em;
             color: #ffd0d0;
         }
+        .potion-bandeau {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .7rem;
+            width: fit-content;
+            margin: 1rem auto 1.1rem;
+            padding: .55rem 1.5rem;
+            border: 1.5px solid rgba(201,164,76,.75);
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(20,52,36,.15), rgba(40,110,72,.45) 50%, rgba(20,52,36,.15));
+            box-shadow: 0 0 18px rgba(80,200,120,.22), inset 0 0 12px rgba(0,0,0,.35);
+        }
+        .potion-fioles { font-size: 1.3rem; letter-spacing: .2rem; filter: drop-shadow(0 0 6px rgba(90,220,130,.7)); }
+        .potion-texte {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            letter-spacing: .06em;
+            color: #e8f3d8;
+        }
+        div[class*="st-key-sorciere_boutons"] button[data-testid="stBaseButton-primary"] {
+            background-color: #2f9a55;
+            border-color: #2f9a55;
+            color: #fff;
+        }
+        div[class*="st-key-sorciere_boutons"] button[data-testid="stBaseButton-primary"]:hover {
+            background-color: #38b165;
+            border-color: #38b165;
+        }
         .plaquette {
             display: flex;
             align-items: center;
@@ -1061,16 +1090,22 @@ def _nuit_sorciere(s, nom, cle):
         plaquette("Rien à faire cette nuit.", icone="🌙")
         bouton_fin(s, cle)
     else:
-        st.write(f"Potions de soin restantes : {s['potions_sorciere']}")
-        st.caption("Tu ne sais pas encore qui les loups ont désigné.")
-        col1, col2 = st.columns(2)
-        if col1.button("Utiliser une potion", type="primary", key=f"soin_{cle}"):
+        n = s["potions_sorciere"]
+        st.markdown(
+            f'<div class="potion-bandeau"><span class="potion-fioles">{"🧪" * n}</span>'
+            f'<span class="potion-texte">Potion{"s" if n > 1 else ""} de soin restante{"s" if n > 1 else ""} : {n}</span></div>',
+            unsafe_allow_html=True,
+        )
+        with st.container(key="sorciere_boutons", horizontal=True, horizontal_alignment="center"):
+            soigne = st.button("Utiliser une potion", type="primary", key=f"soin_{cle}")
+            rien = st.button("Ne rien faire", key=f"rien_{cle}")
+        if soigne:
             s["soin_sorciere"] = True
             s["potions_sorciere"] -= 1
             log(s, f"La sorcière {nom} utilise une potion de soin.")
             fin_de_tour(s)
             st.rerun()
-        if col2.button("Ne rien faire", key=f"rien_{cle}"):
+        if rien:
             fin_de_tour(s)
             st.rerun()
 
@@ -1202,7 +1237,7 @@ ROLES = {
         nom="Sorcière",
         emoji="🧪",
         degrade="radial-gradient(circle at 50% 30%, #3d1f5c, #170a29 75%)",
-        etat_initial={"potions_sorciere": 2, "soin_sorciere": False},
+        etat_initial={"potions_sorciere": 1, "soin_sorciere": False},
         nuit=_nuit_sorciere,
     ),
     "voyante": Role(

@@ -635,6 +635,65 @@ CSS_SCENES = """
     text-shadow: 0 1px 8px rgba(0,0,0,.8);
     margin-top: .2rem;
 }
+.ciel-victoire-village { background: linear-gradient(180deg, #3b86d0 0%, #86c4ee 55%, #ffeeba 100%); }
+.ciel-victoire-village .ciel-nuage { background: rgba(255,255,255,.92); }
+.ciel-victoire-village .ciel-maison { background: #a4573a; }
+.ciel-victoire-village .ciel-sol { background: #3f7d3a; }
+.ciel-rayons {
+    position: absolute; left: 50%; top: -190px; width: 460px; height: 460px; margin-left: -230px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(rgba(255,240,170,.38) 0 7deg, transparent 7deg 22deg);
+    -webkit-mask-image: radial-gradient(circle, #000 15%, transparent 68%);
+    mask-image: radial-gradient(circle, #000 15%, transparent 68%);
+    animation: tourne 60s linear infinite;
+}
+.ciel-soleil-haut {
+    width: 70px; height: 70px; left: 50%; margin-left: -35px; top: 8px;
+    background: radial-gradient(circle, #fffbd6 0%, #ffe066 55%, #ffb733 100%);
+    box-shadow: 0 0 24px 10px rgba(255,214,90,.7), 0 0 80px 34px rgba(255,200,80,.35);
+}
+.ciel-confetti {
+    position: absolute; top: -14px; width: 7px; height: 12px; opacity: 0;
+    animation: chute linear infinite;
+}
+.ciel-victoire-loups { background: linear-gradient(180deg, #12030a 0%, #4a0d1c 52%, #a3302f 100%); }
+.ciel-victoire-loups .ciel-etoile { background: #ffd0c0; }
+.ciel-victoire-loups .ciel-nuage { background: rgba(60,10,20,.45); }
+.ciel-victoire-loups .ciel-maison { background: #0a0308; }
+.ciel-victoire-loups .ciel-sol { background: #050205; }
+.ciel-victoire-loups .ciel-titre { color: #ffd9d0; text-shadow: 0 2px 14px rgba(0,0,0,.85), 0 0 26px rgba(255,60,50,.45); }
+.ciel-lune-sang {
+    width: 120px; height: 120px; right: 9%; top: 60px;
+    background: radial-gradient(circle at 38% 34%, #ff9a72 0%, #d8352e 55%, #8f1420 100%);
+    box-shadow: 0 0 30px 10px rgba(230,50,40,.5), 0 0 110px 44px rgba(200,30,30,.28);
+    animation: monte-lune 2.4s ease-out both, pulse-sang 4s ease-in-out 2.4s infinite;
+}
+.ciel-colline {
+    position: absolute; right: -8%; bottom: -70px; width: 46%; height: 130px;
+    border-radius: 50%; background: #050205;
+}
+.ciel-loup {
+    position: absolute; right: 16%; bottom: 52px; font-size: 64px; line-height: 1;
+    filter: brightness(0);
+}
+.ciel-chauve {
+    position: absolute; font-size: 20px; line-height: 1; filter: brightness(0);
+    animation: vole linear infinite;
+}
+@keyframes tourne { to { transform: rotate(360deg); } }
+@keyframes chute {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(270px) rotate(540deg); opacity: 1; }
+}
+@keyframes pulse-sang { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@keyframes vole {
+    0% { transform: translate(-40px, 0); }
+    25% { transform: translate(190px, 18px); }
+    50% { transform: translate(400px, -6px); }
+    75% { transform: translate(610px, 14px); }
+    100% { transform: translate(850px, 0); }
+}
 @keyframes scintille { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.25); } }
 @keyframes derive { from { transform: translateX(-140px); } to { transform: translateX(860px); } }
 @keyframes monte-lune { from { transform: translateY(70px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -729,6 +788,51 @@ def scene_ciel(mode, titre, sous_titre=""):
     elements.append(f'<div class="ciel-texte"><div class="ciel-titre">{titre}</div>{sous}</div>')
     st.markdown(
         f'<div class="ciel ciel-{mode}">' + "".join(elements) + "</div>", unsafe_allow_html=True,
+    )
+
+
+def scene_victoire(camp_gagnant, titre, sous_titre=""):
+    """Bandeau animé de fin de partie : "village" (fête sous le soleil) ou "loups" (lune de sang)."""
+    rnd = random.Random(11)
+    elements = []
+    if camp_gagnant == "village":
+        elements.append('<div class="ciel-rayons"></div><div class="ciel-astre ciel-soleil-haut"></div>')
+        couleurs = ("#ff5a5a", "#ffd23f", "#4cc9f0", "#7bd88f", "#f78fd0", "#ffffff")
+        for _ in range(34):
+            elements.append(
+                f'<span class="ciel-confetti" style="left:{rnd.uniform(1, 99):.1f}%;'
+                f'background:{rnd.choice(couleurs)};animation-duration:{rnd.uniform(3.2, 5.6):.1f}s;'
+                f'animation-delay:-{rnd.uniform(0, 5):.1f}s"></span>'
+            )
+    else:
+        for _ in range(30):
+            taille = rnd.choice((1, 1, 2, 2, 3))
+            elements.append(
+                f'<span class="ciel-etoile" style="left:{rnd.uniform(1, 99):.1f}%;top:{rnd.uniform(3, 55):.1f}%;'
+                f'width:{taille}px;height:{taille}px;animation-delay:-{rnd.uniform(0, 3):.1f}s"></span>'
+            )
+        elements.append('<div class="ciel-astre ciel-lune-sang"></div>')
+        for i, (haut, duree) in enumerate(((14, 14), (30, 19), (8, 23))):
+            elements.append(
+                f'<span class="ciel-chauve" style="top:{haut}%;animation-duration:{duree}s;'
+                f'animation-delay:-{i * 6}s">🦇</span>'
+            )
+    for i, (haut, largeur, duree) in enumerate(((16, 70, 46), (52, 90, 62))):
+        elements.append(
+            f'<div class="ciel-nuage" style="top:{haut}%;width:{largeur}px;'
+            f'animation-duration:{duree}s;animation-delay:-{i * 21}s"></div>'
+        )
+    maisons = ((3, 46, 40), (15, 60, 52), (31, 42, 36), (46, 70, 56), (64, 50, 44), (77, 64, 50), (90, 40, 34))
+    elements.append('<div class="ciel-village">' + "".join(
+        f'<div class="ciel-maison" style="left:{gauche}%;width:{largeur}px;height:{hauteur}px"></div>'
+        for gauche, largeur, hauteur in maisons
+    ) + '<div class="ciel-sol"></div></div>')
+    if camp_gagnant == "loups":
+        elements.append('<div class="ciel-colline"></div><span class="ciel-loup">🐺</span>')
+    sous = f'<div class="ciel-sous">{sous_titre}</div>' if sous_titre else ""
+    elements.append(f'<div class="ciel-texte"><div class="ciel-titre">{titre}</div>{sous}</div>')
+    st.markdown(
+        f'<div class="ciel ciel-victoire-{camp_gagnant}">' + "".join(elements) + "</div>", unsafe_allow_html=True,
     )
 
 
@@ -1878,8 +1982,14 @@ def ecran_tir_chasseur(s):
 
 
 def ecran_fin(s):
-    st.title("🏁 Fin de la partie")
-    st.header(s["message_fin"])
+    message = s["message_fin"]
+    if message.startswith("Le village a gagné"):
+        scene_victoire("village", "Le village a gagné !", "Fin de la partie")
+    elif message.startswith("Les loups ont gagné"):
+        scene_victoire("loups", "Les loups ont gagné !", "Fin de la partie")
+    else:
+        st.title("🏁 Fin de la partie")
+    st.header(message)
     st.subheader("Les rôles")
     for nom, d in s["joueurs"].items():
         etat = "en vie" if d["vivant"] else "mort"

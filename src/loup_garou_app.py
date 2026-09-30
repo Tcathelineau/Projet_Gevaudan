@@ -314,6 +314,25 @@ def css_cartes():
             margin-top: auto;
             margin-bottom: -1.5rem;
         }
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="stExpandSidebarButton"] {
+            display: none !important;
+        }
+        div[class*="st-key-options"] {
+            position: relative;
+        }
+        div[class*="st-key-menu_option"] {
+            position: absolute;
+            bottom: calc(100% + 0.5rem);
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: #1c1c22;
+            border: 1px solid rgba(201,164,76,.55);
+            border-radius: 0.6rem;
+            padding: 0.8rem;
+            box-shadow: 0 8px 28px rgba(0,0,0,.6);
+        }
         div[class*="st-key-validation_"] {
             display: flex;
             flex-direction: column;
@@ -1754,7 +1773,7 @@ def panneau_rechargement(s):
 
 
 def main():
-    st.set_page_config(page_title="Loup-Garou", page_icon="🐺", layout="wide")
+    st.set_page_config(page_title="Loup-Garou", page_icon="🐺", layout="wide", initial_sidebar_state="expanded")
     css_cartes()
 
     if "partie" not in st.session_state:
@@ -1827,10 +1846,10 @@ def main():
             if st.checkbox("🎵 Musique de fond", value=True, key="musique_on"):
                 st.audio(MUSIQUE_FILE, format="audio/mp3", loop=True, autoplay=True)
 
-        # Le menu se déplie au-dessus du bouton, lui-même ancré en bas de la barre latérale.
+        # Le menu flotte au-dessus du bouton (position absolue) : il recouvre le reste sans le déplacer.
         with st.container(key="options"):
             if st.session_state.get("options_ouvert"):
-                with st.container(border=True):
+                with st.container(key="menu_option"):
                     panneau_rechargement(s)
                     if st.button("🚪 Abandonner la partie", key="abandon"):
                         if s["phase"] != "fin":
@@ -1841,7 +1860,7 @@ def main():
                         st.rerun()
             ouvert = st.session_state.get("options_ouvert", False)
             st.button(
-                "⚙️ Option " + ("▾" if ouvert else "▴"), key="options_bouton",
+                "⚙️ Option " + ("▾" if ouvert else "▴"), key="bouton_option",
                 on_click=lambda: st.session_state.update(options_ouvert=not ouvert),
             )
 

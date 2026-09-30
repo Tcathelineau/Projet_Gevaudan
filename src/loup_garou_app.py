@@ -395,6 +395,17 @@ def css_cartes():
             box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(232,100,154,.45);
         }
         div[class*="st-key-dalles_cupi_"] button::after { content: "💘"; }
+        div[class*="st-key-dalles_maire_"] button::after { content: "👑"; }
+        div[class*="st-key-dalles_vote_"] button {
+            background: rgba(120,60,20,.35);
+            border-color: rgba(210,120,50,.55);
+        }
+        div[class*="st-key-dalles_vote_"] button:hover {
+            background: rgba(170,80,25,.65);
+            border-color: #e0843f;
+            box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(224,132,63,.45);
+        }
+        div[class*="st-key-dalles_vote_"] button::after { content: "⚖️"; }
         div[class*="st-key-dalles_"] button[data-testid="stBaseButton-primary"] {
             border-width: 3px;
             border-color: #f0d890;
@@ -406,6 +417,9 @@ def css_cartes():
         }
         div[class*="st-key-dalles_cupi_"] button[data-testid="stBaseButton-primary"] {
             background: rgba(200,60,120,.75);
+        }
+        div[class*="st-key-dalles_vote_"] button[data-testid="stBaseButton-primary"] {
+            background: rgba(190,90,30,.75);
         }
         div[class*="st-key-dalles_"] button[data-testid="stBaseButton-primary"]::after {
             opacity: 1;
@@ -1415,12 +1429,17 @@ def ecran_election_maire(s):
         "Débattez et votez à voix haute comme d'habitude, puis saisis ici le nom élu."
     )
 
-    en_vie = vivants(s)
-    elu = st.radio("Le village élit comme maire", en_vie, key=f"election_maire_{s['jour']}")
-    if st.button("Valider l'élection", type="primary"):
+    st.markdown("**Le village élit comme maire**")
+    choix = selection_dalles("maire", s["jour"], vivants(s), 1)
+    elu = choix[0] if choix else None
+    if st.button(
+        f"Valider : {elu} est maire" if elu else "Valider l'élection",
+        type="primary", disabled=elu is None, key="valider_maire",
+    ):
         s["maire"] = elu
         log(s, f"{elu} est élu maire.")
         s["dernier_maire"] = None
+        st.session_state.pop(f"sel_maire_{s['jour']}", None)
         s["phase"] = "conseil"
         st.rerun()
 
@@ -1463,9 +1482,15 @@ def ecran_conseil(s):
 
     else:
         st.caption("Débattez à voix haute, puis le capitaine saisit le résultat du vote.")
-        condamne = st.radio("Le village élimine", en_vie, key=f"vote_{s['jour']}")
-        if st.button("Valider le vote", type="primary"):
+        st.markdown("**Le village élimine**")
+        choix = selection_dalles("vote", s["jour"], en_vie, 1)
+        condamne = choix[0] if choix else None
+        if st.button(
+            f"Valider : éliminer {condamne}" if condamne else "Valider le vote",
+            type="primary", disabled=condamne is None, key="valider_vote",
+        ):
             st.session_state[f"resultat_{s['jour']}"] = tuer(s, condamne, "est éliminé par le village")
+            st.session_state.pop(f"sel_vote_{s['jour']}", None)
             st.rerun()
 
 

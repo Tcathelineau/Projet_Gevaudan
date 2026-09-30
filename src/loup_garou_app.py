@@ -171,6 +171,46 @@ def css_cartes():
             letter-spacing: 0.03em;
             color: #ffd0d0;
         }
+        .annonce {
+            --a-couleur: #e0a93b;
+            --a-fond: rgba(120,84,20,.45);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: .6rem 0 1rem;
+            padding: .75rem 1.1rem;
+            border: 1.5px solid var(--a-couleur);
+            border-radius: 12px;
+            background: linear-gradient(100deg, var(--a-fond), rgba(16,18,26,.85));
+            box-shadow: 0 4px 16px rgba(0,0,0,.4);
+        }
+        .annonce-danger { --a-couleur: #cf5a50; --a-fond: rgba(120,32,32,.5); }
+        .annonce-succes { --a-couleur: #6fae6a; --a-fond: rgba(30,84,42,.5); }
+        .annonce-mystere { --a-couleur: #a08ade; --a-fond: rgba(64,44,118,.5); }
+        .annonce-signe {
+            flex: 0 0 auto;
+            width: 2.3rem;
+            height: 2.3rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 1.45rem;
+            line-height: 1;
+            color: #1a1408;
+            background: var(--a-couleur);
+            box-shadow: 0 0 14px var(--a-couleur);
+            animation: annonce-pulse 2.6s ease-in-out infinite;
+        }
+        .annonce-texte {
+            font-family: 'EB Garamond', serif;
+            font-size: 1.2rem;
+            line-height: 1.3;
+            color: #f3ebd8;
+        }
+        @keyframes annonce-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         .potion-bandeau {
             display: flex;
             align-items: center;
@@ -573,7 +613,8 @@ CSS_SCENES = """
 .ciel {
     position: relative;
     height: 250px;
-    max-width: 760px;
+    max-width: 1000px;
+    container-type: inline-size;
     margin: 0.4rem auto 1.2rem;
     border-radius: 16px;
     overflow: hidden;
@@ -718,30 +759,30 @@ CSS_SCENES = """
 @keyframes pulse-sang { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
 @keyframes vole {
     0% { transform: translate(-40px, 0); }
-    25% { transform: translate(190px, 18px); }
-    50% { transform: translate(400px, -6px); }
-    75% { transform: translate(610px, 14px); }
-    100% { transform: translate(850px, 0); }
+    25% { transform: translate(25cqw, 18px); }
+    50% { transform: translate(50cqw, -6px); }
+    75% { transform: translate(75cqw, 14px); }
+    100% { transform: translate(100cqw, 0); }
 }
 @keyframes scintille { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.25); } }
-@keyframes derive { from { transform: translateX(-140px); } to { transform: translateX(860px); } }
+@keyframes derive { from { transform: translateX(-140px); } to { transform: translateX(100cqw); } }
 @keyframes monte-lune { from { transform: translateY(70px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes monte-soleil { from { transform: translateY(90px); } to { transform: none; } }
 @keyframes apparait { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes fenetre { 0%, 100% { opacity: 1; } 45% { opacity: .55; } 60% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .ciel *, .ciel, .avis-papier { animation: none !important; } }
-.avis { position: relative; max-width: 620px; margin: .2rem auto 1.4rem; padding: 0 30px 20px; }
+.avis { position: relative; max-width: 470px; margin: .2rem auto 1.2rem; padding: 0 24px 16px; }
 .avis-poteau {
     position: absolute; bottom: 0; top: 24px; width: 18px; z-index: 0;
     background: linear-gradient(90deg, #3a220f, #5e3a1e 50%, #3a220f);
     border-radius: 3px;
 }
-.avis-poteau-g { left: 34px; }
-.avis-poteau-d { right: 34px; }
+.avis-poteau-g { left: 28px; }
+.avis-poteau-d { right: 28px; }
 .avis-planche {
     position: relative; z-index: 1;
-    padding: 1.3rem 1.4rem 1.5rem;
-    border: 4px solid #4a2c17;
+    padding: 1rem 1.1rem 1.1rem;
+    border: 3px solid #4a2c17;
     border-radius: 8px;
     background:
         repeating-linear-gradient(90deg, rgba(0,0,0,.09) 0 2px, transparent 2px 52px),
@@ -755,17 +796,17 @@ CSS_SCENES = """
 }
 .avis-titre {
     text-align: center; font-family: 'Cinzel', serif; font-weight: 700;
-    font-size: clamp(1.1rem, 3vw, 1.5rem); letter-spacing: .14em; text-transform: uppercase;
+    font-size: clamp(.95rem, 2.4vw, 1.2rem); letter-spacing: .12em; text-transform: uppercase;
     color: #f7e8c4; text-shadow: 0 2px 6px rgba(0,0,0,.65);
 }
 .avis-sous {
     text-align: center; font-family: 'EB Garamond', serif; font-style: italic;
-    color: #ecd9ad; margin: .1rem 0 1rem; font-size: 1.05rem;
+    color: #ecd9ad; margin: .05rem 0 .7rem; font-size: .95rem;
 }
-.avis-papiers { display: flex; flex-direction: column; gap: .9rem; }
+.avis-papiers { display: flex; flex-direction: column; gap: .7rem; }
 .avis-papier {
     position: relative;
-    padding: .9rem 1.2rem .8rem 1.4rem;
+    padding: .55rem 1rem .5rem 1.1rem;
     background: linear-gradient(170deg, #f3e6c0 0%, #e6d3a3 100%);
     color: #3b2a14;
     border-left: 6px solid #a53a32;
@@ -781,9 +822,9 @@ CSS_SCENES = """
 }
 .avis-papier-calme { border-left-color: #5e8c55; text-align: center; }
 .avis-nom {
-    font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.25rem; letter-spacing: .04em;
+    font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.05rem; letter-spacing: .04em;
 }
-.avis-detail { font-family: 'EB Garamond', serif; font-style: italic; font-size: 1.08rem; margin-top: .1rem; }
+.avis-detail { font-family: 'EB Garamond', serif; font-style: italic; font-size: .98rem; margin-top: 0; }
 @keyframes colle { from { opacity: 0; transform: translateY(-14px) rotate(-3deg); } }
 </style>
 """
@@ -862,6 +903,15 @@ def scene_victoire(camp_gagnant, titre, sous_titre=""):
     elements.append(f'<div class="ciel-texte"><div class="ciel-titre">{titre}</div>{sous}</div>')
     st.markdown(
         f'<div class="ciel ciel-victoire-{camp_gagnant}">' + "".join(elements) + "</div>", unsafe_allow_html=True,
+    )
+
+
+def annonce(texte, signe="!", ton="alerte"):
+    """Encart d'annonce avec pastille "!" ou "?" ; ton : alerte, danger, succes, mystere."""
+    st.markdown(
+        f'<div class="annonce annonce-{ton}"><span class="annonce-signe">{signe}</span>'
+        f'<span class="annonce-texte">{html.escape(texte)}</span></div>',
+        unsafe_allow_html=True,
     )
 
 
@@ -1859,13 +1909,13 @@ def panneau_morts(s):
 
 def annonce_tirs(s):
     for mort in s.get("morts_tir", []):
-        st.error(f"🔫 {mort} a été abattu par le chasseur. Il {_camp_txt(s, mort)}.")
+        annonce(f"{mort} a été abattu par le chasseur. Il {_camp_txt(s, mort)}.", "!", "danger")
 
 
 def bouton_tir(s, retour):
     """Bouton menant à l'écran de tir s'il reste un chasseur à faire tirer."""
     chasseur = s["tirs_en_attente"][0]
-    st.warning(f"{chasseur} était le chasseur : il peut tirer sa dernière balle.")
+    annonce(f"{chasseur} était le chasseur : il peut tirer sa dernière balle.", "!")
     if st.button("🔫 Le chasseur décide", type="primary", key=f"bouton_tir_{retour}"):
         s["retour_tir"] = retour
         s["phase"] = "tir_chasseur"
@@ -1902,9 +1952,7 @@ def ecran_election_maire(s):
     st.title("👑 Élection du maire")
 
     if s.get("dernier_maire"):
-        st.warning(
-            f"{s['dernier_maire']} était le maire et il est mort : le village doit élire son successeur."
-        )
+        annonce(f"{s['dernier_maire']} était le maire et il est mort : le village doit élire son successeur.", "!")
 
     st.caption(
         "Débattez et votez à voix haute comme d'habitude, puis saisis ici le nom élu."
@@ -1928,7 +1976,7 @@ def ecran_conseil(s):
     st.title("🗳️ Conseil du village")
 
     if s["jour"] == 0:
-        st.info("Première nuit passée : pas de vote aujourd'hui.")
+        annonce("Première nuit passée : pas de vote aujourd'hui.", "?", "mystere")
         if st.button("La nuit retombe", type="primary"):
             s["jour"] += 1
             s["phase"] = "nuit"
@@ -1940,11 +1988,11 @@ def ecran_conseil(s):
     if st.session_state.get(f"resultat_{s['jour']}"):
         for mort in st.session_state[f"resultat_{s['jour']}"]:
             if ROLES[s["joueurs"][mort]["role"]].camp_secret:
-                st.warning(f"{mort} {_camp_txt(s, mort)}.")
+                annonce(f"{mort} {_camp_txt(s, mort)}.", "?", "mystere")
             elif camp(s, mort) == "loups":
-                st.success(f"{mort} était LOUP-GAROU.")
+                annonce(f"{mort} était LOUP-GAROU.", "!", "succes")
             else:
-                st.error(f"{mort} n'était PAS loup-garou.")
+                annonce(f"{mort} n'était PAS loup-garou.", "!", "danger")
         annonce_tirs(s)
 
         gagnant = vainqueur(s)
@@ -1976,9 +2024,9 @@ def ecran_conseil(s):
 def ecran_tir_chasseur(s):
     chasseur = s["tirs_en_attente"][0]
     st.title("🔫 Dernière balle")
-    st.warning(
+    annonce(
         f"{chasseur} était le chasseur et vient de mourir. "
-        "Il peut désigner quelqu'un qui mourra sur-le-champ, ou renoncer à tirer."
+        "Il peut désigner quelqu'un qui mourra sur-le-champ, ou renoncer à tirer.", "!",
     )
 
     cibles = vivants(s)

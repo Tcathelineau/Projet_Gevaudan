@@ -923,6 +923,56 @@ div[class*="st-key-scene_passage"] .plaquette { max-width: 640px; margin: 0.7rem
 """.replace("__VILLAGE__", _svg_css(_village_nuit_svg())).replace("__NUAGES__", _svg_css(_nuages_svg()))
 
 
+CSS_TABLE = """
+<style>
+div[class*="st-key-table_bois"] {
+    max-width: 1000px;
+    margin: 0.6rem auto 1rem;
+    padding: 1.6rem 1.8rem;
+    border-radius: 14px;
+    border: 3px solid #24160b;
+    background:
+        repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 1px, transparent 1px 9px),
+        repeating-linear-gradient(180deg, transparent 0 96px, rgba(0,0,0,.5) 96px 100px),
+        repeating-linear-gradient(180deg, rgba(255,205,140,.07) 0 50px, transparent 50px 100px),
+        repeating-linear-gradient(180deg, transparent 0 60px, rgba(0,0,0,.08) 60px 130px),
+        linear-gradient(180deg, #6d4526, #5b3a1e);
+    box-shadow: inset 0 0 44px rgba(0,0,0,.55), 0 8px 24px rgba(0,0,0,.5);
+}
+div[class*="st-key-parchemin"] {
+    padding: 1.2rem 1.6rem;
+    border-radius: 6px 14px 8px 12px / 12px 6px 14px 8px;
+    background:
+        radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.35), transparent 55%),
+        radial-gradient(ellipse at center, #f3e4bd 0%, #e8d3a0 65%, #d2b675 100%);
+    box-shadow: 0 5px 16px rgba(0,0,0,.6), inset 0 0 34px rgba(125,85,25,.4);
+    color: #3a2a14;
+}
+div[class*="st-key-parchemin"] p,
+div[class*="st-key-parchemin"] label,
+div[class*="st-key-parchemin"] li,
+div[class*="st-key-parchemin"] h1,
+div[class*="st-key-parchemin"] h2,
+div[class*="st-key-parchemin"] h3,
+div[class*="st-key-parchemin"] [data-testid="stCaptionContainer"],
+div[class*="st-key-parchemin"] [data-testid="stMarkdownContainer"] {
+    color: #3a2a14;
+}
+div[class*="st-key-parchemin"] button[data-testid="stBaseButton-secondary"] {
+    background: rgba(110,75,25,.16);
+    border-color: rgba(110,75,25,.6);
+}
+div[class*="st-key-parchemin"] button[data-testid="stBaseButton-secondary"] p { color: #3a2a14; }
+div[class*="st-key-parchemin"] .badge-meute { background: rgba(140,30,34,.12); box-shadow: none; }
+div[class*="st-key-parchemin"] .badge-meute-label { color: #8a2a2e; opacity: 1; }
+div[class*="st-key-parchemin"] .badge-meute-noms { color: #5c1418; }
+div[class*="st-key-parchemin"] .badge-sous,
+div[class*="st-key-parchemin"] .plaquette-texte { color: #4a3820; }
+div[class*="st-key-parchemin"] .plaquette { background: rgba(255,248,225,.45); border-color: rgba(110,75,25,.45); }
+</style>
+"""
+
+
 def scene_ciel(mode, titre, sous_titre=""):
     """Bandeau animé : "nuit" (lune, étoiles) ou "jour" (lever de soleil), nuages et village."""
     rnd = random.Random(7)
@@ -1919,9 +1969,10 @@ def ecran_nuit(s):
     carte_role(nom, role)
     cle = f"{s['jour']}_{s['tour']}"
 
-    with st.container(height=340, border=False):
-        gerer_nuit = ROLES[role].nuit or _nuit_villageois
-        gerer_nuit(s, nom, cle)
+    with st.container(key="table_bois"):
+        with st.container(height=400, border=False, key="parchemin"):
+            gerer_nuit = ROLES[role].nuit or _nuit_villageois
+            gerer_nuit(s, nom, cle)
 
     if donnees["amoureux"] and s["jour"] > 0:
         autre = [n for n in s["amoureux"] if n != nom]
@@ -2299,6 +2350,7 @@ def main():
     css_cartes()
     st.markdown(CSS_SCENES, unsafe_allow_html=True)
     st.markdown(CSS_PASSAGE, unsafe_allow_html=True)
+    st.markdown(CSS_TABLE, unsafe_allow_html=True)
     garder_sidebar_ouverte()
 
     if "partie" not in st.session_state:

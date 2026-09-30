@@ -451,6 +451,10 @@ def css_cartes():
             padding: 0.55rem 0.3rem;
             transition: all .18s ease;
         }
+        div[class*="st-key-dalles_"][class*="_dense"] button {
+            font-size: 0.72rem;
+            padding: 0.45rem 0.1rem;
+        }
         div[class*="st-key-dalles_"] button:hover {
             background: rgba(28,43,92,.8);
             border-color: #c9a44c;
@@ -1149,10 +1153,11 @@ def plaquette(texte, icone="🌙", ton="neutre"):
 def grille_dalles(theme, cle, choix, selection=()):
     """Dalles cliquables (style selon `theme`, cf. CSS). Renvoie le nom cliqué ou None.
     Les noms de `selection` sont affichés en surbrillance."""
-    # Plus il y a de choix, plus on élargit la grille : elle reste sur peu de lignes.
-    n_col = 2 if len(choix) <= 4 else 3 if len(choix) <= 9 else 4 if len(choix) <= 14 else 5
+    # Plus il y a de choix, plus on élargit la grille : elle reste sur 3 lignes (7 colonnes au plus).
+    n_col = 2 if len(choix) <= 4 else min(7, max(3, -(-len(choix) // 3)))
     clic = None
-    with st.container(key=f"dalles_{theme}_{cle}"):
+    dense = "_dense" if n_col >= 6 else ""
+    with st.container(key=f"dalles_{theme}_{cle}{dense}"):
         cols = st.columns(n_col)
         for i, nom in enumerate(choix):
             with cols[i % n_col]:
@@ -1827,6 +1832,10 @@ def vainqueur(s):
 
     if len(en_vie) == 2 and all(s["joueurs"][n]["amoureux"] for n in en_vie):
         return "Les amoureux l'emportent : ils sont les deux derniers survivants."
+    couple = [n for n in s.get("amoureux", []) if s["joueurs"][n]["vivant"]]
+    if len(couple) == 2 and len({camp(s, n) == "loups" for n in couple}) == 2:
+        # Couple loup/villageois : camp à part, ni le village ni la meute ne peuvent conclure.
+        return None
     if solitaires:
         # Tant qu'il vit, ni le village ni la meute ne peuvent conclure : il doit rester seul.
         if len(en_vie) == 1:
@@ -2058,7 +2067,7 @@ def ecran_nuit(s):
     carte_role(nom, role)
     cle = f"{s['jour']}_{s['tour']}"
 
-    with st.container(height=340, border=False):
+    with st.container(height=400, border=False):
         gerer_nuit = ROLES[role].nuit or _nuit_villageois
         gerer_nuit(s, nom, cle)
 

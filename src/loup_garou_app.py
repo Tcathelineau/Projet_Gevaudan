@@ -1304,6 +1304,11 @@ def _nuit_chien_loup(s, nom, cle):
 
 def _nuit_renard(s, nom, cle):
     """Chaque nuit où il a encore du flair : il flaire 3 personnes et apprend si un loup s'y trouve."""
+    if s["jour"] == 0:
+        plaquette("Première nuit : ton flair ne s'éveille qu'à la nuit prochaine.", icone="🦊")
+        bouton_fin(s, cle)
+        return
+
     resultat = s.get("resultat_renard")
     if resultat and resultat["cle"] == cle:
         if resultat["loup"]:

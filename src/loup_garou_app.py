@@ -250,11 +250,6 @@ def css_cartes():
             margin-bottom: 0.35rem;
         }
         .panneau-dense .panneau-ligne { font-size: 0.92rem; padding: 0.05rem 0; }
-        .panneau-grille {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            column-gap: 1.4rem;
-        }
         .panneau-total {
             border-top: 1px solid rgba(201,164,76,.35);
             margin-top: 0.35rem;
@@ -1143,7 +1138,7 @@ def afficher_composition(nb, total, composition, n_villageois):
         f"""
         <div class="panneau panneau-dense">
             <div class="panneau-titre">Composition</div>
-            <div class="panneau-grille">{lignes}</div>
+            {lignes}
             <div class="panneau-ligne panneau-total"><span><b>Total</b></span><span><b>{total} / {total}</b></span></div>
         </div>
         """,

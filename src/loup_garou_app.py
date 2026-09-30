@@ -380,6 +380,41 @@ def css_cartes():
             box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(230,230,242,.4);
         }
         div[class*="st-key-dalles_lb_"] button::after { content: "🦴"; }
+        div[class*="st-key-dalles_flair_"] button {
+            background: rgba(150,80,20,.3);
+            border-color: rgba(220,140,60,.55);
+        }
+        div[class*="st-key-dalles_flair_"] button:hover {
+            background: rgba(190,100,28,.6);
+            border-color: #e8953f;
+            box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(232,149,63,.45);
+        }
+        div[class*="st-key-dalles_flair_"] button::after { content: "👃"; }
+        div[class*="st-key-dalles_cupi_"] button {
+            background: rgba(150,40,90,.3);
+            border-color: rgba(230,100,150,.55);
+        }
+        div[class*="st-key-dalles_cupi_"] button:hover {
+            background: rgba(190,50,110,.6);
+            border-color: #e8649a;
+            box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(232,100,154,.45);
+        }
+        div[class*="st-key-dalles_cupi_"] button::after { content: "💘"; }
+        div[class*="st-key-dalles_"] button[data-testid="stBaseButton-primary"] {
+            border-width: 3px;
+            border-color: #f0d890;
+            color: #ffffff;
+            box-shadow: 0 0 14px rgba(240,216,144,.55);
+        }
+        div[class*="st-key-dalles_flair_"] button[data-testid="stBaseButton-primary"] {
+            background: rgba(200,110,30,.75);
+        }
+        div[class*="st-key-dalles_cupi_"] button[data-testid="stBaseButton-primary"] {
+            background: rgba(200,60,120,.75);
+        }
+        div[class*="st-key-dalles_"] button[data-testid="stBaseButton-primary"]::after {
+            opacity: 1;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -451,8 +486,9 @@ def plaquette(texte, icone="🌙", ton="neutre"):
     )
 
 
-def grille_dalles(theme, cle, choix):
-    """Dalles cliquables sur 2 colonnes (style selon `theme`, cf. CSS). Renvoie le nom cliqué ou None."""
+def grille_dalles(theme, cle, choix, selection=()):
+    """Dalles cliquables (style selon `theme`, cf. CSS). Renvoie le nom cliqué ou None.
+    Les noms de `selection` sont affichés en surbrillance."""
     # Plus il y a de choix, plus on élargit la grille : elle reste sur peu de lignes.
     n_col = 2 if len(choix) <= 4 else 3 if len(choix) <= 9 else 4 if len(choix) <= 14 else 5
     clic = None
@@ -460,9 +496,25 @@ def grille_dalles(theme, cle, choix):
         cols = st.columns(n_col)
         for i, nom in enumerate(choix):
             with cols[i % n_col]:
-                if st.button(nom, key=f"pick_{theme}_{cle}_{nom}", use_container_width=True):
+                choisi = nom in selection
+                if st.button(
+                    nom, key=f"pick_{theme}_{cle}_{nom}", use_container_width=True,
+                    type="primary" if choisi else "secondary",
+                ):
                     clic = nom
     return clic
+
+
+def selection_dalles(theme, cle, choix, k):
+    """Dalles où l'on en sélectionne `k` (re-cliquer désélectionne). Renvoie la sélection courante."""
+    cle_sel = f"sel_{theme}_{cle}"
+    sel = [n for n in st.session_state.get(cle_sel, []) if n in choix]
+    clic = grille_dalles(theme, cle, choix, selection=sel)
+    if clic:
+        sel = [n for n in sel if n != clic] if clic in sel else (sel + [clic])[-k:]
+        st.session_state[cle_sel] = sel
+        st.rerun()
+    return sel
 
 
 def bouton_fin(s, cle):
@@ -602,10 +654,7 @@ def _nuit_renard(s, nom, cle):
     candidats = [n for n in vivants(s) if n != nom]
     k = min(3, len(candidats))
     st.markdown(f"**Flaire {k} personnes**")
-    groupe = st.multiselect(
-        "Groupe à flairer", candidats, max_selections=k, key=f"flair_{cle}",
-        placeholder="Choisir…", label_visibility="collapsed",
-    )
+    groupe = selection_dalles("flair", cle, candidats, k)
     if st.button("Flairer", type="primary", disabled=len(groupe) != k, key=f"flairer_{cle}"):
         loup = any(camp(s, n) == "loups" for n in groupe)
         log(s, f"Le renard {nom} flaire {', '.join(groupe)} : "
@@ -659,21 +708,16 @@ def _nuit_cupidon(s, nom, cle):
         plaquette("Ton travail est fait. Dors.", icone="🏹")
         bouton_fin(s, cle)
     else:
-        tous = list(s["joueurs"].keys())
-        premier = st.selectbox("Premier amoureux", tous, index=None, placeholder="Choisir…", key=f"cup1_{cle}")
-        second_options = [n for n in tous if n != premier] if premier else tous
-        second = st.selectbox("Deuxième amoureux", second_options, index=None, placeholder="Choisir…", key=f"cup2_{cle}")
-        couple = [premier, second] if premier and second else []
-        if st.button("Décocher la flèche", type="primary", key=f"ok_cup_{cle}"):
-            if len(couple) != 2:
-                st.error("Il en faut exactement deux.")
-            else:
-                s["amoureux"] = couple
-                log(s, f"Cupidon {nom} lie {couple[0]} et {couple[1]}.")
-                for n in couple:
-                    s["joueurs"][n]["amoureux"] = True
-                fin_de_tour(s)
-                st.rerun()
+        st.markdown("**Qui lies-tu par l'amour ?**")
+        st.caption("Choisis deux joueurs (toi compris).")
+        couple = selection_dalles("cupi", cle, list(s["joueurs"].keys()), 2)
+        if st.button("Décocher la flèche", type="primary", disabled=len(couple) != 2, key=f"ok_cup_{cle}"):
+            s["amoureux"] = couple
+            log(s, f"Cupidon {nom} lie {couple[0]} et {couple[1]}.")
+            for n in couple:
+                s["joueurs"][n]["amoureux"] = True
+            fin_de_tour(s)
+            st.rerun()
 
 
 def _nuit_salvateur(s, nom, cle):
@@ -1124,54 +1168,54 @@ def afficher_composition(nb, total, composition, n_villageois):
 
 
 def etape_roles():
-    """Tout tient sans scroller : réglages à gauche, aperçu de la composition et bouton à droite."""
     with st.container(key="setup_roles"):
         st.markdown("##### 1. Composition de la partie")
-        gauche, droite = st.columns([3, 2], gap="large")
 
-        # Réservé ici, rempli une fois les rôles de la colonne de gauche connus.
-        with droite:
-            apercu = st.empty()
+        # Réservé ici pour apparaître avant "Nombre de joueurs", rempli une fois
+        # les rôles ci-dessous connus.
+        apercu = st.empty()
 
-        with gauche:
-            col_nb, col_loup = st.columns(2)
-            nb = col_nb.number_input(
-                "Nombre de joueurs",
-                min_value=5,
-                max_value=18,
-                value=7,
-                step=1,
-                key="nb_joueurs_setup",
-            )
-            loups_defaut, speciaux_defaut = composition_recommandee(nb)
-            n_loup = col_loup.number_input(
-                f"{ROLES['loup'].emoji} {ROLES['loup'].nom}s",
-                min_value=1, max_value=max(1, nb - 1),
-                value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
-            )
-            composition = {"loup": n_loup}
+        nb = st.number_input(
+            "Nombre de joueurs",
+            min_value=5,
+            max_value=18,
+            value=7,
+            step=1,
+            key="nb_joueurs_setup",
+        )
 
-            # Rôles uniques (au plus un exemplaire) : une simple case à cocher, en
-            # grille de 3 colonnes ; le reste de la table devient Villageois.
-            st.markdown("**Autres rôles** · coche ceux qui jouent")
-            uniques = [role for role in ROLES_SPECIAUX if role.unique]
-            for i in range(0, len(uniques), 3):
-                cols = st.columns(3)
-                for col, role in zip(cols, uniques[i:i + 3]):
-                    with col:
-                        composition[role.key] = int(st.checkbox(
-                            f"{role.emoji} {role.nom}",
-                            value=bool(speciaux_defaut[role.key]), key=f"n_{role.key}",
-                        ))
+        loups_defaut, speciaux_defaut = composition_recommandee(nb)
 
-            # Rôles spéciaux en quantité libre (aucun aujourd'hui, mais le prochain
-            # rôle de ce type n'aura besoin que d'une entrée dans ROLES).
-            for role in ROLES_SPECIAUX:
-                if not role.unique:
-                    composition[role.key] = st.slider(
-                        f"{role.emoji} {role.nom}", min_value=0, max_value=nb,
-                        value=speciaux_defaut[role.key], key=f"n_{role.key}",
-                    )
+        st.markdown(f"**{ROLES['loup'].emoji} {ROLES['loup'].nom}**")
+        n_loup = st.number_input(
+            f"{ROLES['loup'].emoji} {ROLES['loup'].nom}s",
+            min_value=1, max_value=max(1, nb - 1),
+            value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
+            label_visibility="collapsed",
+        )
+        composition = {"loup": n_loup}
+
+        # Rôles uniques (au plus un exemplaire) : une simple case à cocher, en
+        # grille de 3 colonnes ; le reste de la table devient Villageois.
+        st.markdown("**Autres rôles** · coche ceux qui jouent")
+        uniques = [role for role in ROLES_SPECIAUX if role.unique]
+        for i in range(0, len(uniques), 3):
+            cols = st.columns(3)
+            for col, role in zip(cols, uniques[i:i + 3]):
+                with col:
+                    composition[role.key] = int(st.checkbox(
+                        f"{role.emoji} {role.nom}",
+                        value=bool(speciaux_defaut[role.key]), key=f"n_{role.key}",
+                    ))
+
+        # Rôles spéciaux en quantité libre (aucun aujourd'hui, mais le prochain
+        # rôle de ce type n'aura besoin que d'une entrée dans ROLES).
+        for role in ROLES_SPECIAUX:
+            if not role.unique:
+                composition[role.key] = st.slider(
+                    f"{role.emoji} {role.nom}", min_value=0, max_value=nb,
+                    value=speciaux_defaut[role.key], key=f"n_{role.key}",
+                )
 
         total = nb + sum(ROLES[cle].cartes_en_plus * n for cle, n in composition.items())
         n_villageois = total - sum(composition.values())
@@ -1180,15 +1224,11 @@ def etape_roles():
         with apercu.container():
             afficher_composition(nb, total, composition, n_villageois)
 
-        with droite:
-            if st.button(
-                "Suivant : noms des joueurs →", type="primary",
-                disabled=n_villageois < 0, use_container_width=True,
-            ):
-                st.session_state.config_nb = nb
-                st.session_state.config_composition = composition
-                st.session_state.config_etape = "noms"
-                st.rerun()
+        if st.button("Suivant : noms des joueurs →", type="primary", disabled=n_villageois < 0):
+            st.session_state.config_nb = nb
+            st.session_state.config_composition = composition
+            st.session_state.config_etape = "noms"
+            st.rerun()
 
 
 def etape_noms():

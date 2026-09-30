@@ -11,7 +11,7 @@
 
 ## 🌙 Le jeu
 
-Un village est hanté par des loups-garous. Chaque nuit, ils dévorent un villageois ; à chaque conseil, le village vote pour éliminer un suspect. Les villageois gagnent s'ils débusquent tous les loups, les loups gagnent s'ils deviennent aussi nombreux que les autres.
+Un village est hanté par des loups-garous. Chaque nuit, ils dévorent un villageois ; à chaque conseil, le village vote pour éliminer un suspect. Les villageois gagnent s'ils débusquent tous les loups, les loups gagnent s'ils deviennent plus nombreux que les autres (ou aussi nombreux, si l'un d'eux est maire).
 
 Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'application gère les rôles, les nuits et les votes, mais l'essentiel se passe entre les joueurs.
 
@@ -51,6 +51,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 
 - **Première nuit sans mort** : les loups se découvrent, mais personne n'est dévoré, et il n'y a pas de vote le premier jour.
 - **Le maire** est élu au premier jour ; s'il meurt, il choisit lui-même son successeur.
+- **Égalité loups / villageois** : la partie continue tant que le maire n'est pas un loup ; elle s'arrête dès que les loups sont plus nombreux, ou aussi nombreux avec un loup pour maire.
 - **Loups en désaccord** : si les loups ne se mettent pas d'accord sur une victime, personne n'est dévoré cette nuit-là.
 - **Les amoureux** (Cupidon) meurent ensemble et gagnent s'ils sont les deux derniers survivants, même s'ils viennent de camps opposés.
 - **Le chasseur** peut emporter quelqu'un avec lui en mourant, ou renoncer à tirer.

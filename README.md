@@ -37,7 +37,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 | 🐺 | **Loup-Garou** | Loups | Se retrouve avec la meute et vote chaque nuit (dès la deuxième) pour dévorer un villageois. |
 | 🧑‍🌾 | **Villageois** | Village | Aucun pouvoir : il dort, débat et vote le jour. |
 | 🔮 | **Voyante** | Village | Une nuit sur deux, sonde un joueur et découvre son rôle. |
-| 🧪 | **Sorcière** | Village | Dispose d'une potion de soin pour sauver la victime des loups. |
+| 🧪 | **Sorcière** | Village | Dispose d'une potion de soin pour sauver la victime des loups, sans savoir qui a été désigné : elle choisit à l'aveugle de l'utiliser ou non. |
 | 🏹 | **Cupidon** | Village | La première nuit, lie deux joueurs par l'amour (lui compris). |
 | 🔫 | **Chasseur** | Village | À sa mort, tire une dernière balle sur le joueur de son choix. |
 | 🛡️ | **Salvateur** | Village | Protège un joueur chaque nuit, jamais le même deux nuits de suite. |
@@ -50,7 +50,8 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 ## 📜 Les règles gérées par l'app
 
 - **Première nuit sans mort** : les loups se découvrent, mais personne n'est dévoré, et il n'y a pas de vote le premier jour.
-- **Le maire** est élu au premier jour ; s'il meurt, le village élit son successeur.
+- **Le maire** est élu au premier jour ; s'il meurt, il choisit lui-même son successeur.
+- **Loups en désaccord** : si les loups ne se mettent pas d'accord sur une victime, personne n'est dévoré cette nuit-là.
 - **Les amoureux** (Cupidon) meurent ensemble et gagnent s'ils sont les deux derniers survivants, même s'ils viennent de camps opposés.
 - **Le chasseur** peut emporter quelqu'un avec lui en mourant, ou renoncer à tirer.
 - **Les solitaires** (Loup Blanc) ne gagnent qu'en éliminant tout le monde : tant qu'ils vivent, ni le village ni la meute ne peut conclure.

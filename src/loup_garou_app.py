@@ -536,6 +536,144 @@ def badge_meute(nom, complices):
     )
 
 
+CSS_SCENES = """
+<style>
+.ciel {
+    position: relative;
+    height: 250px;
+    max-width: 760px;
+    margin: 0.4rem auto 1.2rem;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid rgba(201,164,76,.55);
+    box-shadow: 0 8px 28px rgba(0,0,0,.5);
+}
+.ciel-nuit { background: linear-gradient(180deg, #060a22 0%, #131c4a 55%, #2b3072 100%); }
+.ciel-jour { background: linear-gradient(180deg, #34346f 0%, #b5638f 40%, #f2a468 72%, #ffe3a0 100%); }
+.ciel-etoile {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff8dc;
+    animation: scintille 2.8s ease-in-out infinite;
+}
+.ciel-astre { position: absolute; border-radius: 50%; }
+.ciel-lune {
+    width: 62px; height: 62px; right: 16%; top: 22px;
+    background:
+        radial-gradient(circle at 30% 35%, rgba(190,180,140,.55) 0 7px, transparent 8px),
+        radial-gradient(circle at 62% 60%, rgba(190,180,140,.5) 0 9px, transparent 10px),
+        radial-gradient(circle at 55% 25%, rgba(190,180,140,.4) 0 4px, transparent 5px),
+        #f6efcf;
+    box-shadow: 0 0 22px 6px rgba(246,239,207,.45), 0 0 70px 24px rgba(246,239,207,.18);
+    animation: monte-lune 2.4s ease-out both;
+}
+.ciel-soleil {
+    width: 74px; height: 74px; left: 50%; margin-left: -37px; bottom: 58px;
+    background: radial-gradient(circle, #fff6c2 0%, #ffd45c 55%, #ffb03b 100%);
+    box-shadow: 0 0 26px 10px rgba(255,200,90,.6), 0 0 90px 40px rgba(255,170,80,.3);
+    animation: monte-soleil 2.6s ease-out both;
+}
+.ciel-nuage {
+    position: absolute;
+    height: 22px;
+    border-radius: 22px;
+    animation: derive linear infinite;
+}
+.ciel-nuage::before, .ciel-nuage::after {
+    content: "";
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+}
+.ciel-nuage::before { width: 34px; height: 34px; left: 14px; top: -16px; }
+.ciel-nuage::after { width: 26px; height: 26px; left: 42px; top: -10px; }
+.ciel-nuit .ciel-nuage { background: rgba(120,130,190,.28); }
+.ciel-jour .ciel-nuage { background: rgba(255,240,225,.88); }
+.ciel-village { position: absolute; left: 0; right: 0; bottom: 0; height: 70px; }
+.ciel-maison {
+    position: absolute;
+    bottom: 0;
+    clip-path: polygon(0 38%, 50% 0, 100% 38%, 100% 100%, 0 100%);
+}
+.ciel-nuit .ciel-maison { background: #080b1c; }
+.ciel-jour .ciel-maison { background: #2b2140; }
+.ciel-maison::after {
+    content: "";
+    position: absolute;
+    left: 28%; bottom: 22%;
+    width: 16%; height: 20%;
+    background: #ffd76a;
+    box-shadow: 0 0 6px 2px rgba(255,215,106,.7), calc(var(--l, 40px) * 0.7) 0 0 0 #ffd76a;
+    opacity: 0;
+}
+.ciel-nuit .ciel-maison::after { opacity: 1; animation: fenetre 5s ease-in-out infinite; }
+.ciel-sol {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 12px;
+}
+.ciel-nuit .ciel-sol { background: #05071a; }
+.ciel-jour .ciel-sol { background: #221a33; }
+.ciel-texte {
+    position: absolute; left: 0; right: 0; top: 26%;
+    text-align: center;
+    animation: apparait 1.6s ease-out both;
+}
+.ciel-titre {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(1.4rem, 4vw, 2.1rem);
+    letter-spacing: .06em;
+    color: #fff4d0;
+    text-shadow: 0 2px 14px rgba(0,0,0,.7), 0 0 26px rgba(255,220,130,.35);
+}
+.ciel-sous {
+    font-family: 'EB Garamond', serif;
+    font-size: 1.1rem;
+    color: #ece3d2;
+    text-shadow: 0 1px 8px rgba(0,0,0,.8);
+    margin-top: .2rem;
+}
+@keyframes scintille { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.25); } }
+@keyframes derive { from { transform: translateX(-140px); } to { transform: translateX(860px); } }
+@keyframes monte-lune { from { transform: translateY(70px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes monte-soleil { from { transform: translateY(90px); } to { transform: none; } }
+@keyframes apparait { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fenetre { 0%, 100% { opacity: 1; } 45% { opacity: .55; } 60% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ciel *, .ciel { animation: none !important; } }
+</style>
+"""
+
+
+def scene_ciel(mode, titre, sous_titre=""):
+    """Bandeau animé : "nuit" (lune, étoiles) ou "jour" (lever de soleil), nuages et village."""
+    rnd = random.Random(7)
+    elements = []
+    if mode == "nuit":
+        for _ in range(34):
+            taille = rnd.choice((1, 1, 2, 2, 3))
+            elements.append(
+                f'<span class="ciel-etoile" style="left:{rnd.uniform(1, 99):.1f}%;top:{rnd.uniform(3, 62):.1f}%;'
+                f'width:{taille}px;height:{taille}px;animation-delay:-{rnd.uniform(0, 3):.1f}s"></span>'
+            )
+        elements.append('<div class="ciel-astre ciel-lune"></div>')
+    else:
+        elements.append('<div class="ciel-astre ciel-soleil"></div>')
+    for i, (haut, largeur, duree) in enumerate(((16, 70, 46), (52, 90, 62), (34, 60, 54))):
+        elements.append(
+            f'<div class="ciel-nuage" style="top:{haut}%;width:{largeur}px;'
+            f'animation-duration:{duree}s;animation-delay:-{i * 17}s"></div>'
+        )
+    maisons = ((3, 46, 40), (15, 60, 52), (31, 42, 36), (46, 70, 56), (64, 50, 44), (77, 64, 50), (90, 40, 34))
+    elements.append('<div class="ciel-village">' + "".join(
+        f'<div class="ciel-maison" style="left:{gauche}%;width:{largeur}px;height:{hauteur}px;--l:{largeur}px"></div>'
+        for gauche, largeur, hauteur in maisons
+    ) + '<div class="ciel-sol"></div></div>')
+    sous = f'<div class="ciel-sous">{sous_titre}</div>' if sous_titre else ""
+    elements.append(f'<div class="ciel-texte"><div class="ciel-titre">{titre}</div>{sous}</div>')
+    st.markdown(
+        f'<div class="ciel ciel-{mode}">' + "".join(elements) + "</div>", unsafe_allow_html=True,
+    )
+
+
 def plaquette(texte, icone="🌙", ton="neutre"):
     classe = "plaquette" if ton == "neutre" else f"plaquette plaquette-{ton}"
     st.markdown(
@@ -1417,6 +1555,8 @@ def ecran_nuit(s):
     st.caption(f"Nuit {s['jour']} — joueur {s['tour'] + 1} sur {len(s['ordre_nuit'])}")
 
     if not s["transfert"]:
+        if s["tour"] == 0:
+            scene_ciel("nuit", "La nuit tombe", "Première nuit" if s["jour"] == 0 else f"Nuit {s['jour']}")
         st.header("🔄 Changement de joueur")
         carte_dos()
         plaquette(f"Passe le PC à {nom}, puis pose-le et éloigne-toi de l'écran.", icone="🔄")
@@ -1510,7 +1650,7 @@ def bouton_tir(s, retour):
 
 
 def ecran_reveil(s):
-    st.title(f"☀️ Réveil — jour {s['jour']}")
+    scene_ciel("jour", "Le village se réveille", "Premier jour" if s["jour"] == 0 else f"Jour {s['jour']}")
     if s["morts_nuit"]:
         for mort in s["morts_nuit"]:
             st.error(f"{mort} est mort. Il {_camp_txt(s, mort)}.")
@@ -1791,6 +1931,7 @@ def garder_sidebar_ouverte():
 def main():
     st.set_page_config(page_title="Loup-Garou", page_icon="🐺", layout="wide", initial_sidebar_state="expanded")
     css_cartes()
+    st.markdown(CSS_SCENES, unsafe_allow_html=True)
     garder_sidebar_ouverte()
 
     if "partie" not in st.session_state:

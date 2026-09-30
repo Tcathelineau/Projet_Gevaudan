@@ -929,10 +929,10 @@ CSS_ACCUEIL = """
 <style>
 div[class*="st-key-scene_accueil"] {
     position: relative;
-    max-width: 1150px;
-    min-height: 580px;
+    max-width: 1300px;
+    min-height: 780px;
     margin: 0.4rem auto 1rem;
-    padding: 2rem 1.6rem 150px;
+    padding: 3rem 2rem 190px;
     border-radius: 16px;
     overflow: hidden;
     border: 2px solid rgba(201,164,76,.55);
@@ -975,37 +975,39 @@ div[class*="st-key-scene_accueil"] > div[data-testid="stElementContainer"]:has(.
 }
 .acc-loups::before { color: #ffd0c0; }
 .acc-couche::after {
-    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 130px; pointer-events: none;
-    background-repeat: repeat-x; background-position: left bottom; background-size: 1000px 134px;
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 170px; pointer-events: none;
+    background-repeat: repeat-x; background-position: left bottom; background-size: 1308px 175px;
 }
 .acc-jour::after { background-image: __V_JOUR__; }
 .acc-nuit::after { background-image: __V_NUIT__; }
 .acc-loups::after { background-image: __V_LOUPS__; right: auto; width: 62%; }
 .acc-victoire::after { background-image: __V_VICT__; }
-.acc-couche .ciel-soleil { left: 20%; bottom: 110px; }
-.acc-couche .ciel-lune { width: 84px; height: 84px; right: 12%; top: 60px; }
-.acc-couche .ciel-lune-sang { width: 150px; height: 150px; right: 12%; top: 50px; }
+.acc-couche .ciel-soleil { left: 20%; bottom: 150px; }
+.acc-couche .ciel-lune { width: 110px; height: 110px; right: 12%; top: 70px; }
+.acc-couche .ciel-lune-sang { width: 190px; height: 190px; right: 12%; top: 60px; }
 .acc-couche .ciel-colline { bottom: -90px; height: 190px; }
-.acc-couche .ciel-loup { right: 14%; bottom: 92px; font-size: 84px; }
+.acc-couche .ciel-loup { right: 14%; bottom: 120px; font-size: 110px; }
 .acc-couche .ciel-rayons, .acc-couche .ciel-soleil-haut { left: 80%; }
 .acc-couche .ciel-confetti { animation-name: acc-chute; }
 .acc-titre-bloc { text-align: center; }
-.acc-surtitre { font-size: 3.2rem; line-height: 1; filter: drop-shadow(0 3px 10px rgba(0,0,0,.6)); }
+.acc-surtitre { font-size: 4.4rem; line-height: 1; filter: drop-shadow(0 3px 10px rgba(0,0,0,.6)); }
 .acc-titre {
     font-family: 'Cinzel', serif; font-weight: 700; text-transform: uppercase;
-    font-size: clamp(2rem, 6vw, 3.6rem); letter-spacing: .08em; color: #fff4d0;
+    font-size: clamp(2.4rem, 7vw, 5rem); letter-spacing: .08em; color: #fff4d0;
     text-shadow: 0 3px 18px rgba(0,0,0,.75), 0 0 34px rgba(255,220,130,.35);
 }
 .acc-sous {
-    font-family: 'EB Garamond', serif; font-style: italic; font-size: 1.25rem; color: #f3ead8;
-    text-shadow: 0 1px 10px rgba(0,0,0,.85); margin: .3rem 0 1.4rem;
+    font-family: 'EB Garamond', serif; font-style: italic; font-size: 1.6rem; color: #f3ead8;
+    text-shadow: 0 1px 10px rgba(0,0,0,.85); margin: .4rem 0 2rem;
 }
+div[class*="st-key-accueil_boutons"] { width: min(380px, 100%); margin: 0 auto; gap: 1rem; }
+div[class*="st-key-accueil_btn_"] { width: 100%; }
 div[class*="st-key-accueil_btn_"] button {
-    min-width: 230px; padding: .7rem 1.6rem;
+    width: 100%; padding: 1rem 1.8rem;
     box-shadow: 0 4px 14px rgba(0,0,0,.5);
 }
 div[class*="st-key-accueil_btn_"] button p {
-    font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 600; letter-spacing: .06em;
+    font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 600; letter-spacing: .06em;
 }
 div[class*="st-key-accueil_btn_nouvelle"] button { background-color: #3f7d4f; border-color: #2f5f3b; color: #f2e9d8; }
 div[class*="st-key-accueil_btn_nouvelle"] button:hover { background-color: #4a9059; border-color: #3f7d4f; color: #fff; }
@@ -1021,7 +1023,7 @@ div[class*="st-key-accueil_btn_historique"] button:hover { background-color: rgb
 @keyframes acc-chute {
     0% { transform: translateY(0) rotate(0deg); opacity: 0; }
     10% { opacity: 1; }
-    100% { transform: translateY(620px) rotate(540deg); opacity: 1; }
+    100% { transform: translateY(800px) rotate(540deg); opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) { .acc-couche, .acc-couche *, .acc-couche::before { animation: none !important; } }
 </style>
@@ -2348,42 +2350,76 @@ def icone_evenement(texte):
 
 
 def afficher_historique(s):
-    """Journal regroupé par nuit / jour, dans l'ordre chronologique (sans l'écran de début de partie)."""
-    def bloc(e):
-        if e["moment"] == "fin":
-            return "fin", None
-        return ("nuit" if e["moment"] == "nuit" else "jour"), e["jour"]
-
-    courant = None
-    lignes = []
-
-    def vider():
-        if lignes:
-            st.markdown("\n".join(lignes))
-            lignes.clear()
-
+    """Journal en cases : une case par nuit, par jour et pour l'issue, dans l'ordre chronologique."""
+    blocs = []
     for e in s["journal"]:
         if e["moment"] == "debut":
             continue
-        b = bloc(e)
-        if b != courant:
-            vider()
-            courant = b
-            kind, jour = b
-            if kind == "nuit":
-                st.markdown(f"##### 🌙 Nuit {jour}" + (" · première nuit" if jour == 0 else ""))
-            elif kind == "jour":
-                st.markdown(f"##### ☀️ Jour {jour}")
-            else:
-                st.markdown("##### 🏁 Issue de la partie")
-        icone = "🏆" if b[0] == "fin" else icone_evenement(e["texte"])
-        lignes.append(f"- {icone} {e['texte']}")
-    vider()
+        if e["moment"] == "fin":
+            cle, classe, titre = ("fin", None), "jrn-fin", "🏁 Issue de la partie"
+        elif e["moment"] == "nuit":
+            suite = " <small>· première nuit</small>" if e["jour"] == 0 else ""
+            cle, classe, titre = ("nuit", e["jour"]), "jrn-nuit", f"🌙 Nuit {e['jour']}{suite}"
+        else:
+            cle, classe, titre = ("jour", e["jour"]), "jrn-jour", f"☀️ Jour {e['jour']}"
+        if not blocs or blocs[-1][0] != cle:
+            blocs.append((cle, classe, titre, []))
+        icone = "🏆" if e["moment"] == "fin" else icone_evenement(e["texte"])
+        blocs[-1][3].append(f'<div class="jrn-ligne"><span>{icone}</span><span>{html.escape(e["texte"])}</span></div>')
+    for _, classe, titre, lignes in blocs:
+        st.markdown(
+            f'<div class="jrn-bloc {classe}"><div class="jrn-tete">{titre}</div>{"".join(lignes)}</div>',
+            unsafe_allow_html=True,
+        )
 
 
 # --------------------------------------------------------------------------
 # Menu d'accueil et historique
 # --------------------------------------------------------------------------
+
+CSS_HISTORIQUE = """
+<style>
+.jrn-bloc {
+    --c: #7f8ce0; margin: 0 0 .8rem; border-radius: 10px; overflow: hidden;
+    border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 9%, transparent);
+}
+.jrn-nuit { --c: #7f8ce0; }
+.jrn-jour { --c: #e0a94a; }
+.jrn-fin { --c: #c9a44c; }
+.jrn-tete {
+    padding: .45rem .9rem; font-family: 'Cinzel', serif; font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase; font-size: .95rem; color: #fff4d0;
+    background: color-mix(in srgb, var(--c) 32%, transparent);
+    border-bottom: 1.5px solid var(--c);
+}
+.jrn-tete small { font-family: inherit; font-weight: 400; opacity: .8; text-transform: none; letter-spacing: 0; }
+.jrn-ligne { display: flex; gap: .6rem; padding: .35rem .9rem; align-items: baseline; }
+.jrn-ligne + .jrn-ligne { border-top: 1px solid color-mix(in srgb, var(--c) 28%, transparent); }
+.jrn-ligne > span:first-child { flex: 0 0 1.6rem; text-align: center; }
+div[class*="st-key-histo_"] {
+    --c: #8a8a9a; border: 2px solid var(--c) !important; border-radius: 12px;
+    background: color-mix(in srgb, var(--c) 8%, transparent);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--c) 22%, transparent);
+}
+div[class*="st-key-histo_village_"] { --c: #4caf6a; }
+div[class*="st-key-histo_loups_"] { --c: #d64545; }
+div[class*="st-key-histo_loupblanc_"] { --c: #eceaf4; }
+div[class*="st-key-histo_couple_"] { --c: #f06fb5; }
+.hc-tete { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin-bottom: .6rem; }
+.hc-gagnant {
+    padding: .2rem .8rem; border-radius: 999px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    font-size: .85rem; color: #10121c; background: var(--c);
+}
+.hc-date { opacity: .8; font-size: .95rem; }
+.hc-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: .3rem 0; }
+.hc-label { flex: 0 0 5.2rem; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; opacity: .6; }
+.hc-puce {
+    padding: .1rem .65rem; border-radius: 6px; font-size: .9rem;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
+}
+</style>
+"""
+
 
 def _fond_accueil():
     """Quatre décors qui se fondent en boucle : jour, nuit, lune de sang, victoire du village."""
@@ -2425,7 +2461,7 @@ def ecran_accueil():
             '<div class="acc-sous">Un loup-garou grandeur nature, mené par une application</div></div>',
             unsafe_allow_html=True,
         )
-        with st.container(key="accueil_boutons", horizontal=True, horizontal_alignment="center"):
+        with st.container(key="accueil_boutons"):
             if st.button("🐺 Nouvelle partie", key="accueil_btn_nouvelle", type="primary"):
                 aller_a("installation")
             if st.button("📜 Historique", key="accueil_btn_historique"):
@@ -2453,6 +2489,36 @@ def _date_partie(p):
         return "date inconnue"
 
 
+def gagnant_partie(issue):
+    """(clé CSS, emoji, mot-clé) du camp vainqueur d'après le message de fin."""
+    if issue.startswith("Le village a gagné"):
+        return "village", "🏡", "Village"
+    if issue.startswith("Les loups ont gagné"):
+        return "loups", "🐺", "Loups"
+    if issue.startswith("Les amoureux"):
+        return "couple", "💘", "Couple"
+    if "l'emporte seul" in issue:
+        return "loupblanc", "🌕", "Loup Blanc"
+    return "autre", "🏁", "Fin"
+
+
+def _carte_partie(p):
+    _, emoji, mot = gagnant_partie(p["issue"])
+    joueurs = p["joueurs"]
+    noms = "".join(f'<span class="hc-puce">{html.escape(n)}</span>' for n in joueurs)
+    comptes = Counter(d["role"] for d in joueurs.values())
+    roles = "".join(
+        f'<span class="hc-puce">{ROLES[r].emoji} {html.escape(ROLES[r].nom)}{f" ×{n}" if n > 1 else ""}</span>'
+        for r, n in comptes.items() if r in ROLES
+    )
+    return (
+        f'<div class="hc-tete"><span class="hc-gagnant">{emoji} {mot}</span>'
+        f'<span class="hc-date">📅 {_date_partie(p)}</span></div>'
+        f'<div class="hc-ligne"><span class="hc-label">Joueurs</span>{noms}</div>'
+        f'<div class="hc-ligne"><span class="hc-label">Rôles</span>{roles}</div>'
+    )
+
+
 def ecran_historique():
     st.markdown(CSS_SANS_SIDEBAR, unsafe_allow_html=True)
     if st.button("← Menu", key="retour_menu_historique"):
@@ -2464,16 +2530,21 @@ def ecran_historique():
         st.info("Aucune partie terminée pour l'instant. Les parties abandonnées ne sont pas conservées.")
         return
 
-    village = sum(p["issue"].startswith("Le village a gagné") for p in parties)
-    loups = sum(p["issue"].startswith("Les loups ont gagné") for p in parties)
-    st.caption(f"{len(parties)} parties · 🏡 {village} victoires du village · 🐺 {loups} victoires des loups")
-    for p in parties:
-        icone = "🏡" if p["issue"].startswith("Le village a gagné") else "🐺" if p["issue"].startswith("Les loups ont gagné") else "🏁"
-        with st.expander(f"{icone} {_date_partie(p)} · {p['issue']}"):
-            st.markdown(f"**{len(p['joueurs'])} joueurs**")
-            afficher_roles(p["joueurs"])
-            st.markdown("**📜 Journal**")
-            afficher_historique(p)
+    victoires = Counter(gagnant_partie(p["issue"])[0] for p in parties)
+    bilan = [f"{len(parties)} parties"]
+    for cle, emoji, mot in (("village", "🏡", "Village"), ("loups", "🐺", "Loups"),
+                            ("couple", "💘", "Couple"), ("loupblanc", "🌕", "Loup Blanc")):
+        if victoires[cle]:
+            bilan.append(f"{emoji} {mot} {victoires[cle]}")
+    st.caption(" · ".join(bilan))
+    for i, p in enumerate(parties):
+        with st.container(key=f"histo_{gagnant_partie(p['issue'])[0]}_{i}", border=True):
+            st.markdown(_carte_partie(p), unsafe_allow_html=True)
+            with st.expander("Détails"):
+                st.markdown(f"**{len(p['joueurs'])} joueurs**")
+                afficher_roles(p["joueurs"])
+                st.markdown("**📜 Journal**")
+                afficher_historique(p)
 
 
 # --------------------------------------------------------------------------
@@ -2517,7 +2588,7 @@ def main():
     css_cartes()
     st.markdown(CSS_SCENES, unsafe_allow_html=True)
     st.markdown(CSS_PASSAGE, unsafe_allow_html=True)
-    st.markdown(CSS_ACCUEIL, unsafe_allow_html=True)
+    st.markdown(CSS_ACCUEIL + CSS_HISTORIQUE, unsafe_allow_html=True)
     garder_sidebar_ouverte()
 
     if "partie" not in st.session_state:

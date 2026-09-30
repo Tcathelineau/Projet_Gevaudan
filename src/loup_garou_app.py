@@ -1949,23 +1949,25 @@ def ecran_reveil(s):
 
 
 def ecran_election_maire(s):
-    st.title("👑 Élection du maire")
+    ancien = s.get("dernier_maire")
+    st.title("👑 Succession du maire" if ancien else "👑 Élection du maire")
 
-    if s.get("dernier_maire"):
-        annonce(f"{s['dernier_maire']} était le maire et il est mort : le village doit élire son successeur.", "!")
+    if ancien:
+        annonce(f"{ancien} était le maire et il est mort : il désigne lui-même son successeur.", "!")
+        st.caption(f"{ancien} choisit son successeur, puis saisis ici son choix.")
+        st.markdown(f"**{ancien} désigne comme maire**")
+    else:
+        st.caption("Débattez et votez à voix haute comme d'habitude, puis saisis ici le nom élu.")
+        st.markdown("**Le village élit comme maire**")
 
-    st.caption(
-        "Débattez et votez à voix haute comme d'habitude, puis saisis ici le nom élu."
-    )
-
-    st.markdown("**Le village élit comme maire**")
     choix = selection_dalles("maire", s["jour"], vivants(s), 1)
     elu = choix[0] if choix else None
     if bouton_validation(
-        f"Valider : {elu} est maire" if elu else "Valider l'élection", "valider_maire", disabled=elu is None,
+        f"Valider : {elu} est maire" if elu else ("Valider le choix" if ancien else "Valider l'élection"),
+        "valider_maire", disabled=elu is None,
     ):
         s["maire"] = elu
-        log(s, f"{elu} est élu maire.")
+        log(s, f"{ancien} désigne {elu} comme successeur." if ancien else f"{elu} est élu maire.")
         s["dernier_maire"] = None
         st.session_state.pop(f"sel_maire_{s['jour']}", None)
         s["phase"] = "conseil"
@@ -2108,6 +2110,7 @@ ICONES_EVENEMENTS = [
     ("sauvé par", "💚"),
     ("devient loup-garou", "🐺"),
     ("est élu maire", "👑"),
+    ("comme successeur", "👑"),
     ("Partie abandonnée", "🚪"),
     ("Loup Blanc", "🌕"),
     ("Chien-Loup", "🐕"),

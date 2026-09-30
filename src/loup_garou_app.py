@@ -1900,7 +1900,6 @@ def ecran_nuit(s):
         with st.container(key="scene_passage"):
             st.header("🔄 Changement de joueur")
             carte_dos()
-            plaquette(f"Passe le PC à {nom}, puis pose-le et éloigne-toi de l'écran.", icone="🔄")
             if bouton_validation(f"Je vais chercher {nom}", f"transfert_{s['jour']}_{s['tour']}"):
                 s["transfert"] = True
                 st.rerun()

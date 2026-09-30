@@ -1,0 +1,133 @@
+{
+  "date": "2026-09-30T13:36:38",
+  "issue": "Les loups ont gagné : ils sont aussi nombreux que les villageois.",
+  "joueurs": {
+    "a": {
+      "role": "voyante",
+      "vivant": false,
+      "amoureux": true
+    },
+    "\"": {
+      "role": "chasseur",
+      "vivant": false,
+      "amoureux": false
+    },
+    "b": {
+      "role": "loup",
+      "vivant": true,
+      "amoureux": false
+    },
+    "q": {
+      "role": "sorciere",
+      "vivant": false,
+      "amoureux": false
+    },
+    "v": {
+      "role": "villageois",
+      "vivant": false,
+      "amoureux": true
+    },
+    "s": {
+      "role": "villageois",
+      "vivant": false,
+      "amoureux": false
+    },
+    "c": {
+      "role": "cupidon",
+      "vivant": false,
+      "amoureux": false
+    }
+  },
+  "journal": [
+    {
+      "jour": 0,
+      "moment": "debut",
+      "texte": "7 joueurs. Paquet : Loup-Garou ×1, Sorcière ×1, Voyante ×1, Cupidon ×1, Chasseur ×1, Villageois ×2."
+    },
+    {
+      "jour": 0,
+      "moment": "debut",
+      "texte": "Distribution : a (Voyante), \" (Chasseur), b (Loup-Garou), q (Sorcière), v (Villageois), s (Villageois), c (Cupidon)."
+    },
+    {
+      "jour": 0,
+      "moment": "nuit",
+      "texte": "Cupidon c lie a et v."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "La voyante a sonde s : Villageois."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "b (Loup-Garou) désigne a."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "La sorcière q utilise une potion de soin."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "a était la cible des loups mais est sauvé par la potion de la sorcière."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "Personne ne meurt cette nuit."
+    },
+    {
+      "jour": 1,
+      "moment": "election_maire",
+      "texte": "\" est élu maire."
+    },
+    {
+      "jour": 1,
+      "moment": "conseil",
+      "texte": "q (Sorcière) est éliminé par le village."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "b (Loup-Garou) désigne a."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "a (Voyante) est dévoré par les loups."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "v (Villageois) meurt de chagrin (amoureux)."
+    },
+    {
+      "jour": 2,
+      "moment": "conseil",
+      "texte": "s (Villageois) est éliminé par le village."
+    },
+    {
+      "jour": 3,
+      "moment": "nuit",
+      "texte": "b (Loup-Garou) désigne \"."
+    },
+    {
+      "jour": 3,
+      "moment": "nuit",
+      "texte": "\" (Chasseur) est dévoré par les loups."
+    },
+    {
+      "jour": 3,
+      "moment": "tir_chasseur",
+      "texte": "c (Cupidon) est abattu par le chasseur \"."
+    },
+    {
+      "jour": 3,
+      "moment": "fin",
+      "texte": "Les loups ont gagné : ils sont aussi nombreux que les villageois."
+    }
+  ]
+}

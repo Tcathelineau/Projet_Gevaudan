@@ -19,7 +19,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 SAVE_FILE = "save.json"
-HISTORIQUE_DIR = "parties"
+HISTORIQUE_DIR = "historique"
 MUSIQUE_FILE = "musique.mp3"
 
 
@@ -1507,7 +1507,7 @@ def log(s, texte, moment=None):
 
 
 def archiver_partie(s, issue):
-    """Écrit le journal complet dans parties/ (une seule fois par partie)."""
+    """Écrit le journal complet dans historique/ (une seule fois par partie terminée)."""
     if s.get("archive"):
         return
     os.makedirs(HISTORIQUE_DIR, exist_ok=True)
@@ -2205,7 +2205,6 @@ ICONES_EVENEMENTS = [
     ("devient loup-garou", "🐺"),
     ("est élu maire", "👑"),
     ("comme successeur", "👑"),
-    ("Partie abandonnée", "🚪"),
     ("Loup Blanc", "🌕"),
     ("Chien-Loup", "🐕"),
     ("renard", "🦊"),
@@ -2253,7 +2252,7 @@ def afficher_historique(s):
                 st.markdown(f"##### ☀️ Jour {jour}")
             else:
                 st.markdown("##### 🏁 Issue de la partie")
-        icone = "🏆" if b[0] == "fin" and "abandonnée" not in e["texte"] else icone_evenement(e["texte"])
+        icone = "🏆" if b[0] == "fin" else icone_evenement(e["texte"])
         lignes.append(f"- {icone} {e['texte']}")
     vider()
 
@@ -2377,9 +2376,6 @@ def main():
                 with st.container(key="menu_option"):
                     panneau_rechargement(s)
                     if st.button("🚪 Abandonner la partie", key="abandon"):
-                        if s["phase"] != "fin":
-                            log(s, "Partie abandonnée.", "fin")
-                            archiver_partie(s, "Partie abandonnée")
                         clear_save()
                         st.session_state.clear()
                         st.rerun()

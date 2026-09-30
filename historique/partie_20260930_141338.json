@@ -1,0 +1,153 @@
+{
+  "date": "2026-09-30T14:13:38",
+  "issue": "Le village a gagné : tous les loups sont morts.",
+  "joueurs": {
+    "a": {
+      "role": "voyante",
+      "vivant": false,
+      "amoureux": true
+    },
+    "qsaazee": {
+      "role": "cupidon",
+      "vivant": false,
+      "amoureux": false
+    },
+    "az": {
+      "role": "chasseur",
+      "vivant": true,
+      "amoureux": false
+    },
+    "qsdqd": {
+      "role": "villageois",
+      "vivant": false,
+      "amoureux": false
+    },
+    "sdqwq": {
+      "role": "villageois",
+      "vivant": false,
+      "amoureux": true
+    },
+    "qsq": {
+      "role": "sorciere",
+      "vivant": true,
+      "amoureux": false
+    },
+    "sqsdqs": {
+      "role": "loup",
+      "vivant": false,
+      "amoureux": false
+    }
+  },
+  "journal": [
+    {
+      "jour": 0,
+      "moment": "debut",
+      "texte": "7 joueurs. Paquet : Loup-Garou ×1, Sorcière ×1, Voyante ×1, Cupidon ×1, Chasseur ×1, Villageois ×2."
+    },
+    {
+      "jour": 0,
+      "moment": "debut",
+      "texte": "Distribution : a (Voyante), qsaazee (Cupidon), az (Chasseur), qsdqd (Villageois), sdqwq (Villageois), qsq (Sorcière), sqsdqs (Loup-Garou)."
+    },
+    {
+      "jour": 0,
+      "moment": "nuit",
+      "texte": "Cupidon qsaazee lie a et sdqwq."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "La voyante a sonde az : Chasseur."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "La sorcière qsq utilise une potion de soin."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "sqsdqs (Loup-Garou) désigne qsaazee."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "qsaazee était la cible des loups mais est sauvé par la potion de la sorcière."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "Personne ne meurt cette nuit."
+    },
+    {
+      "jour": 1,
+      "moment": "election_maire",
+      "texte": "qsdqd est élu maire."
+    },
+    {
+      "jour": 1,
+      "moment": "conseil",
+      "texte": "qsdqd (Villageois) est éliminé par le village."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "La sorcière qsq utilise une potion de soin."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "sqsdqs (Loup-Garou) désigne a."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "a était la cible des loups mais est sauvé par la potion de la sorcière."
+    },
+    {
+      "jour": 2,
+      "moment": "nuit",
+      "texte": "Personne ne meurt cette nuit."
+    },
+    {
+      "jour": 2,
+      "moment": "election_maire",
+      "texte": "qsaazee est élu maire."
+    },
+    {
+      "jour": 2,
+      "moment": "conseil",
+      "texte": "sdqwq (Villageois) est éliminé par le village."
+    },
+    {
+      "jour": 2,
+      "moment": "conseil",
+      "texte": "a (Voyante) meurt de chagrin (amoureux)."
+    },
+    {
+      "jour": 3,
+      "moment": "nuit",
+      "texte": "sqsdqs (Loup-Garou) désigne qsaazee."
+    },
+    {
+      "jour": 3,
+      "moment": "nuit",
+      "texte": "qsaazee (Cupidon) est dévoré par les loups."
+    },
+    {
+      "jour": 3,
+      "moment": "election_maire",
+      "texte": "az est élu maire."
+    },
+    {
+      "jour": 3,
+      "moment": "conseil",
+      "texte": "sqsdqs (Loup-Garou) est éliminé par le village."
+    },
+    {
+      "jour": 3,
+      "moment": "fin",
+      "texte": "Le village a gagné : tous les loups sont morts."
+    }
+  ]
+}

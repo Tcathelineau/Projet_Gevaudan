@@ -1,0 +1,88 @@
+{
+  "date": "2026-09-30T13:42:53",
+  "issue": "Le village a gagné : tous les loups sont morts.",
+  "joueurs": {
+    "azsa": {
+      "role": "villageois",
+      "vivant": false,
+      "amoureux": true
+    },
+    "azsq": {
+      "role": "villageois",
+      "vivant": true,
+      "amoureux": false
+    },
+    "dsas": {
+      "role": "sorciere",
+      "vivant": true,
+      "amoureux": false
+    },
+    "eq": {
+      "role": "cupidon",
+      "vivant": true,
+      "amoureux": false
+    },
+    "csa": {
+      "role": "chasseur",
+      "vivant": false,
+      "amoureux": true
+    },
+    "azs": {
+      "role": "voyante",
+      "vivant": true,
+      "amoureux": false
+    },
+    "sasa": {
+      "role": "loup",
+      "vivant": false,
+      "amoureux": false
+    }
+  },
+  "journal": [
+    {
+      "jour": 0,
+      "moment": "debut",
+      "texte": "7 joueurs. Paquet : Loup-Garou ×1, Sorcière ×1, Voyante ×1, Cupidon ×1, Chasseur ×1, Villageois ×2."
+    },
+    {
+      "jour": 0,
+      "moment": "debut",
+      "texte": "Distribution : azsa (Villageois), azsq (Villageois), dsas (Sorcière), eq (Cupidon), csa (Chasseur), azs (Voyante), sasa (Loup-Garou)."
+    },
+    {
+      "jour": 0,
+      "moment": "nuit",
+      "texte": "Cupidon eq lie azsa et csa."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "La voyante azs sonde eq : Cupidon."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "sasa (Loup-Garou) désigne azsa."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "azsa (Villageois) est dévoré par les loups."
+    },
+    {
+      "jour": 1,
+      "moment": "nuit",
+      "texte": "csa (Chasseur) meurt de chagrin (amoureux)."
+    },
+    {
+      "jour": 1,
+      "moment": "tir_chasseur",
+      "texte": "sasa (Loup-Garou) est abattu par le chasseur csa."
+    },
+    {
+      "jour": 1,
+      "moment": "fin",
+      "texte": "Le village a gagné : tous les loups sont morts."
+    }
+  ]
+}

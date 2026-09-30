@@ -1690,8 +1690,6 @@ def ecran_election_maire(s):
         st.warning(
             f"{s['dernier_maire']} était le maire et il est mort : le village doit élire son successeur."
         )
-    else:
-        st.info("Avant le premier vote, le village élit son maire.")
 
     st.caption(
         "Débattez et votez à voix haute comme d'habitude, puis saisis ici le nom élu."
@@ -1723,7 +1721,6 @@ def ecran_conseil(s):
         return
 
     en_vie = vivants(s)
-    st.write("En vie : " + ", ".join(en_vie))
 
     if st.session_state.get(f"resultat_{s['jour']}"):
         for mort in st.session_state[f"resultat_{s['jour']}"]:
@@ -1782,12 +1779,11 @@ def ecran_tir_chasseur(s):
     if choix:
         plaquette(f"Cible choisie : {choix}", icone="🎯")
 
-    col1, col2 = st.columns(2)
-    tirer = col1.button(
-        f"🔫 Tirer sur {choix}" if choix else "🔫 Tirer",
-        type="primary", disabled=choix is None, key="tir_confirmer",
+    tirer = bouton_validation(
+        f"🔫 Tirer sur {choix}" if choix else "🔫 Tirer", "tir_confirmer", disabled=choix is None,
     )
-    renoncer = col2.button("Renoncer à tirer", key="tir_renoncer")
+    with st.container(key="validation_tir_renoncer"):
+        renoncer = st.button("Renoncer à tirer", key="tir_renoncer")
 
     if tirer or renoncer:
         s["tirs_en_attente"].pop(0)

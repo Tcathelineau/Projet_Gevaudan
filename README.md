@@ -30,16 +30,6 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 4. **Élection du maire** (au premier jour) puis **conseil du village** : on débat, l'app enregistre le vote et révèle si l'éliminé était loup ou non.
 5. Retour à la nuit, jusqu'à la victoire d'un camp.
 
-### Les règles gérées par l'app
-
-- **Première nuit sans mort** : les loups se découvrent, mais personne n'est dévoré, et il n'y a pas de vote le premier jour.
-- **Le maire** est élu au premier jour ; s'il meurt, le village élit son successeur.
-- **Les amoureux** (Cupidon) meurent ensemble et gagnent s'ils sont les deux derniers survivants, même s'ils viennent de camps opposés.
-- **Le chasseur** peut emporter quelqu'un avec lui en mourant, ou renoncer à tirer.
-- **Les solitaires** (Loup Blanc) ne gagnent qu'en éliminant tout le monde : tant qu'ils vivent, ni le village ni la meute ne peut conclure.
-- **Camp secret** : à la mort du Chien-Loup, son camp n'est pas dévoilé avant la fin de la partie.
-- **Ordre de nuit** : le Voleur agit avant tout le monde, puis le Chien-Loup, puis les autres rôles.
-
 ## 🃏 Les rôles
 
 | | Rôle | Camp | Pouvoir |
@@ -57,17 +47,23 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 | 🌕 | **Loup Blanc** | Loups, solitaire | Une nuit sur deux, peut dévorer l'un de ses frères ; il gagne seul. |
 | 🐕 | **Chien-Loup** | Au choix | Choisit son camp en secret la première nuit : villageois ou loup-garou. |
 
+## 📜 Les règles gérées par l'app
+
+- **Première nuit sans mort** : les loups se découvrent, mais personne n'est dévoré, et il n'y a pas de vote le premier jour.
+- **Le maire** est élu au premier jour ; s'il meurt, le village élit son successeur.
+- **Les amoureux** (Cupidon) meurent ensemble et gagnent s'ils sont les deux derniers survivants, même s'ils viennent de camps opposés.
+- **Le chasseur** peut emporter quelqu'un avec lui en mourant, ou renoncer à tirer.
+- **Les solitaires** (Loup Blanc) ne gagnent qu'en éliminant tout le monde : tant qu'ils vivent, ni le village ni la meute ne peut conclure.
+- **Camp secret** : à la mort du Chien-Loup, son camp n'est pas dévoilé avant la fin de la partie.
+- **Ordre de nuit** : le Voleur agit avant tout le monde, puis le Chien-Loup, puis les autres rôles.
+
 ## ✨ Fonctionnalités
 
 - **Composition personnalisable** : nombre de joueurs et répartition des rôles, réglables avant chaque partie.
 - **Écrans de passage sécurisés** entre chaque joueur pour éviter qu'un rôle soit vu par la mauvaise personne.
-- **Cartes de rôle** stylisées, façon vraie carte de jeu.
-- **Ambiance** : bandeaux animés (nuit qui tombe, lever de soleil, victoire du village ou des loups) et panneau d'affichage pour l'annonce des morts. Les animations sont coupées si le système demande de réduire les mouvements.
 - **Chronologie et rechargement** : une frise nuit/jour dans la barre latérale montre où en est la partie, et le menu Option permet de revenir au début d'une nuit ou à l'annonce d'un jour (plantage, erreur de clic).
 - **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, affichée nuit par nuit à la fin, archivée dans `parties/partie_AAAAMMJJ_HHMMSS.json` et téléchargeable en JSON.
 - **Sauvegarde automatique** (`save.json`) : la partie reprend là où elle s'est arrêtée, même après avoir fermé le serveur.
-- **Musique de fond** optionnelle, en boucle.
-- **Thème sombre** et mise en page compacte.
 
 ---
 

@@ -1528,8 +1528,8 @@ def ecran_fin(s):
             ancien += " (loup-garou)" if d["camp_choisi"] == "loups" else " (villageois)"
         st.write(f"{ROLES[d['role']].emoji} **{nom}** — {ROLES[d['role']].nom}{ancien} ({etat}){coeur}")
 
-    st.subheader("Historique de la partie")
-    afficher_historique(s)
+    with st.expander("📜 Afficher le log de la partie"):
+        afficher_historique(s)
     st.download_button(
         "Télécharger l'historique (JSON)",
         data=json.dumps(
@@ -1543,14 +1543,45 @@ def ecran_fin(s):
         st.caption(f"Archive enregistrée dans {s['archive']}")
 
 
+# Premier motif trouvé dans le texte gagne : les morts passent avant les rôles.
+ICONES_EVENEMENTS = [
+    ("meurt de chagrin", "💔"),
+    ("abattu par le chasseur", "🔫"),
+    ("renonce à tirer", "🕊️"),
+    ("éliminé par le village", "⚖️"),
+    ("dévoré par le Loup Blanc", "💀"),
+    ("dévoré par les loups", "💀"),
+    ("Personne ne meurt", "🌅"),
+    ("ne s'accordent pas", "🤷"),
+    ("sauvé par", "💚"),
+    ("devient loup-garou", "🐺"),
+    ("est élu maire", "👑"),
+    ("Partie abandonnée", "🚪"),
+    ("Loup Blanc", "🌕"),
+    ("Chien-Loup", "🐕"),
+    ("renard", "🦊"),
+    ("Renard", "🦊"),
+    ("voyante", "🔮"),
+    ("sorcière", "🧪"),
+    ("Cupidon", "💘"),
+    ("salvateur", "🛡️"),
+    ("mentor", "🐾"),
+    ("Voleur", "🃏"),
+    ("désigne", "🍖"),
+]
+
+
+def icone_evenement(texte):
+    return next((icone for motif, icone in ICONES_EVENEMENTS if motif in texte), "▪️")
+
+
 def afficher_historique(s):
-    """Journal regroupé par nuit / jour, dans l'ordre chronologique."""
+    """Journal regroupé par nuit / jour, dans l'ordre chronologique (sans l'écran de début de partie)."""
     def bloc(e):
-        if e["moment"] in ("debut", "fin"):
-            return e["moment"], None
+        if e["moment"] == "fin":
+            return "fin", None
         return ("nuit" if e["moment"] == "nuit" else "jour"), e["jour"]
 
-    titres = {"debut": "🎲 Début de partie", "fin": "🏁 Fin"}
     courant = None
     lignes = []
 
@@ -1560,18 +1591,21 @@ def afficher_historique(s):
             lignes.clear()
 
     for e in s["journal"]:
+        if e["moment"] == "debut":
+            continue
         b = bloc(e)
         if b != courant:
             vider()
             courant = b
             kind, jour = b
             if kind == "nuit":
-                st.markdown(f"##### 🌙 Nuit {jour}" + (" (première nuit)" if jour == 0 else ""))
+                st.markdown(f"##### 🌙 Nuit {jour}" + (" · première nuit" if jour == 0 else ""))
             elif kind == "jour":
                 st.markdown(f"##### ☀️ Jour {jour}")
             else:
-                st.markdown(f"##### {titres[kind]}")
-        lignes.append(f"- {e['texte']}")
+                st.markdown("##### 🏁 Issue de la partie")
+        icone = "🏆" if b[0] == "fin" and "abandonnée" not in e["texte"] else icone_evenement(e["texte"])
+        lignes.append(f"- {icone} {e['texte']}")
     vider()
 
 

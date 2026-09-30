@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300" width="1000" height="300" role="img" aria-label="Bon jeu et que le meilleur gagne">
+<defs>
+<linearGradient id="ciel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a9be0"/><stop offset=".6" stop-color="#8ec8f0"/><stop offset="1" stop-color="#d6ecfa"/></linearGradient>
+<radialGradient id="soleil" cx=".4" cy=".4" r=".8"><stop offset="0" stop-color="#fffbe0"/><stop offset="1" stop-color="#ffd23f"/></radialGradient>
+<radialGradient id="halo"><stop offset="0" stop-color="#fff3b0" stop-opacity=".75"/><stop offset="1" stop-color="#fff3b0" stop-opacity="0"/></radialGradient>
+<clipPath id="cadre"><rect width="1000" height="300" rx="18"/></clipPath>
+</defs>
+<style>
+.n{animation:d 60s linear infinite}
+.r{transform-origin:905px 70px;animation:t 40s linear infinite}
+@keyframes d{from{transform:translateX(-160px)}to{transform:translateX(1160px)}}
+@keyframes t{to{transform:rotate(360deg)}}
+</style>
+<g clip-path="url(#cadre)">
+<rect width="1000" height="300" fill="url(#ciel)"/>
+<circle cx="905" cy="70" r="120" fill="url(#halo)"/>
+<g class="r" stroke="#ffd23f" stroke-width="4" stroke-linecap="round" opacity=".8"><line x1="905" y1="14" x2="905" y2="0"/><line x1="905" y1="126" x2="905" y2="140"/><line x1="849" y1="70" x2="835" y2="70"/><line x1="961" y1="70" x2="975" y2="70"/><line x1="865" y1="30" x2="855" y2="20"/><line x1="945" y1="110" x2="955" y2="120"/><line x1="865" y1="110" x2="855" y2="120"/><line x1="945" y1="30" x2="955" y2="20"/></g>
+<circle cx="905" cy="70" r="36" fill="url(#soleil)"/>
+<g class="n" fill="#fff" opacity=".9"><rect x="0" y="60" width="120" height="26" rx="13"/><circle cx="38" cy="56" r="20"/><circle cx="74" cy="62" r="15"/></g>
+<g class="n" fill="#fff" opacity=".75" style="animation-duration:85s;animation-delay:-40s"><rect x="0" y="150" width="150" height="28" rx="14"/><circle cx="46" cy="144" r="22"/><circle cx="92" cy="150" r="16"/></g>
+<g class="n" fill="#fff" opacity=".6" style="animation-duration:110s;animation-delay:-75s"><rect x="0" y="105" width="100" height="22" rx="11"/><circle cx="32" cy="101" r="16"/><circle cx="62" cy="107" r="12"/></g>
+<polygon fill="#c96b4a" points="30,270 30,232 65.0,208 100,232 100,270"/><rect  x="51" y="250" width="10" height="10" fill="#5b7fa6"/><polygon fill="#b85a3e" points="120,270 120,220 165.0,190 210,220 210,270"/><rect  x="147" y="244" width="13" height="13" fill="#5b7fa6"/><rect  x="174" y="244" width="13" height="13" fill="#5b7fa6"/><polygon fill="#d17a52" points="230,270 230,238 262.0,218 294,238 294,270"/><rect  x="249" y="253" width="9" height="8" fill="#5b7fa6"/><polygon fill="#a9503a" points="310,270 310,213 360.0,178 410,213 410,270"/><rect  x="340" y="241" width="14" height="15" fill="#5b7fa6"/><rect  x="370" y="241" width="14" height="15" fill="#5b7fa6"/><polygon fill="#c96b4a" points="430,270 430,233 467.0,210 504,233 504,270"/><rect  x="452" y="251" width="10" height="10" fill="#5b7fa6"/><polygon fill="#b85a3e" points="520,270 520,218 568.0,186 616,218 616,270"/><rect  x="549" y="243" width="13" height="13" fill="#5b7fa6"/><rect  x="578" y="243" width="13" height="13" fill="#5b7fa6"/><polygon fill="#d17a52" points="640,270 640,235 673.0,214 706,235 706,270"/><rect  x="660" y="252" width="9" height="9" fill="#5b7fa6"/><polygon fill="#a9503a" points="730,270 730,223 776.0,194 822,223 822,270"/><rect  x="758" y="246" width="13" height="12" fill="#5b7fa6"/><rect  x="785" y="246" width="13" height="12" fill="#5b7fa6"/><polygon fill="#c96b4a" points="840,270 840,234 876.0,212 912,234 912,270"/><rect  x="862" y="251" width="10" height="9" fill="#5b7fa6"/><polygon fill="#b85a3e" points="920,270 920,230 955.0,206 990,230 990,270"/><rect  x="941" y="250" width="10" height="10" fill="#5b7fa6"/>
+<rect y="270" width="1000" height="30" fill="#5fa04a"/>
+<text x="500" y="146" text-anchor="middle" font-family="Cinzel,'Trajan Pro','Palatino Linotype','Book Antiqua',Georgia,serif" font-size="42" font-weight="700" textLength="800" lengthAdjust="spacingAndGlyphs" fill="#fff8e6" stroke="#2a4a6e" stroke-opacity=".55" stroke-width="1.5" paint-order="stroke">Bon jeu et que le meilleur gagne</text>
+</g>
+<rect x="1" y="1" width="998" height="298" rx="17" fill="none" stroke="#c9a44c" stroke-opacity=".8" stroke-width="2"/>
+</svg>

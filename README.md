@@ -1,18 +1,78 @@
-# 🐺 Loup-Garou — édition Streamlit
+<p align="center">
+  <img src="docs/banniere.svg" alt="Projet Gévaudan : un village endormi sous la pleine lune" width="100%">
+</p>
 
-Une application web légère pour jouer au Loup-Garou (Les Loups-Garous de Thiercelieux) à plusieurs, sur un seul appareil qu'on se passe autour de la table ("hotseat"). Pas besoin de cartes physiques ni de maître du jeu : l'app gère la composition de la partie, la distribution des rôles, les nuits, les votes et les fins de partie.
+<p align="center">
+  <strong>Un loup-garou grandeur nature, mené par une application.</strong><br>
+  Pas de cartes physiques, pas de maître du jeu : l'application distribue les rôles, mène les nuits, compte les morts et proclame le vainqueur.
+</p>
 
-## Fonctionnalités
+---
 
-- **Composition personnalisable** : nombre de joueurs et répartition des rôles (Loups-Garous, Sorcière, Voyante, Cupidon, Chasseur, Salvateur, Enfant sauvage, Voleur, Renard, Loup Blanc, Chien-Loup, Villageois) réglables avant chaque partie.
-- **Écran de passage sécurisé** entre chaque joueur, en deux étapes, pour éviter qu'un rôle soit vu par la mauvaise personne.
-- **Cartes de rôle stylisées**, façon vraie carte de jeu.
-- **Sauvegarde automatique** (`save.json`) : la partie reprend automatiquement là où elle s'est arrêtée, même après avoir fermé le serveur.
-- **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, sauvegardée avec la partie, affichée nuit par nuit à la fin, et archivée dans `parties/partie_AAAAMMJJ_HHMMSS.json` (téléchargeable aussi depuis l'écran de fin).
-- **Chronologie et rechargement** : une frise nuit/jour dans la barre latérale montre où en est la partie, et un panneau « Recharger une étape » permet de revenir au début d'une nuit ou à l'annonce d'un jour (plantage, erreur de clic).
-- **Ambiance jour/nuit** : bandeaux animés (lune, étoiles, nuages, lever de soleil, village) pour « La nuit tombe » et « Le village se réveille » (désactivés si le système demande de réduire les animations).
-- **Musique de fond** optionnelle, en boucle.
-- **Thème sombre** et mise en page compacte.
+## 🌙 Le jeu
+
+Un village est hanté par des loups-garous. Chaque nuit, ils dévorent un villageois ; à chaque conseil, le village vote pour éliminer un suspect. Les villageois gagnent s'ils débusquent tous les loups, les loups gagnent s'ils deviennent aussi nombreux que les autres.
+
+Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'application gère les rôles, les nuits et les votes, mais l'essentiel se passe entre les joueurs.
+
+- **Le rythme des conseils est libre** : les joueurs conviennent ensemble de leur fréquence (tous les jours, toutes les 12 h, toutes les 6 h…). L'application lance un conseil quand le groupe le décide.
+- **Le jeu se joue en dehors des conseils** : on discute, on forme des alliances, on cherche à démasquer les loups.
+- **Les morts deviennent des esprits frappeurs** : ils continuent de discuter avec les autres et de glaner des informations, mais ne votent pas et ne parlent pas au conseil.
+- **Les esprits ne vont jamais vers les vivants** pour parler du jeu : ce sont les vivants qui viennent les interroger.
+
+À chaque tour de nuit, l'application demande de passer l'appareil au joueur concerné, en deux étapes, pour que personne ne voie la carte d'un autre.
+
+### Une partie en un coup d'œil
+
+1. **Composition** : on saisit les pseudos et on règle le nombre de loups et de rôles spéciaux. Le reste de la table est complété en villageois.
+2. **La nuit tombe** : chaque joueur, à son tour, découvre sa carte et agit en secret (dévorer, sonder, protéger, soigner…).
+3. **Le village se réveille** : un panneau d'affichage annonce les morts de la nuit et le camp qu'ils avaient.
+4. **Élection du maire** (au premier jour) puis **conseil du village** : on débat, l'app enregistre le vote et révèle si l'éliminé était loup ou non.
+5. Retour à la nuit, jusqu'à la victoire d'un camp.
+
+## 🃏 Les rôles
+
+| | Rôle | Camp | Pouvoir |
+|---|---|---|---|
+| 🐺 | **Loup-Garou** | Loups | Se retrouve avec la meute et vote chaque nuit (dès la deuxième) pour dévorer un villageois. |
+| 🧑‍🌾 | **Villageois** | Village | Aucun pouvoir : il dort, débat et vote le jour. |
+| 🔮 | **Voyante** | Village | Une nuit sur deux, sonde un joueur et découvre son rôle. |
+| 🧪 | **Sorcière** | Village | Dispose d'une potion de soin pour sauver la victime des loups, sans savoir qui a été désigné : elle choisit à l'aveugle de l'utiliser ou non. |
+| 🏹 | **Cupidon** | Village | La première nuit, lie deux joueurs par l'amour (lui compris). |
+| 🔫 | **Chasseur** | Village | À sa mort, tire une dernière balle sur le joueur de son choix. |
+| 🛡️ | **Salvateur** | Village | Protège un joueur chaque nuit, jamais le même deux nuits de suite. |
+| 🧒 | **Enfant sauvage** | Village | Choisit un mentor ; si celui-ci meurt, il devient loup-garou. |
+| 🃏 | **Voleur** | Village | Deux cartes restent au milieu de la table : il peut prendre le rôle de l'une d'elles. |
+| 🦊 | **Renard** | Village | Flaire trois joueurs et apprend si un loup s'y cache ; sans loup, il perd son flair. |
+| 🌕 | **Loup Blanc** | Loups, solitaire | Une nuit sur deux, peut dévorer l'un de ses frères ; il gagne seul. |
+| 🐕 | **Chien-Loup** | Au choix | Choisit son camp en secret la première nuit : villageois ou loup-garou. |
+
+## 📜 Les règles gérées par l'app
+
+- **Première nuit sans mort** : les loups se découvrent, mais personne n'est dévoré, et il n'y a pas de vote le premier jour.
+- **Le maire** est élu au premier jour ; s'il meurt, il choisit lui-même son successeur.
+- **Loups en désaccord** : si les loups ne se mettent pas d'accord sur une victime, personne n'est dévoré cette nuit-là.
+- **Les amoureux** (Cupidon) meurent ensemble et gagnent s'ils sont les deux derniers survivants, même s'ils viennent de camps opposés.
+- **Le chasseur** peut emporter quelqu'un avec lui en mourant, ou renoncer à tirer.
+- **Les solitaires** (Loup Blanc) ne gagnent qu'en éliminant tout le monde : tant qu'ils vivent, ni le village ni la meute ne peut conclure.
+- **Camp secret** : à la mort du Chien-Loup, son camp n'est pas dévoilé avant la fin de la partie.
+- **Ordre de nuit** : le Voleur agit avant tout le monde, puis le Chien-Loup, puis les autres rôles.
+
+## ✨ Fonctionnalités
+
+- **Composition personnalisable** : nombre de joueurs et répartition des rôles, réglables avant chaque partie.
+- **Écrans de passage sécurisés** entre chaque joueur pour éviter qu'un rôle soit vu par la mauvaise personne.
+- **Chronologie et rechargement** : une frise nuit/jour dans la barre latérale montre où en est la partie, et le menu Option permet de revenir au début d'une nuit ou à l'annonce d'un jour (plantage, erreur de clic).
+- **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, affichée nuit par nuit à la fin, archivée dans `parties/partie_AAAAMMJJ_HHMMSS.json` et téléchargeable en JSON.
+- **Sauvegarde automatique** (`save.json`) : la partie reprend là où elle s'est arrêtée, même après avoir fermé le serveur.
+
+<p align="center">
+  <img src="docs/banniere-jour.svg" alt="Un village sous le soleil : bon jeu et que le meilleur gagne" width="100%">
+</p>
+
+---
+
+# 🛠️ Partie technique
 
 ## Prérequis
 
@@ -22,7 +82,7 @@ Une application web légère pour jouer au Loup-Garou (Les Loups-Garous de Thier
 
 ## Installation et lancement
 
-### Option 1 — avec uv (le plus rapide)
+### Option 1 : avec uv (le plus rapide)
 
 ```bash
 # Installe uv si ce n'est pas déjà fait
@@ -34,7 +94,7 @@ uv run --python 3.12 --with streamlit streamlit run src/loup_garou_app.py
 
 Une seule commande, à chaque fois : pas de venv à créer ni à activer.
 
-### Option 2 — avec venv + pip (méthode classique)
+### Option 2 : avec venv + pip (méthode classique)
 
 ```bash
 # Vérifie ta version de Python (3.10+ recommandé)
@@ -72,14 +132,18 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 .
 ├── src/
 │   └── loup_garou_app.py   # L'application Streamlit
+├── docs/
+│   ├── banniere.svg         # Bannière de nuit du README
+│   └── banniere-jour.svg    # Bannière de jour du README
 ├── musique.mp3              # (optionnel) musique de fond, à ajouter toi-même
-├── save.json                 # Sauvegarde de la partie en cours (générée automatiquement)
-├── parties/                  # Archives JSON des parties terminées ou abandonnées
+├── save.json                # Sauvegarde de la partie en cours (générée automatiquement)
+├── parties/                 # Archives JSON des parties terminées ou abandonnées
 └── .streamlit/
-    └── config.toml           # Configuration du thème sombre
+    └── config.toml          # Configuration du thème sombre
 ```
 
-> 💡 `save.json` contient l'état complet d'une partie en cours, y compris les rôles des joueurs. Si tu partages ce dépôt publiquement, pense à l'ajouter à un `.gitignore` pour ne pas exposer une sauvegarde en cours :
-> ```
-> save.json
-> ```
+> 💡 `save.json` contient l'état complet d'une partie en cours, y compris les rôles des joueurs, et `parties/` les archives des parties passées. Les deux sont listés dans le `.gitignore` : ne les retire pas si tu partages le dépôt publiquement.
+
+## Ajouter un rôle
+
+Chaque rôle est déclaré dans le registre `ROLES` de `src/loup_garou_app.py` (dataclass `Role`) : nom, emoji, dégradé de la carte, camp, état de départ et fonction de tour de nuit. Un nouveau rôle se déclare à cet endroit, sans toucher au reste de la logique.

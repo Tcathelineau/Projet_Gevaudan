@@ -19,23 +19,6 @@ SAVE_FILE = "save.json"
 HISTORIQUE_DIR = "parties"
 MUSIQUE_FILE = "musique.mp3"
 
-PHASE_EMOJI = {
-    "nuit": "🌙",
-    "reveil": "🌅",
-    "election_maire": "👑",
-    "conseil": "🗳️",
-    "tir_chasseur": "🔫",
-    "fin": "🏁",
-}
-
-PHASE_LABEL = {
-    "nuit": "Nuit",
-    "reveil": "Réveil",
-    "election_maire": "Élection du maire",
-    "conseil": "Conseil",
-    "tir_chasseur": "Dernière balle",
-    "fin": "Fin",
-}
 
 
 def css_cartes():
@@ -246,13 +229,14 @@ def css_cartes():
         }
         .chrono {
             display: flex;
-            flex-direction: column-reverse;
-            align-items: flex-start;
-            max-height: 36vh;
+            flex-wrap: wrap;
+            row-gap: 0.55rem;
+            max-height: 30vh;
             overflow-y: auto;
-            padding: 0.2rem 0.2rem 0.2rem 0.4rem;
+            padding: 0.25rem 0.1rem 0.1rem;
         }
-        .chrono-etape { display: flex; align-items: center; gap: 0.7rem; }
+        .chrono-pas { display: flex; align-items: flex-start; }
+        .chrono-etape { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 30px; }
         .chrono-noeud {
             width: 28px;
             height: 28px;
@@ -261,22 +245,22 @@ def css_cartes():
             align-items: center;
             justify-content: center;
             font-size: 0.8rem;
-            flex-shrink: 0;
         }
         .chrono-nuit { background: #44589a; }
         .chrono-jour { background: #abc4d0; }
         .chrono-actuel { box-shadow: 0 0 0 2px #c9a44c, 0 0 10px rgba(201,164,76,.6); }
         .chrono-lien {
             width: 8px;
-            height: 12px;
-            margin-left: 10px;
+            height: 4px;
+            margin: 12px 1px 0;
             border-radius: 2px;
             background: #d9d9d9;
         }
         .chrono-label {
             font-family: 'EB Garamond', serif;
-            font-size: 0.92rem;
-            color: #ece3d2;
+            font-size: 0.72rem;
+            line-height: 1;
+            color: #b9b09c;
         }
         .chrono-actuel + .chrono-label { color: #f0d890; font-weight: 600; }
         .panneau-dense { padding: 0.6rem 0.9rem; margin-bottom: 0.6rem; }
@@ -1066,18 +1050,17 @@ def etapes_chronologie(s):
 
 def chronologie_html(s):
     etapes = etapes_chronologie(s)
-    blocs = []
+    pas = []
     for i, (genre, jour) in enumerate(etapes):
         actuel = " chrono-actuel" if i == len(etapes) - 1 else ""
         icone, nom = ("🌙", "Nuit") if genre == "nuit" else ("☀️", "Jour")
-        blocs.append(
-            f'<div class="chrono-etape"><div class="chrono-noeud chrono-{genre}{actuel}">{icone}</div>'
-            f'<span class="chrono-label">{nom} {jour}</span></div>'
+        lien = '<div class="chrono-lien"></div>' if i < len(etapes) - 1 else ""
+        pas.append(
+            f'<div class="chrono-pas"><div class="chrono-etape" title="{nom} {jour}">'
+            f'<div class="chrono-noeud chrono-{genre}{actuel}">{icone}</div>'
+            f'<span class="chrono-label">{jour}</span></div>{lien}</div>'
         )
-        if i:
-            blocs.append('<div class="chrono-lien"></div>')
-    # column-reverse : le plus récent est en bas de la frise, et visible sans défiler.
-    return '<div class="chrono">' + "".join(reversed(blocs)) + "</div>"
+    return '<div class="chrono">' + "".join(pas) + "</div>"
 
 
 def terminer_partie(s, message):
@@ -1772,22 +1755,28 @@ def main():
             if secrets else ""
         )
         maire_txt = s.get("maire") or "— (pas encore élu)"
+        if s["phase"] == "fin":
+            titre_phase = "🏁 Fin de partie"
+        elif s["phase"] == "nuit":
+            titre_phase = f"🌙 Nuit {s['jour']}"
+        else:
+            titre_phase = f"☀️ Jour {s['jour']}"
 
         st.markdown(
             f"""
             <div class="panneau">
-                <div class="panneau-titre">{PHASE_EMOJI.get(s['phase'], '')} Jour {s['jour']} — {PHASE_LABEL.get(s['phase'], s['phase'])}</div>
+                <div class="panneau-titre">{titre_phase}</div>
                 <div class="panneau-ligne"><span>👥 Vivants</span><span>{len(vivants(s))} / {s['nb_joueurs']}</span></div>
                 <div class="panneau-ligne"><span>🐺 Loups</span><span>{loups_vivants}</span></div>
                 <div class="panneau-ligne"><span>🧑‍🌾 Village</span><span>{village_vivants}</span></div>
                 {ligne_secret}
             </div>
             <div class="panneau">
-                <div class="panneau-titre">🕰️ Chronologie</div>
-                {chronologie_html(s)}
+                <div class="panneau-ligne"><span>👑 Maire</span><span>{maire_txt}</span></div>
             </div>
             <div class="panneau">
-                <div class="panneau-ligne"><span>👑 Maire</span><span>{maire_txt}</span></div>
+                <div class="panneau-titre">🕰️ Chronologie</div>
+                {chronologie_html(s)}
             </div>
             """,
             unsafe_allow_html=True,
@@ -1811,6 +1800,7 @@ def main():
         ecran_fin(s)
 
     with st.sidebar:
+        st.markdown("#### ⚙️ Option")
         if os.path.exists(MUSIQUE_FILE):
             if st.checkbox("🎵 Musique de fond", value=True, key="musique_on"):
                 st.audio(MUSIQUE_FILE, format="audio/mp3", loop=True, autoplay=True)

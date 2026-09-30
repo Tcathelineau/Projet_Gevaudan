@@ -910,6 +910,11 @@ div[class*="st-key-scene_passage"] h2 {
     color: #fff4d0;
     text-shadow: 0 2px 14px rgba(0,0,0,.7);
 }
+div[class*="st-key-scene_passage"] .passage-sous {
+    text-align: center; margin: -0.6rem 0 0.4rem; color: #f3ead8;
+    font-family: 'EB Garamond', serif; font-style: italic; font-size: 1.15rem;
+    text-shadow: 0 1px 10px rgba(0,0,0,.85);
+}
 div[class*="st-key-scene_passage"] .plaquette { max-width: 640px; margin: 0.7rem auto; background: rgba(8,10,28,.72); }
 @keyframes passage-etoiles { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
 @keyframes passage-nuages {
@@ -1895,10 +1900,13 @@ def ecran_nuit(s):
     st.caption(f"Nuit {s['jour']} — joueur {s['tour'] + 1} sur {len(s['ordre_nuit'])}")
 
     if not s["transfert"]:
-        if s["tour"] == 0:
-            scene_ciel("nuit", "La nuit tombe", "Première nuit" if s["jour"] == 0 else f"Nuit {s['jour']}")
         with st.container(key="scene_passage"):
-            st.header("🔄 Changement de joueur")
+            if s["tour"] == 0:
+                st.header("🌙 La nuit tombe")
+                sous_titre = "Première nuit" if s["jour"] == 0 else f"Nuit {s['jour']}"
+                st.markdown(f'<div class="passage-sous">{sous_titre}</div>', unsafe_allow_html=True)
+            else:
+                st.header("🔄 Changement de joueur")
             carte_dos()
             if bouton_validation(f"Je vais chercher {nom}", f"transfert_{s['jour']}_{s['tour']}"):
                 s["transfert"] = True

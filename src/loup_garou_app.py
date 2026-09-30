@@ -686,8 +686,12 @@ def _nuit_voyante(s, nom, cle):
         bouton_fin(s, cle)
     else:
         candidats = [n for n in vivants(s) if n != nom]
-        vu = grille_dalles("voy", cle, candidats)
-        if vu:
+        choix = selection_dalles("voy", cle, candidats, 1)
+        vu = choix[0] if choix else None
+        if st.button(
+            f"🔮 Sonder {vu}" if vu else "🔮 Sonder", type="primary",
+            disabled=vu is None, key=f"sonder_{cle}",
+        ):
             log(s, f"La voyante {nom} sonde {vu} : {ROLES[s['joueurs'][vu]['role']].nom}.")
             st.session_state[f"vu_{cle}"] = vu
             st.rerun()

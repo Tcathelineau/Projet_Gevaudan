@@ -1897,12 +1897,13 @@ def ecran_nuit(s):
     if not s["transfert"]:
         if s["tour"] == 0:
             scene_ciel("nuit", "La nuit tombe", "Première nuit" if s["jour"] == 0 else f"Nuit {s['jour']}")
-        st.header("🔄 Changement de joueur")
-        carte_dos()
-        plaquette(f"Passe le PC à {nom}, puis pose-le et éloigne-toi de l'écran.", icone="🔄")
-        if st.button(f"C'est fait, {nom} a le PC", type="primary", key=f"transfert_{s['jour']}_{s['tour']}"):
-            s["transfert"] = True
-            st.rerun()
+        with st.container(key="scene_passage"):
+            st.header("🔄 Changement de joueur")
+            carte_dos()
+            plaquette(f"Passe le PC à {nom}, puis pose-le et éloigne-toi de l'écran.", icone="🔄")
+            if bouton_validation(f"Je vais chercher {nom}", f"transfert_{s['jour']}_{s['tour']}"):
+                s["transfert"] = True
+                st.rerun()
         return
 
     if not s["devoile"]:

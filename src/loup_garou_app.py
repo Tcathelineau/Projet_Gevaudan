@@ -272,6 +272,7 @@ def css_cartes():
             padding-bottom: 0.3rem;
             margin-bottom: 0.35rem;
         }
+        .maire-nom { font-size: 1.2rem; color: #f0d890; }
         .panneau-dense .panneau-ligne { font-size: 0.92rem; padding: 0.05rem 0; }
         .panneau-total {
             border-top: 1px solid rgba(201,164,76,.35);
@@ -1778,7 +1779,7 @@ def main():
                 {ligne_secret}
             </div>
             <div class="panneau">
-                <div class="panneau-ligne"><span>👑 Maire</span><span>{maire_txt}</span></div>
+                <div class="panneau-ligne"><span>👑 Maire</span><span class="maire-nom">{maire_txt}</span></div>
             </div>
             <div class="panneau">
                 <div class="panneau-titre">🕰️ Chronologie</div>
@@ -1810,16 +1811,23 @@ def main():
             if st.checkbox("🎵 Musique de fond", value=True, key="musique_on"):
                 st.audio(MUSIQUE_FILE, format="audio/mp3", loop=True, autoplay=True)
 
+        # Le menu se déplie au-dessus du bouton, lui-même ancré en bas de la barre latérale.
         with st.container(key="options"):
-            with st.expander("⚙️ Option"):
-                panneau_rechargement(s)
-                if st.button("🚪 Abandonner la partie", key="abandon"):
-                    if s["phase"] != "fin":
-                        log(s, "Partie abandonnée.", "fin")
-                        archiver_partie(s, "Partie abandonnée")
-                    clear_save()
-                    st.session_state.clear()
-                    st.rerun()
+            if st.session_state.get("options_ouvert"):
+                with st.container(border=True):
+                    panneau_rechargement(s)
+                    if st.button("🚪 Abandonner la partie", key="abandon"):
+                        if s["phase"] != "fin":
+                            log(s, "Partie abandonnée.", "fin")
+                            archiver_partie(s, "Partie abandonnée")
+                        clear_save()
+                        st.session_state.clear()
+                        st.rerun()
+            ouvert = st.session_state.get("options_ouvert", False)
+            st.button(
+                "⚙️ Option " + ("▾" if ouvert else "▴"), key="options_bouton",
+                on_click=lambda: st.session_state.update(options_ouvert=not ouvert),
+            )
 
     save_game(s)
 

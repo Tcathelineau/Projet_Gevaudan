@@ -5,6 +5,7 @@ Lancement :  streamlit run loup_garou_app.py
 """
 
 import copy
+import glob
 import html
 import json
 import os
@@ -835,25 +836,26 @@ def _svg_css(svg):
     return 'url("data:image/svg+xml,' + quote(svg, safe="") + '")'
 
 
-def _village_nuit_svg():
+def _village_svg(couleur_mur="#080b1c", fenetre="#ffd76a", sol="#05071a"):
     maisons = ((30, 70, 46), (120, 90, 78), (230, 64, 52), (310, 100, 96), (430, 74, 56), (520, 96, 84),
                (640, 66, 50), (730, 92, 76), (840, 72, 56), (920, 70, 60))
     corps = []
     for x, largeur, hauteur in maisons:
         bas, mur = 130, hauteur * 0.38
-        corps.append(f'<polygon fill="#080b1c" points="{x},{bas} {x},{bas - hauteur + mur:.0f} {x + largeur / 2:.0f},{bas - hauteur} '
+        corps.append(f'<polygon fill="{couleur_mur}" points="{x},{bas} {x},{bas - hauteur + mur:.0f} {x + largeur / 2:.0f},{bas - hauteur} '
                      f'{x + largeur},{bas - hauteur + mur:.0f} {x + largeur},{bas}"/>')
-        corps.append(f'<rect fill="#ffd76a" x="{x + largeur * 0.3:.0f}" y="{bas - 30}" width="{max(largeur * 0.16, 8):.0f}" height="14"/>')
-        if largeur > 80:
-            corps.append(f'<rect fill="#ffd76a" x="{x + largeur * 0.6:.0f}" y="{bas - 30}" width="{largeur * 0.16:.0f}" height="14"/>')
+        if fenetre:
+            corps.append(f'<rect fill="{fenetre}" x="{x + largeur * 0.3:.0f}" y="{bas - 30}" width="{max(largeur * 0.16, 8):.0f}" height="14"/>')
+            if largeur > 80:
+                corps.append(f'<rect fill="{fenetre}" x="{x + largeur * 0.6:.0f}" y="{bas - 30}" width="{largeur * 0.16:.0f}" height="14"/>')
     return ('<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="130" viewBox="0 0 1000 130">'
-            + "".join(corps) + '<rect y="116" width="1000" height="14" fill="#05071a"/></svg>')
+            + "".join(corps) + f'<rect y="116" width="1000" height="14" fill="{sol}"/></svg>')
 
 
-def _nuages_svg():
+def _nuages_svg(couleur="#7882be", opacite=0.3):
     nuages = ((60, 40, 1.0), (420, 90, 0.7), (760, 30, 0.85), (1050, 80, 0.6), (1250, 45, 0.9))
     corps = "".join(
-        f'<g fill="#7882be" opacity=".3"><rect x="{x}" y="{y}" width="{110 * k:.0f}" height="{24 * k:.0f}" rx="{12 * k:.0f}"/>'
+        f'<g fill="{couleur}" opacity="{opacite}"><rect x="{x}" y="{y}" width="{110 * k:.0f}" height="{24 * k:.0f}" rx="{12 * k:.0f}"/>'
         f'<circle cx="{x + 34 * k:.0f}" cy="{y - 2 * k:.0f}" r="{18 * k:.0f}"/><circle cx="{x + 68 * k:.0f}" cy="{y + 4 * k:.0f}" r="{14 * k:.0f}"/></g>'
         for x, y, k in nuages
     )
@@ -920,7 +922,123 @@ div[class*="st-key-scene_passage"] .plaquette { max-width: 640px; margin: 0.7rem
     div[class*="st-key-scene_passage"], div[class*="st-key-scene_passage"]::before { animation: none !important; }
 }
 </style>
-""".replace("__VILLAGE__", _svg_css(_village_nuit_svg())).replace("__NUAGES__", _svg_css(_nuages_svg()))
+""".replace("__VILLAGE__", _svg_css(_village_svg())).replace("__NUAGES__", _svg_css(_nuages_svg()))
+
+
+CSS_ACCUEIL = """
+<style>
+div[class*="st-key-scene_accueil"] {
+    position: relative;
+    max-width: 1150px;
+    min-height: 580px;
+    margin: 0.4rem auto 1rem;
+    padding: 2rem 1.6rem 150px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid rgba(201,164,76,.55);
+    box-shadow: 0 8px 28px rgba(0,0,0,.5);
+    background: #1a1240;
+    justify-content: center;
+    align-items: center;
+}
+div[class*="st-key-scene_accueil"] > * { position: relative; z-index: 2; width: 100%; }
+div[class*="st-key-scene_accueil"] > div[data-testid="stElementContainer"]:has(.acc-fond) {
+    position: absolute; inset: 0; z-index: 0; width: auto;
+}
+.acc-fond { position: absolute; inset: 0; overflow: hidden; container-type: inline-size; }
+.acc-couche {
+    position: absolute; inset: 0; opacity: 0;
+    background-repeat: repeat-x, no-repeat;
+    background-size: 1400px 200px, auto;
+    animation: acc-fondu 48s linear infinite, acc-nuages 90s linear infinite;
+}
+.acc-jour { opacity: 1;
+    background-image: __N_JOUR__, linear-gradient(180deg, #34346f 0%, #b5638f 40%, #f2a468 72%, #ffe3a0 100%); }
+.acc-nuit { animation-delay: -36s, 0s;
+    background-image: __N_NUIT__, linear-gradient(180deg, #060a22 0%, #131c4a 55%, #2b3072 100%); }
+.acc-loups { animation-delay: -24s, 0s;
+    background-image: __N_LOUPS__, linear-gradient(180deg, #12030a 0%, #4a0d1c 52%, #a3302f 100%); }
+.acc-victoire { animation-delay: -12s, 0s;
+    background-image: __N_VICT__, linear-gradient(180deg, #3b86d0 0%, #86c4ee 55%, #ffeeba 100%); }
+.acc-nuit::before, .acc-loups::before {
+    content: ""; position: absolute; inset: 0 0 35% 0; pointer-events: none;
+    color: #fff8dc;
+    background-image:
+        radial-gradient(1.5px 1.5px at 20px 30px, currentColor, transparent),
+        radial-gradient(1px 1px at 90px 120px, currentColor, transparent),
+        radial-gradient(2px 2px at 160px 60px, currentColor, transparent),
+        radial-gradient(1px 1px at 210px 150px, currentColor, transparent),
+        radial-gradient(1px 1px at 60px 175px, currentColor, transparent),
+        radial-gradient(2px 2px at 120px 10px, currentColor, transparent);
+    background-size: 240px 200px;
+    animation: passage-etoiles 3s ease-in-out infinite;
+}
+.acc-loups::before { color: #ffd0c0; }
+.acc-couche::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 130px; pointer-events: none;
+    background-repeat: repeat-x; background-position: left bottom; background-size: 1000px 134px;
+}
+.acc-jour::after { background-image: __V_JOUR__; }
+.acc-nuit::after { background-image: __V_NUIT__; }
+.acc-loups::after { background-image: __V_LOUPS__; right: auto; width: 62%; }
+.acc-victoire::after { background-image: __V_VICT__; }
+.acc-couche .ciel-soleil { left: 20%; bottom: 110px; }
+.acc-couche .ciel-lune { width: 84px; height: 84px; right: 12%; top: 60px; }
+.acc-couche .ciel-lune-sang { width: 150px; height: 150px; right: 12%; top: 50px; }
+.acc-couche .ciel-colline { bottom: -90px; height: 190px; }
+.acc-couche .ciel-loup { right: 14%; bottom: 92px; font-size: 84px; }
+.acc-couche .ciel-rayons, .acc-couche .ciel-soleil-haut { left: 80%; }
+.acc-couche .ciel-confetti { animation-name: acc-chute; }
+.acc-titre-bloc { text-align: center; }
+.acc-surtitre { font-size: 3.2rem; line-height: 1; filter: drop-shadow(0 3px 10px rgba(0,0,0,.6)); }
+.acc-titre {
+    font-family: 'Cinzel', serif; font-weight: 700; text-transform: uppercase;
+    font-size: clamp(2rem, 6vw, 3.6rem); letter-spacing: .08em; color: #fff4d0;
+    text-shadow: 0 3px 18px rgba(0,0,0,.75), 0 0 34px rgba(255,220,130,.35);
+}
+.acc-sous {
+    font-family: 'EB Garamond', serif; font-style: italic; font-size: 1.25rem; color: #f3ead8;
+    text-shadow: 0 1px 10px rgba(0,0,0,.85); margin: .3rem 0 1.4rem;
+}
+div[class*="st-key-accueil_btn_"] button {
+    min-width: 230px; padding: .7rem 1.6rem;
+    box-shadow: 0 4px 14px rgba(0,0,0,.5);
+}
+div[class*="st-key-accueil_btn_"] button p {
+    font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 600; letter-spacing: .06em;
+}
+div[class*="st-key-accueil_btn_nouvelle"] button { background-color: #3f7d4f; border-color: #2f5f3b; color: #f2e9d8; }
+div[class*="st-key-accueil_btn_nouvelle"] button:hover { background-color: #4a9059; border-color: #3f7d4f; color: #fff; }
+div[class*="st-key-accueil_btn_historique"] button {
+    background-color: rgba(8,10,28,.75); border: 1.5px solid rgba(201,164,76,.85); color: #fff4d0;
+}
+div[class*="st-key-accueil_btn_historique"] button:hover { background-color: rgba(30,28,70,.85); border-color: #e2c274; color: #fff; }
+@keyframes acc-fondu { 0%, 20% { opacity: 1; } 25%, 95% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes acc-nuages {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 1400px 0, 0 0; }
+}
+@keyframes acc-chute {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(620px) rotate(540deg); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .acc-couche, .acc-couche *, .acc-couche::before { animation: none !important; } }
+</style>
+""".replace("__N_JOUR__", _svg_css(_nuages_svg("#fff0e1", 0.8))
+).replace("__N_NUIT__", _svg_css(_nuages_svg())
+).replace("__N_LOUPS__", _svg_css(_nuages_svg("#3c0a14", 0.45))
+).replace("__N_VICT__", _svg_css(_nuages_svg("#ffffff", 0.92))
+).replace("__V_JOUR__", _svg_css(_village_svg("#2b2140", None, "#221a33"))
+).replace("__V_NUIT__", _svg_css(_village_svg())
+).replace("__V_LOUPS__", _svg_css(_village_svg("#0a0308", None, "#050205"))
+).replace("__V_VICT__", _svg_css(_village_svg("#a4573a", "#fff2b0", "#3f7d3a")))
+
+CSS_SANS_SIDEBAR = """
+<style>
+section[data-testid="stSidebar"], [data-testid="stExpandSidebarButton"], [data-testid="stSidebarCollapsedControl"] { display: none; }
+</style>
+"""
 
 
 def scene_ciel(mode, titre, sous_titre=""):
@@ -1733,6 +1851,8 @@ def composition_recommandee(nb):
 
 
 def ecran_installation():
+    if st.button("← Menu", key="retour_menu_installation"):
+        aller_a("accueil")
     st.markdown("#### 🐺 Loup-Garou")
 
     if "config_etape" not in st.session_state:
@@ -2156,6 +2276,18 @@ def ecran_tir_chasseur(s):
         st.rerun()
 
 
+def afficher_roles(joueurs):
+    for nom, d in joueurs.items():
+        etat = "en vie" if d["vivant"] else "mort"
+        coeur = " 💘" if d["amoureux"] else ""
+        ancien = " (ex-enfant sauvage)" if d.get("enfant_sauvage") else ""
+        ancien += " (ex-voleur)" if d.get("voleur") else ""
+        ancien += " (ex-renard)" if d.get("renard") else ""
+        if d.get("camp_choisi"):
+            ancien += " (loup-garou)" if d["camp_choisi"] == "loups" else " (villageois)"
+        st.write(f"{ROLES[d['role']].emoji} **{nom}** — {ROLES[d['role']].nom}{ancien} ({etat}){coeur}")
+
+
 def ecran_fin(s):
     message = s["message_fin"]
     if message.startswith("Le village a gagné"):
@@ -2166,15 +2298,7 @@ def ecran_fin(s):
         st.title("🏁 Fin de la partie")
     st.header(message)
     st.subheader("Les rôles")
-    for nom, d in s["joueurs"].items():
-        etat = "en vie" if d["vivant"] else "mort"
-        coeur = " 💘" if d["amoureux"] else ""
-        ancien = " (ex-enfant sauvage)" if d.get("enfant_sauvage") else ""
-        ancien += " (ex-voleur)" if d.get("voleur") else ""
-        ancien += " (ex-renard)" if d.get("renard") else ""
-        if d.get("camp_choisi"):
-            ancien += " (loup-garou)" if d["camp_choisi"] == "loups" else " (villageois)"
-        st.write(f"{ROLES[d['role']].emoji} **{nom}** — {ROLES[d['role']].nom}{ancien} ({etat}){coeur}")
+    afficher_roles(s["joueurs"])
 
     with st.expander("📜 Afficher le log de la partie"):
         afficher_historique(s)
@@ -2258,6 +2382,101 @@ def afficher_historique(s):
 
 
 # --------------------------------------------------------------------------
+# Menu d'accueil et historique
+# --------------------------------------------------------------------------
+
+def _fond_accueil():
+    """Quatre décors qui se fondent en boucle : jour, nuit, lune de sang, victoire du village."""
+    rnd = random.Random(5)
+    couleurs = ("#ff5a5a", "#ffd23f", "#4cc9f0", "#7bd88f", "#f78fd0", "#ffffff")
+    confettis = "".join(
+        f'<span class="ciel-confetti" style="left:{rnd.uniform(1, 99):.1f}%;background:{rnd.choice(couleurs)};'
+        f'animation-duration:{rnd.uniform(3.2, 5.6):.1f}s;animation-delay:-{rnd.uniform(0, 5):.1f}s"></span>'
+        for _ in range(40)
+    )
+    chauves = "".join(
+        f'<span class="ciel-chauve" style="top:{haut}%;animation-duration:{duree}s;animation-delay:-{i * 6}s">🦇</span>'
+        for i, (haut, duree) in enumerate(((14, 14), (30, 19), (8, 23)))
+    )
+    return (
+        '<div class="acc-fond">'
+        '<div class="acc-couche acc-jour"><div class="ciel-astre ciel-soleil"></div></div>'
+        '<div class="acc-couche acc-nuit"><div class="ciel-astre ciel-lune"></div></div>'
+        '<div class="acc-couche acc-loups"><div class="ciel-astre ciel-lune-sang"></div>' + chauves +
+        '<div class="ciel-colline"></div><span class="ciel-loup">🐺</span></div>'
+        '<div class="acc-couche acc-victoire"><div class="ciel-rayons"></div>'
+        '<div class="ciel-astre ciel-soleil-haut"></div>' + confettis + '</div>'
+        '</div>'
+    )
+
+
+def aller_a(ecran):
+    st.session_state.ecran = ecran
+    st.rerun()
+
+
+def ecran_accueil():
+    st.markdown(CSS_SANS_SIDEBAR, unsafe_allow_html=True)
+    with st.container(key="scene_accueil"):
+        st.markdown(_fond_accueil(), unsafe_allow_html=True)
+        st.markdown(
+            '<div class="acc-titre-bloc"><div class="acc-surtitre">🐺</div>'
+            '<div class="acc-titre">Projet Gévaudan</div>'
+            '<div class="acc-sous">Un loup-garou grandeur nature, mené par une application</div></div>',
+            unsafe_allow_html=True,
+        )
+        with st.container(key="accueil_boutons", horizontal=True, horizontal_alignment="center"):
+            if st.button("🐺 Nouvelle partie", key="accueil_btn_nouvelle", type="primary"):
+                aller_a("installation")
+            if st.button("📜 Historique", key="accueil_btn_historique"):
+                aller_a("historique")
+
+
+def lister_historique():
+    """Parties archivées, de la plus récente à la plus ancienne (les fichiers illisibles sont ignorés)."""
+    parties = []
+    for fichier in sorted(glob.glob(os.path.join(HISTORIQUE_DIR, "partie_*.json")), reverse=True):
+        try:
+            with open(fichier, "r", encoding="utf-8") as f:
+                p = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if isinstance(p, dict) and {"issue", "joueurs", "journal"} <= p.keys():
+            parties.append(p)
+    return parties
+
+
+def _date_partie(p):
+    try:
+        return datetime.fromisoformat(p["date"]).strftime("%d/%m/%Y à %H:%M")
+    except (KeyError, ValueError):
+        return "date inconnue"
+
+
+def ecran_historique():
+    st.markdown(CSS_SANS_SIDEBAR, unsafe_allow_html=True)
+    if st.button("← Menu", key="retour_menu_historique"):
+        aller_a("accueil")
+    scene_ciel("nuit", "Historique des parties", "Les parties terminées, de la plus récente à la plus ancienne")
+
+    parties = lister_historique()
+    if not parties:
+        st.info("Aucune partie terminée pour l'instant. Les parties abandonnées ne sont pas conservées.")
+        return
+
+    village = sum(p["issue"].startswith("Le village a gagné") for p in parties)
+    loups = sum(p["issue"].startswith("Les loups ont gagné") for p in parties)
+    st.caption(f"{len(parties)} parties · 🏡 {village} victoires du village · 🐺 {loups} victoires des loups")
+    for p in parties:
+        icone = "🏡" if p["issue"].startswith("Le village a gagné") else "🐺" if p["issue"].startswith("Les loups ont gagné") else "🏁"
+        with st.expander(f"{icone} {_date_partie(p)} · {p['issue']}"):
+            st.markdown(f"**{len(p['joueurs'])} joueurs**")
+            afficher_roles(p["joueurs"])
+            st.markdown("**📜 Journal**")
+            afficher_historique(p)
+
+
+# --------------------------------------------------------------------------
 # Point d'entrée
 # --------------------------------------------------------------------------
 
@@ -2298,6 +2517,7 @@ def main():
     css_cartes()
     st.markdown(CSS_SCENES, unsafe_allow_html=True)
     st.markdown(CSS_PASSAGE, unsafe_allow_html=True)
+    st.markdown(CSS_ACCUEIL, unsafe_allow_html=True)
     garder_sidebar_ouverte()
 
     if "partie" not in st.session_state:
@@ -2305,7 +2525,13 @@ def main():
         if sauvegarde:
             st.session_state.partie = sauvegarde
         else:
-            ecran_installation()
+            ecran = st.session_state.get("ecran", "accueil")
+            if ecran == "installation":
+                ecran_installation()
+            elif ecran == "historique":
+                ecran_historique()
+            else:
+                ecran_accueil()
             return
 
     s = st.session_state.partie
@@ -2375,7 +2601,8 @@ def main():
             if st.session_state.get("options_ouvert"):
                 with st.container(key="menu_option"):
                     panneau_rechargement(s)
-                    if st.button("🚪 Abandonner la partie", key="abandon"):
+                    libelle = "🏠 Retour au menu" if s["phase"] == "fin" else "🚪 Abandonner la partie"
+                    if st.button(libelle, key="abandon"):
                         clear_save()
                         st.session_state.clear()
                         st.rerun()

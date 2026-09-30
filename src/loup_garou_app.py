@@ -308,9 +308,16 @@ def css_cartes():
         [data-testid="stSidebarUserContent"] [data-testid="stVerticalBlock"] {
             flex: 1;
         }
-        div[class*="st-key-options"] {
+        div[class*="st-key-options"],
+        [data-testid="stLayoutWrapper"]:has(> div[class*="st-key-options"]),
+        [data-testid="stElementContainer"]:has(> div[class*="st-key-options"]) {
             margin-top: auto;
             margin-bottom: -1.5rem;
+        }
+        div[class*="st-key-validation_"] {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         div[class*="st-key-abandon"] button {
             background-color: transparent;
@@ -548,6 +555,12 @@ def selection_dalles(theme, cle, choix, k):
     return sel
 
 
+def bouton_validation(libelle, cle, disabled=False):
+    """Bouton de validation d'une sélection de dalles, centré sous la grille."""
+    with st.container(key=f"validation_{cle}"):
+        return st.button(libelle, type="primary", disabled=disabled, key=cle)
+
+
 def bouton_fin(s, cle):
     if st.button("Terminer mon tour", type="primary", key=f"fin_{cle}"):
         fin_de_tour(s)
@@ -582,11 +595,16 @@ def _cibles_loups(s):
 def _vote_loups(s, nom, cle, cibles):
     """Grille de vote de la meute. Renvoie True quand la victime vient d'être désignée."""
     st.markdown("**Qui dévorez-vous ?**")
-    cible = grille_dalles("loup", cle, cibles)
-    if cible:
+    choix = selection_dalles("loup", cle, cibles, 1)
+    cible = choix[0] if choix else None
+    if bouton_validation(
+        f"🐺 Dévorer {cible}" if cible else "🐺 Dévorer", f"devorer_{cle}", disabled=cible is None,
+    ):
         s["votes_loups"].append(cible)
         log(s, f"{nom} ({ROLES[s['joueurs'][nom]['role']].nom}) désigne {cible}.")
-    return bool(cible)
+        st.session_state.pop(f"sel_loup_{cle}", None)
+        return True
+    return False
 
 
 def _nuit_loup(s, nom, cle):
@@ -686,7 +704,7 @@ def _nuit_renard(s, nom, cle):
     k = min(3, len(candidats))
     st.markdown(f"**Flaire {k} personnes**")
     groupe = selection_dalles("flair", cle, candidats, k)
-    if st.button("Flairer", type="primary", disabled=len(groupe) != k, key=f"flairer_{cle}"):
+    if bouton_validation("Flairer", f"flairer_{cle}", disabled=len(groupe) != k):
         loup = any(camp(s, n) == "loups" for n in groupe)
         log(s, f"Le renard {nom} flaire {', '.join(groupe)} : "
                + ("un loup-garou s'y trouve." if loup else "aucun loup-garou, il perd son flair."))
@@ -710,9 +728,8 @@ def _nuit_voyante(s, nom, cle):
         candidats = [n for n in vivants(s) if n != nom]
         choix = selection_dalles("voy", cle, candidats, 1)
         vu = choix[0] if choix else None
-        if st.button(
-            f"🔮 Sonder {vu}" if vu else "🔮 Sonder", type="primary",
-            disabled=vu is None, key=f"sonder_{cle}",
+        if bouton_validation(
+            f"🔮 Sonder {vu}" if vu else "🔮 Sonder", f"sonder_{cle}", disabled=vu is None,
         ):
             log(s, f"La voyante {nom} sonde {vu} : {ROLES[s['joueurs'][vu]['role']].nom}.")
             st.session_state[f"vu_{cle}"] = vu
@@ -746,7 +763,7 @@ def _nuit_cupidon(s, nom, cle):
         st.markdown("**Qui lies-tu par l'amour ?**")
         st.caption("Choisis deux joueurs (toi compris).")
         couple = selection_dalles("cupi", cle, list(s["joueurs"].keys()), 2)
-        if st.button("Décocher la flèche", type="primary", disabled=len(couple) != 2, key=f"ok_cup_{cle}"):
+        if bouton_validation("Décocher la flèche", f"ok_cup_{cle}", disabled=len(couple) != 2):
             s["amoureux"] = couple
             log(s, f"Cupidon {nom} lie {couple[0]} et {couple[1]}.")
             for n in couple:
@@ -1521,9 +1538,8 @@ def ecran_election_maire(s):
     st.markdown("**Le village élit comme maire**")
     choix = selection_dalles("maire", s["jour"], vivants(s), 1)
     elu = choix[0] if choix else None
-    if st.button(
-        f"Valider : {elu} est maire" if elu else "Valider l'élection",
-        type="primary", disabled=elu is None, key="valider_maire",
+    if bouton_validation(
+        f"Valider : {elu} est maire" if elu else "Valider l'élection", "valider_maire", disabled=elu is None,
     ):
         s["maire"] = elu
         log(s, f"{elu} est élu maire.")
@@ -1574,9 +1590,9 @@ def ecran_conseil(s):
         st.markdown("**Le village élimine**")
         choix = selection_dalles("vote", s["jour"], en_vie, 1)
         condamne = choix[0] if choix else None
-        if st.button(
+        if bouton_validation(
             f"Valider : éliminer {condamne}" if condamne else "Valider le vote",
-            type="primary", disabled=condamne is None, key="valider_vote",
+            "valider_vote", disabled=condamne is None,
         ):
             st.session_state[f"resultat_{s['jour']}"] = tuer(s, condamne, "est éliminé par le village")
             st.session_state.pop(f"sel_vote_{s['jour']}", None)

@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>Les Loups-Garous de Thiercelieux, sur un seul écran qu'on se passe autour de la table.</strong><br>
+  <strong>Un loup-garou grandeur nature, mené par une application.</strong><br>
   Pas de cartes physiques, pas de maître du jeu : l'application distribue les rôles, mène les nuits, compte les morts et proclame le vainqueur.
 </p>
 
@@ -11,16 +11,23 @@
 
 ## 🌙 Le jeu
 
-Un village est hanté par des loups-garous. Chaque nuit, ils dévorent un villageois ; chaque jour, le village vote pour éliminer un suspect. Les villageois gagnent s'ils débusquent tous les loups, les loups gagnent s'ils deviennent aussi nombreux que les autres.
+Un village est hanté par des loups-garous. Chaque nuit, ils dévorent un villageois ; à chaque conseil, le village vote pour éliminer un suspect. Les villageois gagnent s'ils débusquent tous les loups, les loups gagnent s'ils deviennent aussi nombreux que les autres.
 
-Tout le monde joue sur **le même appareil** ("hotseat") : à chaque tour de nuit, l'écran demande de le passer au joueur suivant, en deux étapes, pour que personne ne voie la carte d'un autre.
+Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'application gère les rôles, les nuits et les votes, mais l'essentiel se passe entre les joueurs.
+
+- **Le rythme des conseils est libre** : les joueurs conviennent ensemble de leur fréquence (tous les jours, toutes les 12 h, toutes les 6 h…). L'application lance un conseil quand le groupe le décide.
+- **Le jeu se joue en dehors des conseils** : on discute, on forme des alliances, on cherche à démasquer les loups.
+- **Les morts deviennent des esprits frappeurs** : ils continuent de discuter avec les autres et de glaner des informations, mais ne votent pas et ne parlent pas au conseil.
+- **Les esprits ne vont jamais vers les vivants** pour parler du jeu : ce sont les vivants qui viennent les interroger.
+
+À chaque tour de nuit, l'application demande de passer l'appareil au joueur concerné, en deux étapes, pour que personne ne voie la carte d'un autre.
 
 ### Une partie en un coup d'œil
 
 1. **Composition** : on saisit les pseudos et on règle le nombre de loups et de rôles spéciaux. Le reste de la table est complété en villageois.
 2. **La nuit tombe** : chaque joueur, à son tour, découvre sa carte et agit en secret (dévorer, sonder, protéger, soigner…).
 3. **Le village se réveille** : un panneau d'affichage annonce les morts de la nuit et le camp qu'ils avaient.
-4. **Élection du maire** (au premier jour) puis **conseil du village** : on débat à voix haute, l'app enregistre le vote et révèle si l'éliminé était loup ou non.
+4. **Élection du maire** (au premier jour) puis **conseil du village** : on débat, l'app enregistre le vote et révèle si l'éliminé était loup ou non.
 5. Retour à la nuit, jusqu'à la victoire d'un camp.
 
 ### Les règles gérées par l'app

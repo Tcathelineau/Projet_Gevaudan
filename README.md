@@ -63,7 +63,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 - **Composition personnalisable** : nombre de joueurs et répartition des rôles, réglables avant chaque partie.
 - **Écrans de passage sécurisés** entre chaque joueur pour éviter qu'un rôle soit vu par la mauvaise personne.
 - **Chronologie et rechargement** : une frise nuit/jour dans la barre latérale montre où en est la partie, et le menu Option permet de revenir au début d'une nuit ou à l'annonce d'un jour (plantage, erreur de clic).
-- **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, affichée nuit par nuit à la fin, archivée dans `parties/partie_AAAAMMJJ_HHMMSS.json` et téléchargeable en JSON.
+- **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, affichée nuit par nuit à la fin, archivée à la fin de la partie dans `historique/partie_AAAAMMJJ_HHMMSS.json` (les parties abandonnées ne sont pas conservées) et téléchargeable en JSON.
 - **Sauvegarde automatique** (`save.json`) : la partie reprend là où elle s'est arrêtée, même après avoir fermé le serveur.
 
 <p align="center">
@@ -137,12 +137,12 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 │   └── banniere-jour.svg    # Bannière de jour du README
 ├── musique.mp3              # (optionnel) musique de fond, à ajouter toi-même
 ├── save.json                # Sauvegarde de la partie en cours (générée automatiquement)
-├── parties/                 # Archives JSON des parties terminées ou abandonnées
+├── historique/              # Archives JSON des parties terminées (versionnées dans le dépôt)
 └── .streamlit/
     └── config.toml          # Configuration du thème sombre
 ```
 
-> 💡 `save.json` contient l'état complet d'une partie en cours, y compris les rôles des joueurs, et `parties/` les archives des parties passées. Les deux sont listés dans le `.gitignore` : ne les retire pas si tu partages le dépôt publiquement.
+> 💡 `save.json` contient l'état complet d'une partie en cours, y compris les rôles des joueurs : il est listé dans le `.gitignore`. Le dossier `historique/`, lui, est poussé sur le dépôt : chaque partie terminée y ajoute un fichier avec les rôles et le journal complet.
 
 ## Ajouter un rôle
 

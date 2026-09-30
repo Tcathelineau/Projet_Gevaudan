@@ -1832,8 +1832,11 @@ def vainqueur(s):
         return None
     if not loups:
         return "Le village a gagné : tous les loups sont morts."
-    if len(loups) >= len(autres):
-        return "Les loups ont gagné : ils sont aussi nombreux que les villageois."
+    if len(loups) > len(autres):
+        return "Les loups ont gagné : ils sont plus nombreux que les villageois."
+    # À égalité, le village garde sa chance tant que le maire n'est pas un loup.
+    if len(loups) == len(autres) and s.get("maire") in loups:
+        return "Les loups ont gagné : ils sont aussi nombreux que les villageois et l'un d'eux est maire."
     return None
 
 
@@ -2198,7 +2201,11 @@ def ecran_election_maire(s):
         log(s, f"{ancien} désigne {elu} comme successeur." if ancien else f"{elu} est élu maire.")
         s["dernier_maire"] = None
         st.session_state.pop(f"sel_maire_{s['jour']}", None)
-        s["phase"] = "conseil"
+        gagnant = vainqueur(s)
+        if gagnant:
+            terminer_partie(s, gagnant)
+        else:
+            s["phase"] = "conseil"
         st.rerun()
 
 

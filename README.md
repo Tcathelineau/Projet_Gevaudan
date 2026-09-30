@@ -10,6 +10,7 @@ Une application web légère pour jouer au Loup-Garou (Les Loups-Garous de Thier
 - **Sauvegarde automatique** (`save.json`) : la partie reprend automatiquement là où elle s'est arrêtée, même après avoir fermé le serveur.
 - **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, sauvegardée avec la partie, affichée nuit par nuit à la fin, et archivée dans `parties/partie_AAAAMMJJ_HHMMSS.json` (téléchargeable aussi depuis l'écran de fin).
 - **Chronologie et rechargement** : une frise nuit/jour dans la barre latérale montre où en est la partie, et un panneau « Recharger une étape » permet de revenir au début d'une nuit ou à l'annonce d'un jour (plantage, erreur de clic).
+- **Ambiance jour/nuit** : bandeaux animés (lune, étoiles, nuages, lever de soleil, village) pour « La nuit tombe » et « Le village se réveille » (désactivés si le système demande de réduire les animations).
 - **Musique de fond** optionnelle, en boucle.
 - **Thème sombre** et mise en page compacte.
 

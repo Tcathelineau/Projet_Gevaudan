@@ -13,6 +13,7 @@ from collections import Counter
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Callable, Optional
+from urllib.parse import quote
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -828,6 +829,98 @@ CSS_SCENES = """
 @keyframes colle { from { opacity: 0; transform: translateY(-14px) rotate(-3deg); } }
 </style>
 """
+
+
+def _svg_css(svg):
+    return 'url("data:image/svg+xml,' + quote(svg, safe="") + '")'
+
+
+def _village_nuit_svg():
+    maisons = ((30, 70, 46), (120, 90, 78), (230, 64, 52), (310, 100, 96), (430, 74, 56), (520, 96, 84),
+               (640, 66, 50), (730, 92, 76), (840, 72, 56), (920, 70, 60))
+    corps = []
+    for x, largeur, hauteur in maisons:
+        bas, mur = 130, hauteur * 0.38
+        corps.append(f'<polygon fill="#080b1c" points="{x},{bas} {x},{bas - hauteur + mur:.0f} {x + largeur / 2:.0f},{bas - hauteur} '
+                     f'{x + largeur},{bas - hauteur + mur:.0f} {x + largeur},{bas}"/>')
+        corps.append(f'<rect fill="#ffd76a" x="{x + largeur * 0.3:.0f}" y="{bas - 30}" width="{max(largeur * 0.16, 8):.0f}" height="14"/>')
+        if largeur > 80:
+            corps.append(f'<rect fill="#ffd76a" x="{x + largeur * 0.6:.0f}" y="{bas - 30}" width="{largeur * 0.16:.0f}" height="14"/>')
+    return ('<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="130" viewBox="0 0 1000 130">'
+            + "".join(corps) + '<rect y="116" width="1000" height="14" fill="#05071a"/></svg>')
+
+
+def _nuages_svg():
+    nuages = ((60, 40, 1.0), (420, 90, 0.7), (760, 30, 0.85), (1050, 80, 0.6), (1250, 45, 0.9))
+    corps = "".join(
+        f'<g fill="#7882be" opacity=".3"><rect x="{x}" y="{y}" width="{110 * k:.0f}" height="{24 * k:.0f}" rx="{12 * k:.0f}"/>'
+        f'<circle cx="{x + 34 * k:.0f}" cy="{y - 2 * k:.0f}" r="{18 * k:.0f}"/><circle cx="{x + 68 * k:.0f}" cy="{y + 4 * k:.0f}" r="{14 * k:.0f}"/></g>'
+        for x, y, k in nuages
+    )
+    return f'<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="200" viewBox="0 0 1400 200">{corps}</svg>'
+
+
+CSS_PASSAGE = """
+<style>
+div[class*="st-key-scene_passage"] {
+    position: relative;
+    max-width: 1150px;
+    margin: 0.4rem auto 1rem;
+    padding: 2.2rem 1.6rem 150px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid rgba(201,164,76,.55);
+    box-shadow: 0 8px 28px rgba(0,0,0,.5);
+    background-color: #131c4a;
+    background-image:
+        __NUAGES__,
+        radial-gradient(circle at calc(100% - 110px) 74px, #f6efcf 0 30px, rgba(246,239,207,.4) 34px, rgba(246,239,207,.12) 80px, transparent 140px),
+        linear-gradient(180deg, #060a22 0%, #131c4a 55%, #2b3072 100%);
+    background-repeat: repeat-x, no-repeat, no-repeat;
+    background-size: 1400px 200px, auto, auto;
+    background-position: 0 0, 0 0, 0 0;
+    animation: passage-nuages 90s linear infinite;
+}
+div[class*="st-key-scene_passage"]::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 35% 0;
+    pointer-events: none;
+    background-image:
+        radial-gradient(1.5px 1.5px at 20px 30px, #fff8dc, transparent),
+        radial-gradient(1px 1px at 90px 120px, #fff8dc, transparent),
+        radial-gradient(2px 2px at 160px 60px, #fff8dc, transparent),
+        radial-gradient(1px 1px at 210px 150px, #fff8dc, transparent),
+        radial-gradient(1px 1px at 60px 175px, #fff8dc, transparent),
+        radial-gradient(2px 2px at 120px 10px, #fff8dc, transparent);
+    background-size: 240px 200px;
+    animation: passage-etoiles 3s ease-in-out infinite;
+}
+div[class*="st-key-scene_passage"]::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 130px;
+    pointer-events: none;
+    background: __VILLAGE__ repeat-x left bottom / 1000px 130px;
+}
+div[class*="st-key-scene_passage"] > * { position: relative; z-index: 1; }
+div[class*="st-key-scene_passage"] h2 {
+    text-align: center;
+    color: #fff4d0;
+    text-shadow: 0 2px 14px rgba(0,0,0,.7);
+}
+div[class*="st-key-scene_passage"] .plaquette { max-width: 640px; margin: 0.7rem auto; background: rgba(8,10,28,.72); }
+@keyframes passage-etoiles { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+@keyframes passage-nuages {
+    from { background-position: 0 0, 0 0, 0 0; }
+    to { background-position: 1400px 0, 0 0, 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    div[class*="st-key-scene_passage"], div[class*="st-key-scene_passage"]::before { animation: none !important; }
+}
+</style>
+""".replace("__VILLAGE__", _svg_css(_village_nuit_svg())).replace("__NUAGES__", _svg_css(_nuages_svg()))
 
 
 def scene_ciel(mode, titre, sous_titre=""):
@@ -1804,21 +1897,22 @@ def ecran_nuit(s):
     if not s["transfert"]:
         if s["tour"] == 0:
             scene_ciel("nuit", "La nuit tombe", "Première nuit" if s["jour"] == 0 else f"Nuit {s['jour']}")
-        st.header("🔄 Changement de joueur")
-        carte_dos()
-        plaquette(f"Passe le PC à {nom}, puis pose-le et éloigne-toi de l'écran.", icone="🔄")
-        if st.button(f"C'est fait, {nom} a le PC", type="primary", key=f"transfert_{s['jour']}_{s['tour']}"):
-            s["transfert"] = True
-            st.rerun()
+        with st.container(key="scene_passage"):
+            st.header("🔄 Changement de joueur")
+            carte_dos()
+            if bouton_validation(f"Je vais chercher {nom}", f"transfert_{s['jour']}_{s['tour']}"):
+                s["transfert"] = True
+                st.rerun()
         return
 
     if not s["devoile"]:
-        st.header(f"C'est ton tour, {nom}")
-        carte_dos()
-        plaquette("Confirme que c'est bien toi avant de voir ton rôle.", icone="🗝️")
-        if st.button(f"Oui, je suis {nom}", type="primary", key=f"pret_{s['jour']}_{s['tour']}"):
-            s["devoile"] = True
-            st.rerun()
+        with st.container(key="scene_passage"):
+            st.header(f"C'est ton tour, {nom}")
+            carte_dos()
+            plaquette("Confirme que c'est bien toi avant de voir ton rôle.", icone="🗝️")
+            if bouton_validation(f"Oui, je suis {nom}", f"pret_{s['jour']}_{s['tour']}"):
+                s["devoile"] = True
+                st.rerun()
         return
 
     st.header("🃏 Ta carte")
@@ -2204,6 +2298,7 @@ def main():
     st.set_page_config(page_title="Loup-Garou", page_icon="🐺", layout="wide", initial_sidebar_state="expanded")
     css_cartes()
     st.markdown(CSS_SCENES, unsafe_allow_html=True)
+    st.markdown(CSS_PASSAGE, unsafe_allow_html=True)
     garder_sidebar_ouverte()
 
     if "partie" not in st.session_state:

@@ -273,7 +273,7 @@ def css_cartes():
             padding-bottom: 0.3rem;
             margin-bottom: 0.35rem;
         }
-        .maire-nom { font-size: 1.2rem; color: #f0d890; }
+        .maire-nom { font-size: 1.2rem; font-weight: 400; color: #f0d890; }
         .panneau-dense .panneau-ligne { font-size: 0.92rem; padding: 0.05rem 0; }
         .panneau-total {
             border-top: 1px solid rgba(201,164,76,.35);
@@ -354,6 +354,8 @@ def css_cartes():
         div[class*="st-key-dalles_"] {
             max-width: min(760px, 95%);
             margin: 0 auto;
+            /* Le conteneur rogne ce qui dépasse : la marge laisse la place à la lueur des dalles choisies. */
+            padding: 1rem 1rem 0.6rem;
         }
         div[class*="st-key-dalles_"],
         div[class*="st-key-dalles_"] [data-testid="stVerticalBlock"] {
@@ -1776,16 +1778,18 @@ def panneau_rechargement(s):
 def garder_sidebar_ouverte():
     """Streamlit mémorise dans le navigateur qu'on a replié la barre latérale, et la replie d'office
     sur petit écran. Comme on masque son bouton de réouverture, on la rouvre par script."""
-    components.html(
-        """<script>
+    script = """<script>
         const doc = window.parent.document;
         setInterval(() => {
             const bouton = doc.querySelector('[data-testid="stExpandSidebarButton"] button, [data-testid="stExpandSidebarButton"]');
             if (bouton) bouton.click();
         }, 400);
-        </script>""",
-        height=0,
-    )
+        </script>"""
+    # st.components.v1.html est déprécié au profit de st.iframe (absent des versions plus anciennes).
+    if hasattr(st, "iframe"):
+        st.iframe(script, height=1)
+    else:
+        components.html(script, height=0)
 
 
 def main():

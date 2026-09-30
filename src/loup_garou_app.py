@@ -1208,6 +1208,28 @@ def bouton_fin(s, cle):
 # s'adaptent automatiquement — aucun autre écran à modifier.
 # --------------------------------------------------------------------------
 
+OPTIONS_DEFAUT = {
+    "potions_sorciere": 1,     # potions de soin de la sorcière
+    "cadence_voyante": 2,      # la voyante sonde une nuit sur N (à partir de la nuit 1)
+    "cadence_loup_blanc": 2,   # le Loup Blanc festoie une nuit sur N (à partir de la nuit 1)
+    "maire_depart": True,      # à égalité loups/village, la partie continue sauf si le maire est un loup
+}
+
+
+def opt(s, cle):
+    """Option de partie (les anciennes sauvegardes n'en ont pas : valeur par défaut)."""
+    return s.get("options", {}).get(cle, OPTIONS_DEFAUT[cle])
+
+
+def _nuit_active(s, cadence):
+    """Nuit 1 puis une nuit sur `cadence`."""
+    return s["jour"] > 0 and (s["jour"] - 1) % cadence == 0
+
+
+def _prochaine_nuit(s, cadence):
+    return s["jour"] + cadence - (s["jour"] - 1) % cadence
+
+
 def _afficher_meute(s, nom):
     if s["joueurs"][nom].get("enfant_sauvage"):
         plaquette("Ton mentor est mort : tu as rejoint la meute.", icone="🐾")
@@ -1267,8 +1289,11 @@ def _nuit_loup_blanc(s, nom, cle):
     if not freres:
         plaquette("Tu es le dernier loup : plus aucun frère à dévorer.", icone="🌕")
         bouton_fin(s, cle)
-    elif s["jour"] % 2 == 0:
-        plaquette(f"Pas de festin cette nuit. Prochain festin : nuit {s['jour'] + 1}.", icone="🌕")
+    elif not _nuit_active(s, opt(s, "cadence_loup_blanc")):
+        plaquette(
+            f"Pas de festin cette nuit. Prochain festin : nuit {_prochaine_nuit(s, opt(s, 'cadence_loup_blanc'))}.",
+            icone="🌕",
+        )
         bouton_fin(s, cle)
     else:
         st.markdown("**Un de tes frères est-il de trop ?**")
@@ -1345,16 +1370,19 @@ def _nuit_renard(s, nom, cle):
 
 
 def _nuit_voyante(s, nom, cle):
-    """La voyante a une vision une nuit sur deux (nuits impaires) : pas de stock à épuiser."""
+    """La voyante a une vision toutes les N nuits (option de partie) : pas de stock à épuiser."""
     deja_vu = st.session_state.get(f"vu_{cle}")
-    peut_voir = s["jour"] > 0 and s["jour"] % 2 == 1
+    peut_voir = _nuit_active(s, opt(s, "cadence_voyante"))
 
     if deja_vu:
         role_vu = s["joueurs"][deja_vu]["role"]
         plaquette(f"{deja_vu} est {ROLES[role_vu].nom.upper()}.", icone="🔮", ton="succes")
         bouton_fin(s, cle)
     elif not peut_voir:
-        plaquette(f"Pas de vision cette nuit. Prochaine vision : nuit {s['jour'] + 1}.", icone="🌙")
+        plaquette(
+            f"Pas de vision cette nuit. Prochaine vision : nuit {_prochaine_nuit(s, opt(s, 'cadence_voyante'))}.",
+            icone="🌙",
+        )
         bouton_fin(s, cle)
     else:
         candidats = [n for n in vivants(s) if n != nom]
@@ -1736,8 +1764,8 @@ def terminer_partie(s, message):
 # État du jeu
 # --------------------------------------------------------------------------
 
-def nouvelle_partie(noms, composition):
-    """noms : liste de noms de joueurs. composition : dict {role: nombre}."""
+def nouvelle_partie(noms, composition, options=None):
+    """noms : liste de noms de joueurs. composition : dict {role: nombre}. options : cf. OPTIONS_DEFAUT."""
     roles = []
     for role, n in composition.items():
         roles += [role] * n
@@ -1772,6 +1800,8 @@ def nouvelle_partie(noms, composition):
     }
     for role in ROLES.values():
         etat.update(role.etat_initial)
+    etat["options"] = {**OPTIONS_DEFAUT, **(options or {})}
+    etat["potions_sorciere"] = etat["options"]["potions_sorciere"]
     paquet = ", ".join(f"{ROLES[cle].nom} ×{n}" for cle, n in composition.items() if n > 0)
     log(etat, f"{len(noms)} joueurs. Paquet : {paquet}.", "debut")
     log(etat, "Distribution : " + ", ".join(
@@ -1850,9 +1880,12 @@ def vainqueur(s):
         return "Le village a gagné : tous les loups sont morts."
     if len(loups) > len(autres):
         return "Les loups ont gagné : ils sont plus nombreux que les villageois."
-    # À égalité, le village garde sa chance tant que le maire n'est pas un loup.
-    if len(loups) == len(autres) and s.get("maire") in loups:
-        return "Les loups ont gagné : ils sont aussi nombreux que les villageois et l'un d'eux est maire."
+    if len(loups) == len(autres):
+        if not opt(s, "maire_depart"):
+            return "Les loups ont gagné : ils sont aussi nombreux que les villageois."
+        # À égalité, le village garde sa chance tant que le maire n'est pas un loup.
+        if s.get("maire") in loups:
+            return "Les loups ont gagné : ils sont aussi nombreux que les villageois et l'un d'eux est maire."
     return None
 
 
@@ -1928,6 +1961,37 @@ def afficher_composition(nb, total, composition, n_villageois):
         st.caption(f"{total - nb} cartes restent au milieu de la table ({nb} joueurs, {total} cartes).")
 
 
+CADENCES = {1: "Chaque nuit", 2: "Une nuit sur 2", 3: "Une nuit sur 3"}
+
+
+def saisir_options(composition):
+    """Options de règles, limitées aux rôles présents dans la partie. Renvoie le dict d'options."""
+    options = dict(OPTIONS_DEFAUT)
+    with st.expander("⚙️ Options de la partie"):
+        if composition.get("sorciere"):
+            options["potions_sorciere"] = st.number_input(
+                "🧪 Potions de soin de la sorcière", min_value=1, max_value=5,
+                value=OPTIONS_DEFAUT["potions_sorciere"], step=1, key="opt_potions",
+            )
+        if composition.get("voyante"):
+            options["cadence_voyante"] = st.radio(
+                "🔮 Visions de la voyante", list(CADENCES), format_func=CADENCES.get,
+                index=OPTIONS_DEFAUT["cadence_voyante"] - 1, horizontal=True, key="opt_voyante",
+            )
+        if composition.get("loup_blanc"):
+            options["cadence_loup_blanc"] = st.radio(
+                "🌕 Festins du Loup Blanc", list(CADENCES), format_func=CADENCES.get,
+                index=OPTIONS_DEFAUT["cadence_loup_blanc"] - 1, horizontal=True, key="opt_loup_blanc",
+            )
+        options["maire_depart"] = st.toggle(
+            "👑 À égalité loups / village, le maire départage",
+            value=OPTIONS_DEFAUT["maire_depart"], key="opt_maire",
+            help="Activé : la partie continue à égalité, sauf si le maire est un loup. "
+                 "Désactivé : les loups gagnent dès qu'ils sont aussi nombreux que les autres.",
+        )
+    return options
+
+
 def etape_roles():
     with st.container(key="setup_roles"):
         st.markdown("##### 1. Composition de la partie")
@@ -1982,12 +2046,15 @@ def etape_roles():
         n_villageois = total - sum(composition.values())
         composition["villageois"] = max(n_villageois, 0)
 
+        options = saisir_options(composition)
+
         with apercu.container():
             afficher_composition(nb, total, composition, n_villageois)
 
         if st.button("Suivant : noms des joueurs →", type="primary", disabled=n_villageois < 0):
             st.session_state.config_nb = nb
             st.session_state.config_composition = composition
+            st.session_state.config_options = options
             st.session_state.config_etape = "noms"
             st.rerun()
 
@@ -2018,8 +2085,10 @@ def etape_noms():
         elif len(set(noms)) != nb:
             st.error("Deux joueurs portent le même nom.")
         else:
-            st.session_state.partie = nouvelle_partie(noms, st.session_state.config_composition)
-            for cle in ("config_etape", "config_nb", "config_composition"):
+            st.session_state.partie = nouvelle_partie(
+                noms, st.session_state.config_composition, st.session_state.get("config_options"),
+            )
+            for cle in ("config_etape", "config_nb", "config_composition", "config_options"):
                 st.session_state.pop(cle, None)
             st.rerun()
 

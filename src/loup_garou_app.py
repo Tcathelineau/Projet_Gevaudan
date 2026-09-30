@@ -950,15 +950,15 @@ div[class*="st-key-scene_accueil"] > div[data-testid="stElementContainer"]:has(.
     position: absolute; inset: 0; opacity: 0;
     background-repeat: repeat-x, no-repeat;
     background-size: 1400px 200px, auto;
-    animation: acc-fondu 48s linear infinite, acc-nuages 90s linear infinite;
+    animation: acc-fondu 24s linear infinite, acc-nuages 90s linear infinite;
 }
 .acc-jour { opacity: 1;
     background-image: __N_JOUR__, linear-gradient(180deg, #34346f 0%, #b5638f 40%, #f2a468 72%, #ffe3a0 100%); }
-.acc-nuit { animation-delay: -36s, 0s;
+.acc-nuit { animation-delay: -18s, 0s;
     background-image: __N_NUIT__, linear-gradient(180deg, #060a22 0%, #131c4a 55%, #2b3072 100%); }
-.acc-loups { animation-delay: -24s, 0s;
+.acc-loups { animation-delay: -12s, 0s;
     background-image: __N_LOUPS__, linear-gradient(180deg, #12030a 0%, #4a0d1c 52%, #a3302f 100%); }
-.acc-victoire { animation-delay: -12s, 0s;
+.acc-victoire { animation-delay: -6s, 0s;
     background-image: __N_VICT__, linear-gradient(180deg, #3b86d0 0%, #86c4ee 55%, #ffeeba 100%); }
 .acc-nuit::before, .acc-loups::before {
     content: ""; position: absolute; inset: 0 0 35% 0; pointer-events: none;
@@ -995,10 +995,6 @@ div[class*="st-key-scene_accueil"] > div[data-testid="stElementContainer"]:has(.
     font-family: 'Cinzel', serif; font-weight: 700; text-transform: uppercase;
     font-size: clamp(2.4rem, 7vw, 5rem); letter-spacing: .08em; color: #fff4d0;
     text-shadow: 0 3px 18px rgba(0,0,0,.75), 0 0 34px rgba(255,220,130,.35);
-}
-.acc-sous {
-    font-family: 'EB Garamond', serif; font-style: italic; font-size: 1.6rem; color: #f3ead8;
-    text-shadow: 0 1px 10px rgba(0,0,0,.85); margin: .4rem 0 2rem;
 }
 div[class*="st-key-accueil_boutons"] { width: min(380px, 100%); margin: 0 auto; gap: 1rem; }
 div[class*="st-key-accueil_btn_"] { width: 100%; }
@@ -2457,8 +2453,7 @@ def ecran_accueil():
         st.markdown(_fond_accueil(), unsafe_allow_html=True)
         st.markdown(
             '<div class="acc-titre-bloc"><div class="acc-surtitre">🐺</div>'
-            '<div class="acc-titre">Projet Gévaudan</div>'
-            '<div class="acc-sous">Un loup-garou grandeur nature, mené par une application</div></div>',
+            '<div class="acc-titre">Projet Gévaudan</div></div>',
             unsafe_allow_html=True,
         )
         with st.container(key="accueil_boutons"):

@@ -830,6 +830,8 @@ CSS_SCENES = """
     box-shadow: 0 2px 3px rgba(0,0,0,.5);
 }
 .avis-papier-calme { border-left-color: #5e8c55; text-align: center; }
+.avis-papier-loup { border-left-color: #5e8c55; }
+.avis-papier-secret { border-left-color: #c9a44c; }
 .avis-nom {
     font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.05rem; letter-spacing: .04em;
 }
@@ -2112,6 +2114,16 @@ def _camp_txt(s, nom):
     return "était LOUP-GAROU" if camp(s, nom) == "loups" else "n'était pas loup-garou"
 
 
+def panneau_avis(titre, sous, papiers):
+    """Panneau d'affichage du village : planche de bois portant des avis punaisés."""
+    st.markdown(
+        '<div class="avis"><div class="avis-poteau avis-poteau-g"></div><div class="avis-poteau avis-poteau-d"></div>'
+        f'<div class="avis-planche"><div class="avis-titre">{titre}</div>'
+        f'<div class="avis-sous">{sous}</div><div class="avis-papiers">{"".join(papiers)}</div></div></div>',
+        unsafe_allow_html=True,
+    )
+
+
 def panneau_morts(s):
     """Annonce des morts de la nuit, façon panneau d'affichage du village."""
     papiers = []
@@ -2129,13 +2141,28 @@ def panneau_morts(s):
             '<div class="avis-papier avis-papier-calme"><div class="avis-nom">🕊️ Nul n\'a péri</div>'
             '<div class="avis-detail">Le village a passé une nuit paisible.</div></div>'
         )
-    sous = "Premier jour" if s["jour"] == 0 else f"Jour {s['jour']}"
-    st.markdown(
-        '<div class="avis"><div class="avis-poteau avis-poteau-g"></div><div class="avis-poteau avis-poteau-d"></div>'
-        f'<div class="avis-planche"><div class="avis-titre">Avis à la population</div>'
-        f'<div class="avis-sous">{sous}</div><div class="avis-papiers">{"".join(papiers)}</div></div></div>',
-        unsafe_allow_html=True,
-    )
+    panneau_avis("Avis à la population", "Premier jour" if s["jour"] == 0 else f"Jour {s['jour']}", papiers)
+
+
+def panneau_vote(s, morts):
+    """Verdict du vote du village : vert si un loup tombe, rouge sinon, ambre si son camp reste secret."""
+    papiers = []
+    for i, mort in enumerate(morts):
+        if ROLES[s["joueurs"][mort]["role"]].camp_secret:
+            classe = " avis-papier-secret"
+        elif camp(s, mort) == "loups":
+            classe = " avis-papier-loup"
+        else:
+            classe = ""
+        entete = "⚖️" if i == 0 else "💔"
+        detail = f"Il {_camp_txt(s, mort)}."
+        if i > 0:
+            detail = f"Mort de chagrin (amoureux). {detail}"
+        papiers.append(
+            f'<div class="avis-papier{classe}"><div class="avis-nom">{entete} {html.escape(mort)}</div>'
+            f'<div class="avis-detail">{detail}</div></div>'
+        )
+    panneau_avis("Sentence du village", f"Jour {s['jour']}", papiers)
 
 
 def annonce_tirs(s):
@@ -2210,7 +2237,11 @@ def ecran_election_maire(s):
 
 
 def ecran_conseil(s):
-    st.title("🗳️ Conseil du village")
+    resultat = None if s["jour"] == 0 else st.session_state.get(f"resultat_{s['jour']}")
+    if resultat:
+        scene_ciel("jour", "Le village a tranché", f"Jour {s['jour']}")
+    else:
+        st.title("🗳️ Conseil du village")
 
     if s["jour"] == 0:
         annonce("Première nuit passée : pas de vote aujourd'hui.", "?", "mystere")
@@ -2222,14 +2253,8 @@ def ecran_conseil(s):
 
     en_vie = vivants(s)
 
-    if st.session_state.get(f"resultat_{s['jour']}"):
-        for mort in st.session_state[f"resultat_{s['jour']}"]:
-            if ROLES[s["joueurs"][mort]["role"]].camp_secret:
-                annonce(f"{mort} {_camp_txt(s, mort)}.", "?", "mystere")
-            elif camp(s, mort) == "loups":
-                annonce(f"{mort} était LOUP-GAROU.", "!", "succes")
-            else:
-                annonce(f"{mort} n'était PAS loup-garou.", "!", "danger")
+    if resultat:
+        panneau_vote(s, resultat)
         annonce_tirs(s)
 
         gagnant = vainqueur(s)

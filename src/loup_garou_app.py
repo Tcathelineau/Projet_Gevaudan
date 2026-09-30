@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Optional
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 SAVE_FILE = "save.json"
 HISTORIQUE_DIR = "parties"
@@ -1772,9 +1773,25 @@ def panneau_rechargement(s):
         recharger_etape(s, cle)
 
 
+def garder_sidebar_ouverte():
+    """Streamlit mémorise dans le navigateur qu'on a replié la barre latérale, et la replie d'office
+    sur petit écran. Comme on masque son bouton de réouverture, on la rouvre par script."""
+    components.html(
+        """<script>
+        const doc = window.parent.document;
+        setInterval(() => {
+            const bouton = doc.querySelector('[data-testid="stExpandSidebarButton"] button, [data-testid="stExpandSidebarButton"]');
+            if (bouton) bouton.click();
+        }, 400);
+        </script>""",
+        height=0,
+    )
+
+
 def main():
     st.set_page_config(page_title="Loup-Garou", page_icon="🐺", layout="wide", initial_sidebar_state="expanded")
     css_cartes()
+    garder_sidebar_ouverte()
 
     if "partie" not in st.session_state:
         sauvegarde = load_game()

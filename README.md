@@ -66,6 +66,10 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 - **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, affichée nuit par nuit à la fin, archivée dans `parties/partie_AAAAMMJJ_HHMMSS.json` et téléchargeable en JSON.
 - **Sauvegarde automatique** (`save.json`) : la partie reprend là où elle s'est arrêtée, même après avoir fermé le serveur.
 
+<p align="center">
+  <img src="docs/banniere-jour.svg" alt="Un village sous le soleil : bon jeu et que le meilleur gagne" width="100%">
+</p>
+
 ---
 
 # 🛠️ Partie technique
@@ -129,7 +133,8 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 ├── src/
 │   └── loup_garou_app.py   # L'application Streamlit
 ├── docs/
-│   └── banniere.svg         # Bannière du README
+│   ├── banniere.svg         # Bannière de nuit du README
+│   └── banniere-jour.svg    # Bannière de jour du README
 ├── musique.mp3              # (optionnel) musique de fond, à ajouter toi-même
 ├── save.json                # Sauvegarde de la partie en cours (générée automatiquement)
 ├── parties/                 # Archives JSON des parties terminées ou abandonnées

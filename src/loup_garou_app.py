@@ -5,6 +5,7 @@ Lancement :  streamlit run loup_garou_app.py
 """
 
 import copy
+import html
 import json
 import os
 import random
@@ -640,7 +641,62 @@ CSS_SCENES = """
 @keyframes monte-soleil { from { transform: translateY(90px); } to { transform: none; } }
 @keyframes apparait { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes fenetre { 0%, 100% { opacity: 1; } 45% { opacity: .55; } 60% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .ciel *, .ciel { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .ciel *, .ciel, .avis-papier { animation: none !important; } }
+.avis { position: relative; max-width: 620px; margin: .2rem auto 1.4rem; padding: 0 30px 20px; }
+.avis-poteau {
+    position: absolute; bottom: 0; top: 24px; width: 18px; z-index: 0;
+    background: linear-gradient(90deg, #3a220f, #5e3a1e 50%, #3a220f);
+    border-radius: 3px;
+}
+.avis-poteau-g { left: 34px; }
+.avis-poteau-d { right: 34px; }
+.avis-planche {
+    position: relative; z-index: 1;
+    padding: 1.3rem 1.4rem 1.5rem;
+    border: 4px solid #4a2c17;
+    border-radius: 8px;
+    background:
+        repeating-linear-gradient(90deg, rgba(0,0,0,.09) 0 2px, transparent 2px 52px),
+        linear-gradient(180deg, #8f5f37 0%, #6d4425 100%);
+    box-shadow: 0 10px 26px rgba(0,0,0,.55), inset 0 0 26px rgba(0,0,0,.35);
+}
+.avis-planche::before {
+    content: ""; position: absolute; left: -14px; right: -14px; top: -18px; height: 20px;
+    border-radius: 8px 8px 2px 2px; background: linear-gradient(180deg, #55351c, #3a2212);
+    box-shadow: 0 3px 6px rgba(0,0,0,.5);
+}
+.avis-titre {
+    text-align: center; font-family: 'Cinzel', serif; font-weight: 700;
+    font-size: clamp(1.1rem, 3vw, 1.5rem); letter-spacing: .14em; text-transform: uppercase;
+    color: #f7e8c4; text-shadow: 0 2px 6px rgba(0,0,0,.65);
+}
+.avis-sous {
+    text-align: center; font-family: 'EB Garamond', serif; font-style: italic;
+    color: #ecd9ad; margin: .1rem 0 1rem; font-size: 1.05rem;
+}
+.avis-papiers { display: flex; flex-direction: column; gap: .9rem; }
+.avis-papier {
+    position: relative;
+    padding: .9rem 1.2rem .8rem 1.4rem;
+    background: linear-gradient(170deg, #f3e6c0 0%, #e6d3a3 100%);
+    color: #3b2a14;
+    border-left: 6px solid #a53a32;
+    box-shadow: 0 4px 10px rgba(0,0,0,.5);
+    transform: rotate(-.7deg);
+    animation: colle .6s ease-out both;
+}
+.avis-papier:nth-child(even) { transform: rotate(.6deg); animation-delay: .25s; }
+.avis-papier::before {
+    content: ""; position: absolute; top: -6px; left: 50%; width: 12px; height: 12px; margin-left: -6px;
+    border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ff8a7a, #b3261e 70%);
+    box-shadow: 0 2px 3px rgba(0,0,0,.5);
+}
+.avis-papier-calme { border-left-color: #5e8c55; text-align: center; }
+.avis-nom {
+    font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.25rem; letter-spacing: .04em;
+}
+.avis-detail { font-family: 'EB Garamond', serif; font-style: italic; font-size: 1.08rem; margin-top: .1rem; }
+@keyframes colle { from { opacity: 0; transform: translateY(-14px) rotate(-3deg); } }
 </style>
 """
 
@@ -1636,6 +1692,32 @@ def _camp_txt(s, nom):
     return "était LOUP-GAROU" if camp(s, nom) == "loups" else "n'était pas loup-garou"
 
 
+def panneau_morts(s):
+    """Annonce des morts de la nuit, façon panneau d'affichage du village."""
+    papiers = []
+    for mort in s["morts_nuit"]:
+        papiers.append(
+            f'<div class="avis-papier"><div class="avis-nom">💀 {html.escape(mort)}</div>'
+            f'<div class="avis-detail">Il {_camp_txt(s, mort)}.</div></div>'
+        )
+    if s["morts_nuit"] and len(s["amoureux"]) == 2 and set(s["amoureux"]) <= set(s["morts_nuit"]):
+        papiers.append(
+            '<div class="avis-papier"><div class="avis-detail">💔 Les amoureux sont morts ensemble.</div></div>'
+        )
+    if not papiers:
+        papiers.append(
+            '<div class="avis-papier avis-papier-calme"><div class="avis-nom">🕊️ Nul n\'a péri</div>'
+            '<div class="avis-detail">Le village a passé une nuit paisible.</div></div>'
+        )
+    sous = "Premier jour" if s["jour"] == 0 else f"Jour {s['jour']}"
+    st.markdown(
+        '<div class="avis"><div class="avis-poteau avis-poteau-g"></div><div class="avis-poteau avis-poteau-d"></div>'
+        f'<div class="avis-planche"><div class="avis-titre">Avis à la population</div>'
+        f'<div class="avis-sous">{sous}</div><div class="avis-papiers">{"".join(papiers)}</div></div></div>',
+        unsafe_allow_html=True,
+    )
+
+
 def annonce_tirs(s):
     for mort in s.get("morts_tir", []):
         st.error(f"🔫 {mort} a été abattu par le chasseur. Il {_camp_txt(s, mort)}.")
@@ -1653,13 +1735,7 @@ def bouton_tir(s, retour):
 
 def ecran_reveil(s):
     scene_ciel("jour", "Le village se réveille", "Premier jour" if s["jour"] == 0 else f"Jour {s['jour']}")
-    if s["morts_nuit"]:
-        for mort in s["morts_nuit"]:
-            st.error(f"{mort} est mort. Il {_camp_txt(s, mort)}.")
-        if len(s["amoureux"]) == 2 and set(s["amoureux"]) <= set(s["morts_nuit"]):
-            st.caption("Les amoureux sont morts ensemble.")
-    else:
-        st.success("Personne n'est mort cette nuit.")
+    panneau_morts(s)
     annonce_tirs(s)
 
     if s.get("tirs_en_attente"):

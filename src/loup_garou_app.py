@@ -4,6 +4,7 @@ Loup-Garou — version Streamlit (jeu en hotseat : on se passe l'écran).
 Lancement :  streamlit run loup_garou_app.py
 """
 
+import copy
 import json
 import os
 import random
@@ -243,6 +244,41 @@ def css_cartes():
             color: #ece3d2;
             padding: 0.15rem 0;
         }
+        .chrono {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: flex-start;
+            max-height: 36vh;
+            overflow-y: auto;
+            padding: 0.2rem 0.2rem 0.2rem 0.4rem;
+        }
+        .chrono-etape { display: flex; align-items: center; gap: 0.7rem; }
+        .chrono-noeud {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        .chrono-nuit { background: #44589a; }
+        .chrono-jour { background: #abc4d0; }
+        .chrono-actuel { box-shadow: 0 0 0 2px #c9a44c, 0 0 10px rgba(201,164,76,.6); }
+        .chrono-lien {
+            width: 8px;
+            height: 12px;
+            margin-left: 10px;
+            border-radius: 2px;
+            background: #d9d9d9;
+        }
+        .chrono-label {
+            font-family: 'EB Garamond', serif;
+            font-size: 0.92rem;
+            color: #ece3d2;
+        }
+        .chrono-actuel + .chrono-label { color: #f0d890; font-weight: 600; }
         .panneau-dense { padding: 0.6rem 0.9rem; margin-bottom: 0.6rem; }
         .panneau-dense .panneau-titre {
             font-size: 0.95rem;
@@ -987,6 +1023,63 @@ def archiver_partie(s, issue):
     s["archive"] = fichier
 
 
+def prendre_instantane(s, genre):
+    """Copie l'état de la partie au début d'une nuit ("nuit") ou à l'annonce du réveil ("jour")."""
+    if genre == "nuit":
+        libelle = f"🌙 Nuit {s['jour']} · début de la nuit"
+    else:
+        libelle = f"☀️ Jour {s['jour']} · annonce du réveil"
+    cle = f"{genre}_{s['jour']}"
+    instantanes = s.setdefault("instantanes", [])
+    # Une étape rejouée (après un rechargement) remplace sa version précédente et toutes celles d'après.
+    for i, inst in enumerate(instantanes):
+        if inst["id"] == cle:
+            del instantanes[i:]
+            break
+    etat = copy.deepcopy({k: v for k, v in s.items() if k != "instantanes"})
+    instantanes.append({"id": cle, "libelle": libelle, "etat": etat})
+
+
+def recharger_etape(s, cle):
+    """Revient à l'étape `cle` : tout ce qui a suivi est oublié."""
+    instantanes = s["instantanes"]
+    i = next(i for i, inst in enumerate(instantanes) if inst["id"] == cle)
+    nouvel = copy.deepcopy(instantanes[i]["etat"])
+    nouvel["instantanes"] = instantanes[: i + 1]
+    # Les saisies en cours d'écran (sélections, résultats de vision...) vivent dans session_state.
+    for k in list(st.session_state.keys()):
+        if k != "musique_on":
+            del st.session_state[k]
+    st.session_state.partie = nouvel
+    st.rerun()
+
+
+def etapes_chronologie(s):
+    """Étapes vécues jusqu'ici, dans l'ordre : [("nuit", 0), ("jour", 0), ("nuit", 1), ...]."""
+    etapes = []
+    for j in range(s["jour"] + 1):
+        etapes.append(("nuit", j))
+        if j < s["jour"] or s["phase"] != "nuit":
+            etapes.append(("jour", j))
+    return etapes
+
+
+def chronologie_html(s):
+    etapes = etapes_chronologie(s)
+    blocs = []
+    for i, (genre, jour) in enumerate(etapes):
+        actuel = " chrono-actuel" if i == len(etapes) - 1 else ""
+        icone, nom = ("🌙", "Nuit") if genre == "nuit" else ("☀️", "Jour")
+        blocs.append(
+            f'<div class="chrono-etape"><div class="chrono-noeud chrono-{genre}{actuel}">{icone}</div>'
+            f'<span class="chrono-label">{nom} {jour}</span></div>'
+        )
+        if i:
+            blocs.append('<div class="chrono-lien"></div>')
+    # column-reverse : le plus récent est en bas de la frise, et visible sans défiler.
+    return '<div class="chrono">' + "".join(reversed(blocs)) + "</div>"
+
+
 def terminer_partie(s, message):
     log(s, message, "fin")
     s["phase"] = "fin"
@@ -1278,6 +1371,7 @@ def etape_noms():
 
 def ecran_nuit(s):
     if not s["ordre_nuit"]:
+        prendre_instantane(s, "nuit")
         # Voleur puis Chien-Loup jouent en premier (cf. priorite_nuit) : leur choix de
         # rôle ou de camp doit être fait avant que les autres ne découvrent la meute.
         s["ordre_nuit"] = sorted(vivants(s), key=lambda n: ROLES[s["joueurs"][n]["role"]].priorite_nuit)
@@ -1363,6 +1457,7 @@ def resoudre_nuit(s):
     s["tour"] = 0
     s["devoile"] = False
     s["phase"] = "reveil"
+    prendre_instantane(s, "jour")
 
 
 def _camp_txt(s, nom):
@@ -1637,6 +1732,21 @@ def afficher_historique(s):
 # Point d'entrée
 # --------------------------------------------------------------------------
 
+def panneau_rechargement(s):
+    instantanes = s.get("instantanes", [])
+    if not instantanes:
+        return
+    libelles = {inst["id"]: inst["libelle"] for inst in instantanes}
+    with st.expander("⏪ Recharger une étape"):
+        st.caption("En cas de plantage ou d'erreur : revient au début de la nuit ou à l'annonce du jour choisi. Ce qui a suivi est oublié.")
+        cle = st.selectbox(
+            "Étape", list(reversed(libelles)), index=None, placeholder="Choisir une étape…",
+            format_func=libelles.get, label_visibility="collapsed", key="reload_choix",
+        )
+        if st.button("Recharger cette étape", disabled=cle is None, key="reload_ok"):
+            recharger_etape(s, cle)
+
+
 def main():
     st.set_page_config(page_title="Loup-Garou", page_icon="🐺", layout="wide")
     css_cartes()
@@ -1673,6 +1783,10 @@ def main():
                 {ligne_secret}
             </div>
             <div class="panneau">
+                <div class="panneau-titre">🕰️ Chronologie</div>
+                {chronologie_html(s)}
+            </div>
+            <div class="panneau">
                 <div class="panneau-ligne"><span>👑 Maire</span><span>{maire_txt}</span></div>
             </div>
             """,
@@ -1700,6 +1814,8 @@ def main():
         if os.path.exists(MUSIQUE_FILE):
             if st.checkbox("🎵 Musique de fond", value=True, key="musique_on"):
                 st.audio(MUSIQUE_FILE, format="audio/mp3", loop=True, autoplay=True)
+
+        panneau_rechargement(s)
 
         if st.button("🚪 Abandonner la partie", key="abandon"):
             if s["phase"] != "fin":

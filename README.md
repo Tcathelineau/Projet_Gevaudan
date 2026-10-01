@@ -134,19 +134,39 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 ```
 .
 ├── src/
-│   └── loup_garou_app.py   # L'application Streamlit
+│   ├── loup_garou_app.py        # Point d'entrée Streamlit (quelques lignes)
+│   └── loup_garou/
+│       ├── app.py               # main() : page, barre latérale, aiguillage selon la phase
+│       ├── config.py            # Chemins (save.json, historique/, musique.mp3)
+│       ├── options.py           # Options avancées et leurs valeurs par défaut
+│       ├── roles.py             # Registre ROLES (données des rôles, sans interface)
+│       ├── moteur/              # Règles du jeu, sans dépendance à l'interface
+│       │   ├── partie.py        #   nouvelle partie, morts, résolution de la nuit, victoire
+│       │   ├── journal.py       #   journal et instantanés de la chronologie
+│       │   └── persistance.py   #   sauvegarde, archives et lecture de l'historique
+│       └── ui/                  # Interface Streamlit
+│           ├── styles.py        #   CSS et décors SVG
+│           ├── composants.py    #   cartes, bandeaux, dalles de sélection...
+│           ├── nuit_roles.py    #   tour de nuit de chaque rôle (NUIT_ROLES)
+│           ├── barre_laterale.py#   rechargement d'étape, barre ouverte
+│           └── ecrans/          #   accueil, installation, nuit, jour, fin
 ├── docs/
-│   ├── banniere.svg         # Bannière de nuit du README
-│   └── banniere-jour.svg    # Bannière de jour du README
-├── musique.mp3              # (optionnel) musique de fond, à ajouter toi-même
-├── save.json                # Sauvegarde de la partie en cours (générée automatiquement)
-├── historique/              # Archives JSON des parties terminées (versionnées dans le dépôt)
+│   ├── banniere.svg             # Bannière de nuit du README
+│   └── banniere-jour.svg        # Bannière de jour du README
+├── musique.mp3                  # (optionnel) musique de fond, à ajouter toi-même
+├── save.json                    # Sauvegarde de la partie en cours (générée automatiquement)
+├── historique/                  # Archives JSON des parties terminées (versionnées dans le dépôt)
 └── .streamlit/
-    └── config.toml          # Configuration du thème sombre
+    └── config.toml              # Configuration du thème sombre
 ```
+
+Le dossier `moteur/` ne dépend ni de Streamlit ni de `ui/` : les règles se lisent et se testent sans interface. Les dépendances vont toujours dans le même sens : `ui` -> `moteur` -> `roles` / `options` -> `config`.
 
 > 💡 `save.json` contient l'état complet d'une partie en cours, y compris les rôles des joueurs : il est listé dans le `.gitignore`. Le dossier `historique/`, lui, est poussé sur le dépôt : chaque partie terminée y ajoute un fichier avec les rôles et le journal complet.
 
 ## Ajouter un rôle
 
-Chaque rôle est déclaré dans le registre `ROLES` de `src/loup_garou_app.py` (dataclass `Role`) : nom, emoji, dégradé de la carte, camp, état de départ et fonction de tour de nuit. Un nouveau rôle se déclare à cet endroit, sans toucher au reste de la logique.
+1. Déclarer le rôle dans le registre `ROLES` de `src/loup_garou/roles.py` (dataclass `Role`) : nom, emoji, dégradé de la carte, camp, état de départ, priorité de nuit.
+2. Écrire sa fonction de tour de nuit dans `src/loup_garou/ui/nuit_roles.py` et l'inscrire dans le dictionnaire `NUIT_ROLES`. Un rôle absent de `NUIT_ROLES` dort comme un villageois.
+
+Les règles (`moteur/`) lisent le registre : elles n'ont pas à changer pour un rôle sans effet particulier sur la victoire ou les morts.

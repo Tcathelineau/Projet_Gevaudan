@@ -4,6 +4,8 @@ from urllib.parse import quote
 
 import streamlit as st
 
+from loup_garou.roles import ROLES
+
 
 def css_cartes():
     st.markdown(
@@ -1059,3 +1061,34 @@ div[class*="st-key-histo_couple_"] { --c: #f06fb5; }
 }
 </style>
 """
+
+
+def css_infobulles():
+    """Infobulle au survol de chaque rôle de l'écran de composition (conteneurs `info_<rôle>`)."""
+    regles = "".join(
+        f'div[class*="st-key-info_{cle}"]:hover::after {{ content: "{role.description.replace(chr(34), chr(39))}"; }}\n'
+        for cle, role in ROLES.items()
+    )
+    return f"""
+        <style>
+        div[class*="st-key-info_"] {{ position: relative; }}
+        div[class*="st-key-info_"]:hover::after {{
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            width: min(280px, 80vw);
+            padding: 0.55rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(201,164,76,.6);
+            background: #1b150d;
+            box-shadow: 0 6px 18px rgba(0,0,0,.55);
+            font-family: 'EB Garamond', serif;
+            font-size: 0.95rem;
+            line-height: 1.3;
+            color: #f2e9d8;
+            pointer-events: none;
+        }}
+        {regles}
+        </style>
+    """

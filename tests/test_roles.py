@@ -35,3 +35,8 @@ def test_chaque_role_a_un_tour_de_nuit():
     from loup_garou.ui.nuit_roles import NUIT_ROLES
 
     assert set(NUIT_ROLES) == set(ROLES)
+
+
+def test_chaque_role_a_une_description():
+    for role in ROLES.values():
+        assert role.description.strip(), role.key

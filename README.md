@@ -180,7 +180,7 @@ uv run --python 3.12 --with pytest --with streamlit python -m pytest
 
 ## Ajouter un rôle
 
-1. Déclarer le rôle dans le registre `ROLES` de `src/loup_garou/roles.py` (dataclass `Role`) : nom, emoji, dégradé de la carte, camp, état de départ, priorité de nuit.
+1. Déclarer le rôle dans le registre `ROLES` de `src/loup_garou/roles.py` (dataclass `Role`) : nom, emoji, dégradé de la carte, camp, état de départ, priorité de nuit, description (une ou deux phrases, affichées en infobulle dans l'écran de composition). Pour les jauges d'équilibre, ajouter aussi ses notes dans `src/loup_garou/equilibre.py`.
 2. Écrire sa fonction de tour de nuit dans `src/loup_garou/ui/nuit_roles.py` et l'inscrire dans le dictionnaire `NUIT_ROLES`. Un rôle absent de `NUIT_ROLES` dort comme un villageois.
 
 Les règles (`moteur/`) lisent le registre : elles n'ont pas à changer pour un rôle sans effet particulier sur la victoire ou les morts.

@@ -17,12 +17,14 @@ class Role:
     tir_a_la_mort: bool = False  # à sa mort, ce rôle peut emporter un autre joueur avec lui
     solitaire: bool = False  # gagne seul, en éliminant tout le monde (village et loups compris)
     camp_secret: bool = False  # son camp n'est pas révélé à sa mort (le joueur a choisi le sien)
+    description: str = ""  # une ou deux phrases affichées en infobulle à la composition
     priorite_nuit: int = 2  # plus petit = joue plus tôt dans la nuit (à égalité : ordre des joueurs)
 
 
 ROLES = {
     "loup": Role(
         key="loup",
+        description="Dès la deuxième nuit, se concerte avec la meute pour dévorer un villageois. Les loups gagnent quand ils sont plus nombreux que les autres.",
         nom="Loup-Garou",
         emoji="🐺",
         degrade="radial-gradient(circle at 50% 30%, #6b1f22, #2a0a0c 75%)",
@@ -31,6 +33,7 @@ ROLES = {
     ),
     "sorciere": Role(
         key="sorciere",
+        description="Détient une potion de soin pour sauver la victime des loups (sans savoir qui c'est). En option, des potions de mort pour empoisonner un joueur.",
         nom="Sorcière",
         emoji="🧪",
         degrade="radial-gradient(circle at 50% 30%, #3d1f5c, #170a29 75%)",
@@ -38,18 +41,21 @@ ROLES = {
     ),
     "voyante": Role(
         key="voyante",
+        description="Sonde un joueur lors de ses nuits de vision et découvre son rôle.",
         nom="Voyante",
         emoji="🔮",
         degrade="radial-gradient(circle at 50% 30%, #1c2b5c, #090f29 75%)",
     ),
     "cupidon": Role(
         key="cupidon",
+        description="La première nuit, lie deux joueurs par l'amour (lui compris) : si l'un meurt, l'autre le suit.",
         nom="Cupidon",
         emoji="🏹",
         degrade="radial-gradient(circle at 50% 30%, #6b2748, #29101f 75%)",
     ),
     "chasseur": Role(
         key="chasseur",
+        description="À sa mort, tire une dernière balle sur le joueur de son choix, ou renonce.",
         nom="Chasseur",
         emoji="🔫",
         degrade="radial-gradient(circle at 50% 30%, #6b4a1f, #291b0a 75%)",
@@ -57,6 +63,7 @@ ROLES = {
     ),
     "salvateur": Role(
         key="salvateur",
+        description="Protège un joueur chaque nuit contre les loups, jamais le même deux nuits de suite.",
         nom="Salvateur",
         emoji="🛡️",
         degrade="radial-gradient(circle at 50% 30%, #1f5c55, #0a2925 75%)",
@@ -65,6 +72,7 @@ ROLES = {
     ),
     "enfant_sauvage": Role(
         key="enfant_sauvage",
+        description="Choisit un mentor la première nuit ; si celui-ci meurt, il devient loup-garou.",
         nom="Enfant sauvage",
         emoji="🧒",
         degrade="radial-gradient(circle at 50% 30%, #4a5c1f, #1c260a 75%)",
@@ -73,6 +81,7 @@ ROLES = {
     ),
     "voleur": Role(
         key="voleur",
+        description="Deux cartes restent au milieu de la table : la première nuit, il peut prendre le rôle de l'une d'elles.",
         nom="Voleur",
         emoji="🃏",
         degrade="radial-gradient(circle at 50% 30%, #5c4a1f, #261d0a 75%)",
@@ -82,6 +91,7 @@ ROLES = {
     ),
     "renard": Role(
         key="renard",
+        description="Dès la deuxième nuit, flaire un groupe de trois joueurs et apprend si un loup s'y cache ; sans loup, il perd son flair.",
         nom="Renard",
         emoji="🦊",
         degrade="radial-gradient(circle at 50% 30%, #8a3f12, #33150a 75%)",
@@ -89,6 +99,7 @@ ROLES = {
     ),
     "loup_blanc": Role(
         key="loup_blanc",
+        description="Loup solitaire : une nuit sur deux, il peut dévorer l'un de ses frères. Il gagne seul, en éliminant tout le monde.",
         nom="Loup Blanc",
         emoji="🌕",
         degrade="radial-gradient(circle at 50% 30%, #6e6e78, #24242b 75%)",
@@ -99,6 +110,7 @@ ROLES = {
     ),
     "chien_loup": Role(
         key="chien_loup",
+        description="Choisit son camp en secret la première nuit : villageois ou loup-garou. Son camp n'est pas dévoilé à sa mort.",
         nom="Chien-Loup",
         emoji="🐕",
         degrade="radial-gradient(circle at 50% 30%, #5a4632, #1e1710 75%)",
@@ -108,6 +120,7 @@ ROLES = {
     ),
     "villageois": Role(
         key="villageois",
+        description="Aucun pouvoir : il dort, débat et vote le jour pour démasquer les loups.",
         nom="Villageois",
         emoji="🧑‍🌾",
         degrade="radial-gradient(circle at 50% 30%, #35431f, #141a0d 75%)",

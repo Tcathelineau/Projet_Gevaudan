@@ -369,7 +369,8 @@ def css_cartes():
             flex-wrap: wrap;
             justify-content: center;
             gap: 0.35rem;
-            margin: 0.4rem 0 0.7rem 0;
+            margin: 0.6rem 0 1.6rem 0;
+            padding-bottom: 0.6rem;
         }
         .icone-role {
             width: 46px;

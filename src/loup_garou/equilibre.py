@@ -29,9 +29,11 @@ NOTES = {
 FORCE_VOYANTE = {1: 7, 2: 5, 3: 4}
 FORCE_LOUP_BLANC = {1: -6, 2: -5, 3: -4}
 
-# Seuils de la jauge d'équilibre (somme des forces) et des jauges rapportées à la table.
-SEUIL_EQUILIBRE = 3
-SEUIL_NET = 10
+# Demi-largeur de la jauge d'équilibre : 2 points de force par joueur (au moins 10), pour qu'un
+# rôle pèse moins sur le curseur à une grande table qu'à une petite.
+FORCE_PAR_JOUEUR = 2
+DEMI_LARGEUR_MIN = 10
+# Seuils des jauges d'information et de chaos, rapportées à la table.
 SEUILS_INFO = (0.4, 0.9)    # information par joueur : faible / moyenne / forte
 SEUILS_CHAOS = (0.3, 0.8)  # chaos par joueur : calme / mouvementée / imprévisible
 
@@ -70,13 +72,10 @@ def bilan(composition, nb_joueurs, options=None):
     return Bilan(force, info, chaos, nb_joueurs)
 
 
-def niveau_equilibre(force):
-    """(libellé, camp favorisé : "village", "loups" ou None)."""
-    if abs(force) <= SEUIL_EQUILIBRE:
-        return "Équilibrée", None
-    camp = "village" if force > 0 else "loups"
-    ampleur = "Net avantage" if abs(force) >= SEUIL_NET else "Léger avantage"
-    return f"{ampleur} {'au village' if camp == 'village' else 'aux loups'}", camp
+def position_equilibre(b):
+    """Position du curseur entre 0 (avantage loups) et 100 (avantage village), 50 = équilibre."""
+    demi = max(DEMI_LARGEUR_MIN, FORCE_PAR_JOUEUR * b.joueurs)
+    return 50 + max(-demi, min(demi, b.force)) / demi * 50
 
 
 def _niveau(total, joueurs, seuils, libelles):

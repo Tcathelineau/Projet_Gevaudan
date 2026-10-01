@@ -51,7 +51,7 @@ Les pouvoirs ci-dessous sont **ma compréhension générale de ces rôles, non v
 
 ## Les trois compteurs de l'écran de composition
 
-1. **Équilibre** : somme des forces de la table, affichée comme une jauge entre « avantage loups » et « avantage village ». Seuils proposés : de -3 à +3 équilibrée ; de ±4 à ±9 léger avantage ; ±10 et plus net avantage. Seuils à calibrer sur les parties jouées (les archives de `historique/` donnent déjà le vainqueur et la composition).
+1. **Équilibre** : somme des forces de la table, affichée par un curseur entre « loups » et « village », sans chiffre ni libellé. L'échelle dépend de la table : la demi-largeur de la jauge vaut 2 points de force par joueur (au moins 10). Une Voyante (+5 à +7) déplace donc le curseur d'environ 25 % de la demi-jauge à 7 joueurs, et d'environ 15 % à 18 joueurs. Échelle à ajuster à l'usage (les archives de `historique/` donnent déjà le vainqueur et la composition).
 2. **Information** : somme des notes d'information divisée par le nombre de joueurs : faible sous 0,4, moyenne jusqu'à 0,9, forte au-delà.
 3. **Chaos** : même calcul : calme sous 0,3, mouvementée jusqu'à 0,8, imprévisible au-delà.
 

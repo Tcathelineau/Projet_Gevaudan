@@ -1089,6 +1089,7 @@ def css_infobulles():
             color: #f2e9d8;
             pointer-events: none;
         }}
+        [data-testid="stColumn"]:last-child div[class*="st-key-info_"]:hover::after {{ left: auto; right: 0; }}
         {regles}
         </style>
     """

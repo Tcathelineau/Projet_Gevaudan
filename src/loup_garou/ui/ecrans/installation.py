@@ -160,12 +160,12 @@ def etape_roles():
         composition = {"loup": n_loup}
 
         # Rôles uniques (au plus un exemplaire) : une simple case à cocher, en
-        # grille de 3 colonnes ; le reste de la table devient Villageois.
+        # grille de 4 colonnes ; le reste de la table devient Villageois.
         st.markdown("**Autres rôles** · coche ceux qui jouent")
         uniques = [role for role in ROLES_SPECIAUX if role.unique]
-        for i in range(0, len(uniques), 3):
-            cols = st.columns(3)
-            for col, role in zip(cols, uniques[i:i + 3]):
+        for i in range(0, len(uniques), 4):
+            cols = st.columns(4)
+            for col, role in zip(cols, uniques[i:i + 4]):
                 with col, st.container(key=f"info_{role.key}"):
                     composition[role.key] = int(st.checkbox(
                         f"{role.emoji} {role.nom}",

@@ -342,7 +342,6 @@ def _nuit_villageois(s, nom, cle):
 
 # Tour de nuit de chaque rôle (clé de ROLES -> fonction de rendu) ; un rôle absent dort comme un villageois.
 NUIT_ROLES = {
-    "active": nuit_active,
     "loup": _nuit_loup,
     "loup_blanc": _nuit_loup_blanc,
     "chien_loup": _nuit_chien_loup,

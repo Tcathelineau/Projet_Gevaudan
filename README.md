@@ -150,10 +150,7 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 │           ├── nuit_roles.py    #   tour de nuit de chaque rôle (NUIT_ROLES)
 │           ├── barre_laterale.py#   rechargement d'étape, barre ouverte
 │           └── ecrans/          #   accueil, installation, nuit, jour, fin
-├── tests/                       # Tests pytest (moteur, options, rôles, persistance, parcours de l'UI)
-├── pytest.ini                   # Configuration de pytest (src dans le chemin d'import)
-├── .gitlab-ci.yml               # CI GitLab : lance les tests à chaque merge request
-├── .github/workflows/tests.yml  # Même chose sur GitHub Actions
+├── .claude/skills/projet-gevaudan/SKILL.md  # Guide du projet pour Claude Code (architecture, règles, conventions)
 ├── docs/
 │   ├── banniere.svg             # Bannière de nuit du README
 │   └── banniere-jour.svg        # Bannière de jour du README

@@ -84,6 +84,6 @@ def test_jauges_d_equilibre_dans_la_composition():
     at.button(key="accueil_btn_nouvelle").click().run()
     assert not at.exception
     texte = " ".join(m.value for m in at.markdown)
-    assert "Équilibre de la partie" in texte and "Rapport de force" in texte
+    assert "Équilibre de la partie" in texte and "jauge-repere" in texte
     at.checkbox(key="n_voyante").check().run()
     assert not at.exception

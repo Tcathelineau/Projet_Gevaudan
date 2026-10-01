@@ -5,7 +5,7 @@ from loup_garou.moteur.partie import (
     camp, composition_recommandee, fin_de_tour, nouvelle_partie, resoudre_nuit, terminer_partie, tuer,
     vainqueur, vivants,
 )
-from loup_garou.roles import ROLES, ROLES_SPECIAUX
+from loup_garou.roles import ROLES_SPECIAUX
 
 
 # --- nouvelle_partie -------------------------------------------------------

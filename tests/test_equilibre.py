@@ -1,6 +1,4 @@
-import pytest
-
-from loup_garou.equilibre import NOTES, bilan, niveau_chaos, niveau_equilibre, niveau_info
+from loup_garou.equilibre import NOTES, Bilan, bilan, niveau_chaos, niveau_info, position_equilibre
 from loup_garou.roles import ROLES
 
 
@@ -46,16 +44,16 @@ def test_options_de_couple_et_de_maire():
     assert bilan({"villageois": 4}, 4, {"maire_depart": False}).force == base.force - 2
 
 
-@pytest.mark.parametrize("force, libelle, camp", [
-    (0, "Équilibrée", None),
-    (-3, "Équilibrée", None),
-    (4, "Léger avantage au village", "village"),
-    (-9, "Léger avantage aux loups", "loups"),
-    (10, "Net avantage au village", "village"),
-    (-12, "Net avantage aux loups", "loups"),
-])
-def test_niveau_equilibre(force, libelle, camp):
-    assert niveau_equilibre(force) == (libelle, camp)
+def test_position_du_curseur_est_centree_et_bornee():
+    assert position_equilibre(Bilan(0, 0, 0, 10)) == 50
+    assert position_equilibre(Bilan(100, 0, 0, 10)) == 100
+    assert position_equilibre(Bilan(-100, 0, 0, 10)) == 0
+
+
+def test_un_role_pese_moins_sur_le_curseur_a_une_grande_table():
+    petite = position_equilibre(Bilan(7, 0, 0, 7))
+    grande = position_equilibre(Bilan(7, 0, 0, 18))
+    assert 50 < grande < petite < 100
 
 
 def test_niveaux_info_et_chaos_rapportes_a_la_table():

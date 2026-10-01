@@ -152,6 +152,7 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 │           └── ecrans/          #   accueil, installation, nuit, jour, fin
 ├── .claude/skills/projet-gevaudan/SKILL.md  # Guide du projet pour Claude Code (architecture, règles, conventions)
 ├── docs/
+│   ├── equilibre-roles.md       # Force, information et chaos de chaque rôle (proposition)
 │   ├── banniere.svg             # Bannière de nuit du README
 │   └── banniere-jour.svg        # Bannière de jour du README
 ├── musique.mp3                  # (optionnel) musique de fond, à ajouter toi-même

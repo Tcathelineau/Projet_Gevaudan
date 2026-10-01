@@ -529,6 +529,16 @@ def css_cartes():
             box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(232,100,154,.45);
         }
         div[class*="st-key-dalles_cupi_"] button::after { content: "💘"; }
+        div[class*="st-key-dalles_poison_"] button {
+            background: rgba(60,110,40,.28);
+            border-color: rgba(140,210,90,.55);
+        }
+        div[class*="st-key-dalles_poison_"] button:hover {
+            background: rgba(70,140,40,.5);
+            border-color: #9be05a;
+            box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(155,224,90,.4);
+        }
+        div[class*="st-key-dalles_poison_"] button::after { content: "☠️"; }
         div[class*="st-key-dalles_maire_"] button::after { content: "👑"; }
         div[class*="st-key-dalles_vote_"] button {
             background: rgba(120,60,20,.35);
@@ -583,15 +593,16 @@ def carte_dos():
     st.markdown('<div class="carte-dos">🐺</div>', unsafe_allow_html=True)
 
 
-def badge_amour(autre):
+def badge_amour(autres):
+    label = "En couple avec" if len(autres) == 1 else "En trouple avec"
     st.markdown(
         f"""
         <div class="badge-amour">
             <span class="badge-icone">💘</span>
             <div>
-                <div class="badge-label">En couple avec</div>
-                <div class="badge-nom">{autre}</div>
-                <div class="badge-sous">Si l'un meurt, l'autre le suit.</div>
+                <div class="badge-label">{label}</div>
+                <div class="badge-nom">{" & ".join(autres)}</div>
+                <div class="badge-sous">Si l'un meurt, {"l'autre le suit" if len(autres) == 1 else "les autres le suivent"}.</div>
             </div>
         </div>
         """,
@@ -1210,6 +1221,9 @@ def bouton_fin(s, cle):
 
 OPTIONS_DEFAUT = {
     "potions_sorciere": 1,     # potions de soin de la sorcière
+    "potions_mort": 0,         # potions de mort de la sorcière
+    "couple_hasard": False,    # couple tiré au sort au départ, sans Cupidon
+    "trouple": False,          # l'amour lie trois joueurs au lieu de deux
     "cadence_voyante": 2,      # la voyante sonde une nuit sur N (à partir de la nuit 1)
     "cadence_loup_blanc": 2,   # le Loup Blanc festoie une nuit sur N (à partir de la nuit 1)
     "maire_depart": True,      # à égalité loups/village, la partie continue sauf si le maire est un loup
@@ -1219,6 +1233,10 @@ OPTIONS_DEFAUT = {
 def opt(s, cle):
     """Option de partie (les anciennes sauvegardes n'en ont pas : valeur par défaut)."""
     return s.get("options", {}).get(cle, OPTIONS_DEFAUT[cle])
+
+
+def _taille_couple(s):
+    return 3 if opt(s, "trouple") else 2
 
 
 def _nuit_active(s, cadence):
@@ -1397,28 +1415,66 @@ def _nuit_voyante(s, nom, cle):
 
 
 def _nuit_sorciere(s, nom, cle):
-    if s["jour"] == 0 or s["potions_sorciere"] == 0:
+    def reste_a_faire():
+        return (s["potions_sorciere"] > 0 and not s["soin_sorciere"]) or (
+            s.get("potions_mort_sorciere", 0) > 0 and not s.get("cible_poison"))
+
+    if s["jour"] == 0 or not reste_a_faire():
         plaquette("Rien à faire cette nuit.", icone="🌙")
         bouton_fin(s, cle)
-    else:
-        n = s["potions_sorciere"]
-        st.markdown(
-            f'<div class="potion-bandeau"><span class="potion-fioles">{"🧪" * n}</span>'
-            f'<span class="potion-texte">Potion{"s" if n > 1 else ""} de soin restante{"s" if n > 1 else ""} : {n}</span></div>',
-            unsafe_allow_html=True,
-        )
-        with st.container(key="sorciere_boutons", horizontal=True, horizontal_alignment="center"):
-            soigne = st.button("Utiliser une potion", type="primary", key=f"soin_{cle}")
-            rien = st.button("Ne rien faire", key=f"rien_{cle}")
-        if soigne:
-            s["soin_sorciere"] = True
-            s["potions_sorciere"] -= 1
-            log(s, f"La sorcière {nom} utilise une potion de soin.")
-            fin_de_tour(s)
+        return
+
+    soin = s["potions_sorciere"]
+    mort = s.get("potions_mort_sorciere", 0)
+    fioles = "🧪" * soin + "☠️" * mort
+    detail = " · ".join(filter(None, (
+        f"{soin} potion{'s' if soin > 1 else ''} de soin" if soin else "",
+        f"{mort} potion{'s' if mort > 1 else ''} de mort" if mort else "",
+    )))
+    st.markdown(
+        f'<div class="potion-bandeau"><span class="potion-fioles">{fioles}</span>'
+        f'<span class="potion-texte">Il te reste : {detail}</span></div>',
+        unsafe_allow_html=True,
+    )
+
+    if st.session_state.get(f"poison_{cle}"):
+        st.markdown("**Qui empoisonnes-tu ?**")
+        cible = grille_dalles("poison", cle, [n for n in vivants(s) if n != nom])
+        if st.button("Annuler", key=f"annule_poison_{cle}"):
+            st.session_state.pop(f"poison_{cle}", None)
             st.rerun()
-        if rien:
-            fin_de_tour(s)
+        if cible:
+            s["cible_poison"] = cible
+            s["potions_mort_sorciere"] -= 1
+            log(s, f"La sorcière {nom} empoisonne {cible}.")
+            st.session_state.pop(f"poison_{cle}", None)
+            if not reste_a_faire():
+                fin_de_tour(s)
             st.rerun()
+        return
+
+    peut_soigner = soin > 0 and not s["soin_sorciere"]
+    peut_empoisonner = mort > 0 and not s.get("cible_poison")
+    utilise = s["soin_sorciere"] or bool(s.get("cible_poison"))
+    with st.container(key="sorciere_boutons", horizontal=True, horizontal_alignment="center"):
+        soigne = peut_soigner and st.button(
+            "Utiliser une potion de soin", type="primary", key=f"soin_{cle}")
+        empoisonne = peut_empoisonner and st.button(
+            "Empoisonner quelqu'un", type="secondary" if peut_soigner else "primary", key=f"empoisonne_{cle}")
+        fin = st.button("Terminer mon tour" if utilise else "Ne rien faire", key=f"rien_{cle}")
+    if soigne:
+        s["soin_sorciere"] = True
+        s["potions_sorciere"] -= 1
+        log(s, f"La sorcière {nom} utilise une potion de soin.")
+        if not reste_a_faire():
+            fin_de_tour(s)
+        st.rerun()
+    if empoisonne:
+        st.session_state[f"poison_{cle}"] = True
+        st.rerun()
+    if fin:
+        fin_de_tour(s)
+        st.rerun()
 
 
 def _nuit_cupidon(s, nom, cle):
@@ -1427,11 +1483,12 @@ def _nuit_cupidon(s, nom, cle):
         bouton_fin(s, cle)
     else:
         st.markdown("**Qui lies-tu par l'amour ?**")
-        st.caption("Choisis deux joueurs (toi compris).")
-        couple = selection_dalles("cupi", cle, list(s["joueurs"].keys()), 2)
-        if bouton_validation("Décocher la flèche", f"ok_cup_{cle}", disabled=len(couple) != 2):
+        k = _taille_couple(s)
+        st.caption(f"Choisis {'trois' if k == 3 else 'deux'} joueurs (toi compris).")
+        couple = selection_dalles("cupi", cle, list(s["joueurs"].keys()), k)
+        if bouton_validation("Décocher la flèche", f"ok_cup_{cle}", disabled=len(couple) != k):
             s["amoureux"] = couple
-            log(s, f"Cupidon {nom} lie {couple[0]} et {couple[1]}.")
+            log(s, f"Cupidon {nom} lie {', '.join(couple[:-1])} et {couple[-1]}.")
             for n in couple:
                 s["joueurs"][n]["amoureux"] = True
             fin_de_tour(s)
@@ -1548,7 +1605,7 @@ ROLES = {
         nom="Sorcière",
         emoji="🧪",
         degrade="radial-gradient(circle at 50% 30%, #3d1f5c, #170a29 75%)",
-        etat_initial={"potions_sorciere": 1, "soin_sorciere": False},
+        etat_initial={"potions_sorciere": 1, "potions_mort_sorciere": 0, "soin_sorciere": False, "cible_poison": None},
         nuit=_nuit_sorciere,
     ),
     "voyante": Role(
@@ -1802,11 +1859,18 @@ def nouvelle_partie(noms, composition, options=None):
         etat.update(role.etat_initial)
     etat["options"] = {**OPTIONS_DEFAUT, **(options or {})}
     etat["potions_sorciere"] = etat["options"]["potions_sorciere"]
+    etat["potions_mort_sorciere"] = etat["options"]["potions_mort"]
     paquet = ", ".join(f"{ROLES[cle].nom} ×{n}" for cle, n in composition.items() if n > 0)
     log(etat, f"{len(noms)} joueurs. Paquet : {paquet}.", "debut")
     log(etat, "Distribution : " + ", ".join(
         f"{n} ({ROLES[d['role']].nom})" for n, d in joueurs.items()
     ) + ".", "debut")
+    if etat["options"]["couple_hasard"]:
+        couple = random.sample(list(joueurs), _taille_couple(etat))
+        etat["amoureux"] = couple
+        for n in couple:
+            joueurs[n]["amoureux"] = True
+        log(etat, f"Le hasard lie {', '.join(couple[:-1])} et {couple[-1]}.", "debut")
     return etat
 
 
@@ -1865,10 +1929,11 @@ def vainqueur(s):
     autres = [n for n in en_vie if camp(s, n) != "loups"]
     solitaires = [n for n in en_vie if ROLES[s["joueurs"][n]["role"]].solitaire]
 
-    if len(en_vie) == 2 and all(s["joueurs"][n]["amoureux"] for n in en_vie):
-        return "Les amoureux l'emportent : ils sont les deux derniers survivants."
     couple = [n for n in s.get("amoureux", []) if s["joueurs"][n]["vivant"]]
-    if len(couple) == 2 and len({camp(s, n) == "loups" for n in couple}) == 2:
+    if len(couple) >= 2 and len(en_vie) == len(couple):
+        nombre = "deux" if len(couple) == 2 else "trois"
+        return f"Les amoureux l'emportent : ils sont les {nombre} derniers survivants."
+    if len(couple) >= 2 and len({camp(s, n) == "loups" for n in couple}) == 2:
         # Couple loup/villageois : camp à part, ni le village ni la meute ne peuvent conclure.
         return None
     if solitaires:
@@ -1967,11 +2032,16 @@ CADENCES = {1: "Chaque nuit", 2: "Une nuit sur 2", 3: "Une nuit sur 3"}
 def saisir_options(composition):
     """Options de règles, limitées aux rôles présents dans la partie. Renvoie le dict d'options."""
     options = dict(OPTIONS_DEFAUT)
-    with st.expander("⚙️ Options de la partie"):
+    with st.expander("⚙️ Options avancées"):
         if composition.get("sorciere"):
-            options["potions_sorciere"] = st.number_input(
+            col_soin, col_mort = st.columns(2)
+            options["potions_sorciere"] = col_soin.number_input(
                 "🧪 Potions de soin de la sorcière", min_value=1, max_value=5,
                 value=OPTIONS_DEFAUT["potions_sorciere"], step=1, key="opt_potions",
+            )
+            options["potions_mort"] = col_mort.number_input(
+                "☠️ Potions de mort de la sorcière", min_value=0, max_value=5,
+                value=OPTIONS_DEFAUT["potions_mort"], step=1, key="opt_potions_mort",
             )
         if composition.get("voyante"):
             options["cadence_voyante"] = st.radio(
@@ -1983,6 +2053,17 @@ def saisir_options(composition):
                 "🌕 Festins du Loup Blanc", list(CADENCES), format_func=CADENCES.get,
                 index=OPTIONS_DEFAUT["cadence_loup_blanc"] - 1, horizontal=True, key="opt_loup_blanc",
             )
+        options["couple_hasard"] = st.toggle(
+            "🎲 Couple tiré au sort, sans Cupidon",
+            value=OPTIONS_DEFAUT["couple_hasard"], key="opt_couple_hasard",
+            help="Le couple est désigné au hasard dès le départ ; Cupidon est remplacé par un villageois.",
+        )
+        options["trouple"] = st.toggle(
+            "🎉 Mode fun : un trouple au lieu d'un couple",
+            value=OPTIONS_DEFAUT["trouple"], key="opt_trouple",
+            help="L'amour lie trois joueurs (choisis par Cupidon, ou tirés au sort). "
+                 "Si l'un meurt, les deux autres le suivent.",
+        )
         options["maire_depart"] = st.toggle(
             "👑 À égalité loups / village, le maire départage",
             value=OPTIONS_DEFAUT["maire_depart"], key="opt_maire",
@@ -2047,6 +2128,9 @@ def etape_roles():
         composition["villageois"] = max(n_villageois, 0)
 
         options = saisir_options(composition)
+        if options["couple_hasard"] and composition.get("cupidon"):
+            composition["villageois"] += composition["cupidon"]
+            composition["cupidon"] = 0
 
         with apercu.container():
             afficher_composition(nb, total, composition, n_villageois)
@@ -2145,10 +2229,10 @@ def ecran_nuit(s):
         gerer_nuit = ROLES[role].nuit or _nuit_villageois
         gerer_nuit(s, nom, cle)
 
-    if donnees["amoureux"] and s["jour"] > 0:
-        autre = [n for n in s["amoureux"] if n != nom]
+    if donnees["amoureux"] and (s["jour"] > 0 or opt(s, "couple_hasard")):
+        autres = [n for n in s["amoureux"] if n != nom]
         with st.sidebar:
-            badge_amour(autre[0])
+            badge_amour(autres)
 
 
 def resoudre_nuit(s):
@@ -2173,6 +2257,9 @@ def resoudre_nuit(s):
         # Le festin du Loup Blanc échappe à la sorcière et au salvateur.
         if s.get("cible_loup_blanc"):
             morts += tuer(s, s["cible_loup_blanc"], "est dévoré par le Loup Blanc")
+        # Le poison échappe à la potion de soin et au salvateur.
+        if s.get("cible_poison"):
+            morts += tuer(s, s["cible_poison"], "est empoisonné par la sorcière")
         if not morts:
             log(s, "Personne ne meurt cette nuit.")
 
@@ -2183,6 +2270,7 @@ def resoudre_nuit(s):
     s["protege_precedent"] = s.get("protege_nuit")
     s["protege_nuit"] = None
     s["soin_sorciere"] = False
+    s["cible_poison"] = None
     s["ordre_nuit"] = []
     s["tour"] = 0
     s["devoile"] = False
@@ -2215,7 +2303,7 @@ def panneau_morts(s):
             f'<div class="avis-papier"><div class="avis-nom">💀 {html.escape(mort)}</div>'
             f'<div class="avis-detail">Il {_camp_txt(s, mort)}.</div></div>'
         )
-    if s["morts_nuit"] and len(s["amoureux"]) == 2 and set(s["amoureux"]) <= set(s["morts_nuit"]):
+    if s["morts_nuit"] and s["amoureux"] and set(s["amoureux"]) <= set(s["morts_nuit"]):
         papiers.append(
             '<div class="avis-papier"><div class="avis-detail">💔 Les amoureux sont morts ensemble.</div></div>'
         )

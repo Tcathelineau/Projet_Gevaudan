@@ -37,7 +37,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 | 🐺 | **Loup-Garou** | Loups | Se retrouve avec la meute et vote chaque nuit (dès la deuxième) pour dévorer un villageois. |
 | 🧑‍🌾 | **Villageois** | Village | Aucun pouvoir : il dort, débat et vote le jour. |
 | 🔮 | **Voyante** | Village | Une nuit sur deux par défaut, sonde un joueur et découvre son rôle. |
-| 🧪 | **Sorcière** | Village | Dispose de potions de soin (une par défaut) pour sauver la victime des loups, sans savoir qui a été désigné : elle choisit à l'aveugle de l'utiliser ou non. |
+| 🧪 | **Sorcière** | Village | Dispose de potions de soin (une par défaut) pour sauver la victime des loups, sans savoir qui a été désigné : elle choisit à l'aveugle de l'utiliser ou non. En option, elle a aussi des potions de mort pour empoisonner un joueur (ni le salvateur ni le soin ne l'en protègent). |
 | 🏹 | **Cupidon** | Village | La première nuit, lie deux joueurs par l'amour (lui compris). |
 | 🔫 | **Chasseur** | Village | À sa mort, tire une dernière balle sur le joueur de son choix. |
 | 🛡️ | **Salvateur** | Village | Protège un joueur chaque nuit, jamais le même deux nuits de suite. |
@@ -53,7 +53,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 - **Le maire** est élu au premier jour ; s'il meurt, il choisit lui-même son successeur.
 - **Égalité loups / villageois** : la partie continue tant que le maire n'est pas un loup ; elle s'arrête dès que les loups sont plus nombreux, ou aussi nombreux avec un loup pour maire.
 - **Loups en désaccord** : si les loups ne se mettent pas d'accord sur une victime, personne n'est dévoré cette nuit-là.
-- **Les amoureux** (Cupidon) meurent ensemble et gagnent s'ils sont les deux derniers survivants. Si le couple mêle un loup et un villageois, il forme un camp à part : tant qu'il vit, ni le village ni la meute ne peuvent gagner, et le couple doit éliminer tous les autres.
+- **Les amoureux** (Cupidon, ou tirés au sort si l'option est activée) meurent ensemble et gagnent s'ils sont les derniers survivants (deux, ou trois en mode trouple). Si le couple mêle un loup et un villageois, il forme un camp à part : tant qu'il vit, ni le village ni la meute ne peuvent gagner, et le couple doit éliminer tous les autres.
 - **Le chasseur** peut emporter quelqu'un avec lui en mourant, ou renoncer à tirer.
 - **Les solitaires** (Loup Blanc) ne gagnent qu'en éliminant tout le monde : tant qu'ils vivent, ni le village ni la meute ne peut conclure.
 - **Camp secret** : à la mort du Chien-Loup, son camp n'est pas dévoilé avant la fin de la partie.
@@ -63,7 +63,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 
 - **Menu d'accueil** : un village qui défile (jour, nuit, loups, victoire) avec deux boutons, « Nouvelle partie » et « Historique ». L'écran Historique affiche chaque partie archivée sous forme de carte (date, joueurs, rôles, camp vainqueur, bordure colorée selon le vainqueur) avec le journal détaillé en cases nuit/jour.
 - **Composition personnalisable** : nombre de joueurs et répartition des rôles, réglables avant chaque partie.
-- **Options de partie** (menu de composition, « ⚙️ Options de la partie ») : potions de soin de la sorcière (1 à 5), fréquence des visions de la voyante et des festins du Loup Blanc (chaque nuit, une nuit sur 2 ou sur 3), et égalité loups / village (le maire départage, ou les loups gagnent dès l'égalité). Les options ne s'affichent que pour les rôles présents.
+- **Options avancées** (menu de composition, « ⚙️ Options avancées ») : potions de soin (1 à 5) et de mort (0 à 5) de la sorcière, couple tiré au sort sans Cupidon (Cupidon est alors remplacé par un villageois), mode fun « trouple » (l'amour lie trois joueurs au lieu de deux), fréquence des visions de la voyante et des festins du Loup Blanc (chaque nuit, une nuit sur 2 ou sur 3), et égalité loups / village (le maire départage, ou les loups gagnent dès l'égalité). Les options ne s'affichent que pour les rôles présents.
 - **Écrans de passage sécurisés** entre chaque joueur pour éviter qu'un rôle soit vu par la mauvaise personne.
 - **Chronologie et rechargement** : une frise nuit/jour dans la barre latérale montre où en est la partie, et le menu Option permet de revenir au début d'une nuit ou à l'annonce d'un jour (plantage, erreur de clic).
 - **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, affichée nuit par nuit à la fin, archivée à la fin de la partie dans `historique/partie_AAAAMMJJ_HHMMSS.json` (les parties abandonnées ne sont pas conservées) et téléchargeable en JSON.

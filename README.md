@@ -63,6 +63,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 
 - **Menu d'accueil** : un village qui défile (jour, nuit, loups, victoire) avec deux boutons, « Nouvelle partie » et « Historique ». L'écran Historique affiche chaque partie archivée sous forme de carte (date, joueurs, rôles, camp vainqueur, bordure colorée selon le vainqueur) avec le journal détaillé en cases nuit/jour.
 - **Composition personnalisable** : nombre de joueurs et répartition des rôles, réglables avant chaque partie.
+- **Jauges d'équilibre** : l'écran de composition affiche un rapport de force loups / village, un niveau d'information et un niveau de chaos, recalculés à chaque changement de rôle ou d'option (indicateur approximatif, voir `docs/equilibre-roles.md`).
 - **Options avancées** (menu de composition, « ⚙️ Options avancées ») : potions de soin (1 à 5) et de mort (0 à 5) de la sorcière, couple tiré au sort sans Cupidon (Cupidon est alors remplacé par un villageois), mode fun « trouple » (l'amour lie trois joueurs au lieu de deux), fréquence des visions de la voyante et des festins du Loup Blanc (chaque nuit, une nuit sur 2 ou sur 3), et égalité loups / village (le maire départage, ou les loups gagnent dès l'égalité). Les options ne s'affichent que pour les rôles présents.
 - **Écrans de passage sécurisés** entre chaque joueur pour éviter qu'un rôle soit vu par la mauvaise personne.
 - **Chronologie et rechargement** : une frise nuit/jour dans la barre latérale montre où en est la partie, et le menu Option permet de revenir au début d'une nuit ou à l'annonce d'un jour (plantage, erreur de clic).
@@ -139,6 +140,7 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 │       ├── app.py               # main() : page, barre latérale, aiguillage selon la phase
 │       ├── config.py            # Chemins (save.json, historique/, musique.mp3)
 │       ├── options.py           # Options avancées et leurs valeurs par défaut
+│       ├── equilibre.py         # Jauges d'équilibre (force, information, chaos) d'une composition
 │       ├── roles.py             # Registre ROLES (données des rôles, sans interface)
 │       ├── moteur/              # Règles du jeu, sans dépendance à l'interface
 │       │   ├── partie.py        #   nouvelle partie, morts, résolution de la nuit, victoire

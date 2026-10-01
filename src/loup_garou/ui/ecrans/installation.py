@@ -2,6 +2,7 @@
 
 import streamlit as st
 
+from loup_garou.equilibre import bilan, niveau_chaos, niveau_equilibre, niveau_info
 from loup_garou.moteur.partie import composition_recommandee, nouvelle_partie
 from loup_garou.options import CADENCES, OPTIONS_DEFAUT
 from loup_garou.roles import ROLES, ROLES_SPECIAUX
@@ -23,7 +24,7 @@ def ecran_installation():
         etape_noms()
 
 
-def afficher_composition(nb, total, composition, n_villageois):
+def afficher_composition(nb, total, composition, n_villageois, options):
     lignes = "".join(
         f'<div class="panneau-ligne"><span>{ROLES[cle].emoji} {ROLES[cle].nom}</span><span>{n}</span></div>'
         for cle, n in composition.items()
@@ -53,8 +54,41 @@ def afficher_composition(nb, total, composition, n_villageois):
         for _ in range(n)
     )
     st.markdown(f'<div class="pictogramme">{icones}</div>', unsafe_allow_html=True)
+    afficher_jauges(bilan(composition, nb, options))
     if total > nb:
         st.caption(f"{total - nb} cartes restent au milieu de la table ({nb} joueurs, {total} cartes).")
+
+
+def afficher_jauges(b):
+    """Équilibre loups / village, information et chaos de la composition."""
+    libelle, _ = niveau_equilibre(b.force)
+    # Jauge d'équilibre : repère entre 0 % (loups) et 100 % (village), plafonné à ±15.
+    position = 50 + max(-15, min(15, b.force)) / 15 * 50
+    signe = f"+{b.force}" if b.force > 0 else str(b.force)
+
+    def barre(titre, niveau, valeur, maxi):
+        pct = min(100, valeur / maxi * 100)
+        return (
+            f'<div class="jauge"><div class="jauge-entete"><span>{titre}</span>'
+            f'<span class="jauge-valeur">{niveau}</span></div>'
+            f'<div class="jauge-piste jauge-piste-simple"><div class="jauge-rempli" style="width: {pct:.0f}%;"></div></div></div>'
+        )
+
+    st.markdown(
+        f"""
+        <div class="panneau panneau-dense">
+            <div class="panneau-titre">Équilibre de la partie</div>
+            <div class="jauge"><div class="jauge-entete"><span>⚖️ Rapport de force ({signe})</span>
+                <span class="jauge-valeur">{libelle}</span></div>
+                <div class="jauge-piste"><div class="jauge-repere" style="left: {position:.0f}%;"></div></div>
+                <div class="jauge-extremites"><span>🐺 Loups</span><span>Village 🏡</span></div></div>
+            {barre("🔮 Information", niveau_info(b), b.info / max(b.joueurs, 1), 1.5)}
+            {barre("🌀 Chaos", niveau_chaos(b), b.chaos / max(b.joueurs, 1), 1.5)}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.caption("Indicateur approximatif : voir docs/equilibre-roles.md.")
 
 
 def saisir_options(composition):
@@ -161,7 +195,7 @@ def etape_roles():
             composition["cupidon"] = 0
 
         with apercu.container():
-            afficher_composition(nb, total, composition, n_villageois)
+            afficher_composition(nb, total, composition, n_villageois, options)
 
         if st.button("Suivant : noms des joueurs →", type="primary", disabled=n_villageois < 0):
             st.session_state.config_nb = nb

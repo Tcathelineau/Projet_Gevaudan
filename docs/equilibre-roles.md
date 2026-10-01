@@ -52,10 +52,14 @@ Les pouvoirs ci-dessous sont **ma compréhension générale de ces rôles, non v
 ## Les trois compteurs de l'écran de composition
 
 1. **Équilibre** : somme des forces de la table, affichée comme une jauge entre « avantage loups » et « avantage village ». Seuils proposés : de -3 à +3 équilibrée ; de ±4 à ±9 léger avantage ; ±10 et plus net avantage. Seuils à calibrer sur les parties jouées (les archives de `historique/` donnent déjà le vainqueur et la composition).
-2. **Information** : somme des notes d'information, rapportée au nombre de joueurs pour être lisible (faible, moyenne, forte).
-3. **Chaos** : somme des notes de chaos, rapportée au nombre de joueurs (calme, mouvementée, imprévisible).
+2. **Information** : somme des notes d'information divisée par le nombre de joueurs : faible sous 0,4, moyenne jusqu'à 0,9, forte au-delà.
+3. **Chaos** : même calcul : calme sous 0,3, mouvementée jusqu'à 0,8, imprévisible au-delà.
+
+Ces compteurs sont implémentés dans `src/loup_garou/equilibre.py` (les valeurs y sont recopiées : en cas de changement, modifier les deux). Les seuils d'information et de chaos ont été choisis en regardant des compositions types, sans autre calibrage.
 
 ### Vérification sur les compositions recommandées
+
+> Le tableau ci-dessous compte la Voyante à +7 (une vision par nuit). L'app la limite par défaut à une nuit sur deux (+5) : avec ce réglage, chaque colonne perd 2 points (par exemple 12 joueurs : -5, 16 joueurs : -8).
 
 Avec ces valeurs, la composition suggérée par l'app (`composition_recommandee`) donne :
 

@@ -339,6 +339,29 @@ def css_cartes():
             margin-top: 0.35rem;
             padding-top: 0.3rem;
         }
+        .jauge { margin: 0.45rem 0 0.2rem; font-family: 'EB Garamond', serif; color: #ece3d2; }
+        .jauge-entete { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.92rem; }
+        .jauge-valeur { color: #f0d890; font-weight: 600; }
+        .jauge-piste {
+            position: relative;
+            height: 8px;
+            margin: 0.3rem 0 0.15rem;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #7a2a2e, #4a4637 50%, #3f7d4f);
+        }
+        .jauge-piste-simple { background: rgba(236,227,210,.15); }
+        .jauge-piste-simple > .jauge-rempli { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: #c9a44c; }
+        .jauge-repere {
+            position: absolute;
+            top: -4px;
+            width: 4px;
+            height: 16px;
+            margin-left: -2px;
+            border-radius: 2px;
+            background: #f2e9d8;
+            box-shadow: 0 0 6px rgba(0,0,0,.6);
+        }
+        .jauge-extremites { display: flex; justify-content: space-between; font-size: 0.72rem; color: #b9b09c; }
         .pictogramme {
             display: flex;
             flex-wrap: wrap;

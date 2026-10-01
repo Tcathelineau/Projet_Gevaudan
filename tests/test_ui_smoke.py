@@ -77,3 +77,13 @@ def test_partie_complete_jusqu_a_la_fin():
     else:
         pytest.fail("la partie ne se termine pas en 1500 clics")
     assert at.session_state["partie"]["phase"] == "fin"
+
+
+def test_jauges_d_equilibre_dans_la_composition():
+    at = _app()
+    at.button(key="accueil_btn_nouvelle").click().run()
+    assert not at.exception
+    texte = " ".join(m.value for m in at.markdown)
+    assert "Équilibre de la partie" in texte and "Rapport de force" in texte
+    at.checkbox(key="n_voyante").check().run()
+    assert not at.exception

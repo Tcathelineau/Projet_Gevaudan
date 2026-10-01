@@ -7,6 +7,7 @@ from loup_garou.moteur.partie import composition_recommandee, nouvelle_partie
 from loup_garou.options import CADENCES, OPTIONS_DEFAUT
 from loup_garou.roles import ROLES, ROLES_SPECIAUX
 from loup_garou.ui.ecrans.accueil import aller_a
+from loup_garou.ui.styles import css_infobulles
 
 
 def ecran_installation():
@@ -129,6 +130,7 @@ def saisir_options(composition):
 
 
 def etape_roles():
+    st.markdown(css_infobulles(), unsafe_allow_html=True)
     with st.container(key="setup_roles"):
         st.markdown("##### 1. Composition de la partie")
 
@@ -147,13 +149,14 @@ def etape_roles():
 
         loups_defaut, speciaux_defaut = composition_recommandee(nb)
 
-        st.markdown(f"**{ROLES['loup'].emoji} {ROLES['loup'].nom}**")
-        n_loup = st.number_input(
-            f"{ROLES['loup'].emoji} {ROLES['loup'].nom}s",
-            min_value=1, max_value=max(1, nb - 1),
-            value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
-            label_visibility="collapsed",
-        )
+        with st.container(key="info_loup"):
+            st.markdown(f"**{ROLES['loup'].emoji} {ROLES['loup'].nom}**")
+            n_loup = st.number_input(
+                f"{ROLES['loup'].emoji} {ROLES['loup'].nom}s",
+                min_value=1, max_value=max(1, nb - 1),
+                value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
+                label_visibility="collapsed",
+            )
         composition = {"loup": n_loup}
 
         # Rôles uniques (au plus un exemplaire) : une simple case à cocher, en
@@ -163,7 +166,7 @@ def etape_roles():
         for i in range(0, len(uniques), 3):
             cols = st.columns(3)
             for col, role in zip(cols, uniques[i:i + 3]):
-                with col:
+                with col, st.container(key=f"info_{role.key}"):
                     composition[role.key] = int(st.checkbox(
                         f"{role.emoji} {role.nom}",
                         value=bool(speciaux_defaut[role.key]), key=f"n_{role.key}",
@@ -173,10 +176,11 @@ def etape_roles():
         # rôle de ce type n'aura besoin que d'une entrée dans ROLES).
         for role in ROLES_SPECIAUX:
             if not role.unique:
-                composition[role.key] = st.slider(
-                    f"{role.emoji} {role.nom}", min_value=0, max_value=nb,
-                    value=speciaux_defaut[role.key], key=f"n_{role.key}",
-                )
+                with st.container(key=f"info_{role.key}"):
+                    composition[role.key] = st.slider(
+                        f"{role.emoji} {role.nom}", min_value=0, max_value=nb,
+                        value=speciaux_defaut[role.key], key=f"n_{role.key}",
+                    )
 
         total = nb + sum(ROLES[cle].cartes_en_plus * n for cle, n in composition.items())
         n_villageois = total - sum(composition.values())

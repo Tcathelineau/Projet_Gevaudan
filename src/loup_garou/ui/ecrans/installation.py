@@ -37,20 +37,19 @@ def afficher_composition(nb, total, composition, n_villageois, options):
         for cle, n in composition.items()
         if n > 0
     )
-    col_composition, col_equilibre = st.columns(2)
-    with col_composition:
-        st.markdown(
-            f"""
+    st.markdown(
+        f"""
+        <div class="apercu-grille">
             <div class="panneau panneau-dense">
                 <div class="panneau-titre">Composition</div>
                 {lignes}
                 <div class="panneau-ligne panneau-total"><span><b>Total</b></span><span><b>{total} / {total}</b></span></div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with col_equilibre:
-        afficher_jauges(bilan(composition, nb, options))
+            {jauges_html(bilan(composition, nb, options)).strip()}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     icones = "".join(
         f'<div class="icone-role" style="background: {ROLES[cle].degrade};" title="{ROLES[cle].nom}">{ROLES[cle].emoji}</div>'
@@ -62,8 +61,8 @@ def afficher_composition(nb, total, composition, n_villageois, options):
         st.caption(f"{total - nb} cartes restent au milieu de la table ({nb} joueurs, {total} cartes).")
 
 
-def afficher_jauges(b):
-    """Équilibre loups / village, information et chaos de la composition."""
+def jauges_html(b):
+    """Panneau d'équilibre : curseur loups / village, information et chaos."""
 
     def barre(titre, niveau, valeur):
         pct = min(100, valeur / 1.5 * 100)
@@ -73,8 +72,7 @@ def afficher_jauges(b):
             f'<div class="jauge-piste jauge-piste-simple"><div class="jauge-rempli" style="width: {pct:.1f}%;"></div></div></div>'
         )
 
-    st.markdown(
-        f"""
+    return f"""
         <div class="panneau panneau-dense">
             <div class="panneau-titre">Équilibre de la partie</div>
             <div class="jauge">
@@ -83,9 +81,7 @@ def afficher_jauges(b):
             {barre("🔮 Information", niveau_info(b), b.info / max(b.joueurs, 1))}
             {barre("🌀 Chaos", niveau_chaos(b), b.chaos / max(b.joueurs, 1))}
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    """
 
 
 def saisir_options(composition):

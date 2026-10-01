@@ -362,6 +362,8 @@ def css_cartes():
             box-shadow: 0 0 6px rgba(0,0,0,.6);
         }
         .jauge-extremites { display: flex; justify-content: space-between; font-size: 0.72rem; color: #b9b09c; }
+        .apercu-grille { display: grid; grid-template-columns: 2fr 3fr; gap: 0.6rem; align-items: stretch; }
+        .apercu-grille .panneau-dense { margin-bottom: 0; }
         .pictogramme {
             display: flex;
             flex-wrap: wrap;
@@ -370,14 +372,14 @@ def css_cartes():
             margin: 0.4rem 0 0.7rem 0;
         }
         .icone-role {
-            width: 36px;
-            height: 36px;
+            width: 46px;
+            height: 46px;
             border-radius: 50%;
             border: 2px solid #c9a44c;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.05rem;
+            font-size: 1.35rem;
             box-shadow: 0 0 12px rgba(201,164,76,.25) inset;
         }
         [data-testid="stSidebarUserContent"] {

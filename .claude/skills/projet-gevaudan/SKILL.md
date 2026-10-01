@@ -1,0 +1,123 @@
+---
+name: projet-gevaudan
+description: Connaissance du projet Gévaudan (Loup-Garou en Streamlit, jeu hotseat) : architecture du code, conventions, règles de jeu déjà décidées, ambiance visuelle, façon de travailler avec l'équipe. À charger avant toute modification du jeu, d'un rôle, d'une option, de l'interface ou du README.
+---
+
+# Projet Gévaudan : guide pour travailler dessus
+
+Application Streamlit de Loup-Garou en **hotseat** : un seul appareil passe de main en main, sans maître du jeu. Dépôt `github.com/Tcathelineau/Projet_Gevaudan` (compte personnel Tcathelineau, pas l'identité git professionnelle).
+
+```bash
+uv run --python 3.12 --with streamlit streamlit run src/loup_garou_app.py
+```
+
+## 1. Esprit du projet
+
+- **Jeu grandeur nature** sur plusieurs heures ou jours : l'app gère rôles, nuits et votes ; l'essentiel se joue entre les joueurs. Le rythme des conseils est libre. Les morts deviennent des « esprits frappeurs » (ils discutent, ne votent pas). Ces règles sociales sont dans le README, pas dans le code.
+- **Pas de maître du jeu** : l'app joue ce rôle. Chaque écran doit être compréhensible par quelqu'un qui découvre le jeu.
+- **Secret d'abord** : à chaque tour de nuit, deux écrans de passage (« Je vais chercher X », puis « Oui, je suis X ») évitent qu'on voie la carte d'un autre. Ne jamais afficher un rôle ou un résultat de vision sans passer par ces écrans.
+- **Ambiance** : thème sombre (`.streamlit/config.toml`, `base = "dark"`), village gothique en SVG/CSS animé (lune, étoiles, nuages, maisons, confettis de victoire, lune de sang), cartes de rôle avec dégradé propre à chaque rôle, bandeaux et encarts d'annonce (`annonce`, `plaquette`, `scene_ciel`, `scene_victoire`). Toute nouvelle interface doit rester dans ce registre : pas de widget Streamlit brut quand une brique maison existe.
+- **Sobriété visuelle** : pas de scroll dans l'écran de nuit (conteneur de hauteur 400), les dalles tiennent sur 3 lignes au plus.
+- Les textes affichés sont en **français**, tutoiement dans les écrans de passage.
+
+## 2. Architecture du code
+
+```
+src/loup_garou_app.py        point d'entrée (importe loup_garou.app.main)
+src/loup_garou/
+  config.py                  SAVE_FILE, HISTORIQUE_DIR, MUSIQUE_FILE (chemins relatifs au dossier courant)
+  options.py                 OPTIONS_DEFAUT, opt(), taille_couple(), nuit_active(), prochaine_nuit(), CADENCES
+  roles.py                   dataclass Role, registre ROLES, ROLES_SPECIAUX (données seulement)
+  moteur/                    règles du jeu, SANS Streamlit
+    partie.py                nouvelle_partie, vivants, camp, tuer, vainqueur, fin_de_tour,
+                             terminer_partie, resoudre_nuit, composition_recommandee
+    journal.py               log, prendre_instantane, etapes_chronologie
+    persistance.py           save_game/load_game/clear_save, archiver_partie, lister_historique,
+                             date_partie, gagnant_partie
+  ui/                        interface Streamlit
+    styles.py                CSS (cartes, scènes, passage, accueil, historique) et décors SVG
+    composants.py            carte_role, carte_dos, badges, scene_ciel/victoire, annonce, plaquette,
+                             grille_dalles, selection_dalles, bouton_validation, bouton_fin, panneau_avis
+    nuit_roles.py            une fonction de tour de nuit par rôle + NUIT_ROLES (clé de rôle -> fonction)
+    barre_laterale.py        recharger_etape, panneau_rechargement, garder_sidebar_ouverte
+    ecrans/                  accueil, installation, nuit, jour (réveil, maire, conseil, tir), fin
+  app.py                     main() : CSS, barre latérale, aiguillage sur s["phase"], musique, menu Option
+```
+
+**Sens des dépendances** : `ui` -> `moteur` -> `roles` / `options` -> `config`. Le moteur n'importe jamais `streamlit` ni `ui` (c'est ce qui le rend testable). `roles.py` ne connaît pas l'interface : c'est pour cela que le tour de nuit d'un rôle est dans `NUIT_ROLES` (ui) et non dans la dataclass `Role`.
+
+Streamlit relance le script d'entrée à chaque interaction ; les modules importés restent en cache. Tout l'état vit dans `st.session_state.partie` (le dictionnaire `s`), les saisies temporaires d'écran aussi (clés `sel_*`, `pick_*`, `reload_*`...).
+
+### L'état de partie `s`
+
+Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (`save_game(s)` en fin de `main`), rechargé au démarrage (reprise automatique).
+
+| Clé | Rôle |
+|---|---|
+| `joueurs` | `{nom: {"role", "vivant", "amoureux", ...}}` ; extras éventuels : `camp_choisi` (Chien-Loup), `enfant_sauvage` |
+| `phase` | `nuit`, `reveil`, `election_maire`, `conseil`, `tir_chasseur`, `fin` |
+| `jour` | 0 = première nuit (Cupidon seulement, pas de mort) ; 1, 2... ensuite |
+| `ordre_nuit`, `tour`, `devoile`, `transfert` | déroulé du passage de l'appareil en nuit |
+| `votes_loups`, `morts_nuit`, `morts_tir`, `tirs_en_attente`, `retour_tir` | résolution de nuit et tirs du chasseur |
+| `amoureux`, `maire`, `dernier_maire`, `loups`, `cartes_milieu` | état social |
+| `options` | options de partie (voir §4) |
+| clés propres aux rôles | viennent de `Role.etat_initial` (ex. `potions_sorciere`, `protege_nuit`, `mentor_enfant`, `cible_loup_blanc`) |
+| `journal`, `instantanes` | historique daté par moment, points de retour pour le rechargement d'étape |
+
+### Registre des rôles
+
+`Role` (dataclass figée) : `key, nom, emoji, degrade, camp ("village" | "loups"), unique, etat_initial, cartes_en_plus, recommande, tir_a_la_mort, solitaire, camp_secret, priorite_nuit`. Rôles actuels : loup, villageois, sorciere, voyante, cupidon, chasseur, salvateur, enfant_sauvage, voleur, renard, loup_blanc, chien_loup.
+
+**Ajouter un rôle** :
+1. déclarer l'entrée dans `ROLES` (`roles.py`), avec ses clés d'état dans `etat_initial` ;
+2. écrire `_nuit_<role>(s, nom, cle)` dans `ui/nuit_roles.py` et l'ajouter à `NUIT_ROLES` (un rôle absent dort comme un villageois) ;
+3. si le rôle change les morts ou la victoire : `moteur/partie.py` (`tuer`, `resoudre_nuit`, `vainqueur`) ;
+4. si le rôle a des réglages : `OPTIONS_DEFAUT` et `saisir_options` (écran d'installation) ;
+5. mettre à jour le tableau des rôles et les règles du README.
+
+### Briques d'interface
+
+- `grille_dalles(theme, cle, choix, selection)` et `selection_dalles(theme, cle, choix, k)` : dalles cliquables. Chaque `theme` a son style CSS via la classe `st-key-dalles_<theme>_...` (themes existants : voy, loup, cupi, salv, mentor, flair, lb, poison, vote, maire, tir). Un nouveau thème = une entrée dans `styles.py`.
+- `bouton_validation(libelle, cle, disabled=False)` valide une étape ; `bouton_fin(s, cle)` termine le tour d'un joueur de nuit ; les clés de boutons de nuit contiennent `jour` et `tour` pour rester uniques.
+- `st.container(key="x")` donne la classe CSS `st-key-x` : c'est le crochet de style privilégié.
+- Après toute mutation de `s` qui doit changer l'écran : `st.rerun()`.
+
+## 3. Règles de jeu décidées (à ne pas casser)
+
+- **Première nuit (`jour` 0)** : seul Cupidon agit ; les loups se découvrent mais personne n'est dévoré ; pas de vote le premier jour. Le Renard ne flaire pas la nuit 0.
+- **Ordre de nuit** par `priorite_nuit` : Voleur (0), Chien-Loup (1), puis les autres (2) dans l'ordre des joueurs.
+- **Loups en désaccord** (égalité des votes) : personne n'est dévoré.
+- **Sorcière à l'aveugle** : elle ne sait pas qui est la victime. Potion de soin sauve du festin des loups ; le poison et le festin du Loup Blanc échappent au soin et au Salvateur.
+- **Maire** : élu au premier jour ; s'il meurt, il désigne lui-même son successeur.
+- **Égalité loups / village** : la partie continue tant que le maire n'est pas un loup ; option `maire_depart` désactivée = les loups gagnent dès l'égalité.
+- **Amoureux** : meurent ensemble. Couple mixte loup + villageois = camp à part : ni village ni meute ne peut gagner tant qu'il vit ; il gagne s'il est le dernier groupe vivant (2 joueurs, 3 en trouple).
+- **Solitaire** (Loup Blanc) : ne gagne qu'en restant seul ; bloque les victoires des autres tant qu'il vit.
+- **Camp secret** (Chien-Loup) : son camp n'est dévoilé qu'à la fin.
+- **Enfant sauvage** : devient loup à la mort de son mentor.
+- **Chasseur** : tir à la mort, ou renonce ; géré par la phase `tir_chasseur` et `tirs_en_attente`.
+
+## 4. Système d'options
+
+`OPTIONS_DEFAUT` (`options.py`) : `potions_sorciere`, `potions_mort`, `couple_hasard`, `trouple`, `cadence_voyante`, `cadence_loup_blanc`, `maire_depart`. Toujours lire via `opt(s, "cle")` : les anciennes sauvegardes n'ont pas de clé `options`, `opt` retombe sur le défaut. Les options ne s'affichent à l'installation (« ⚙️ Options avancées ») que pour les rôles présents. `couple_hasard` remplace Cupidon par un villageois ; `trouple` est le mode « fun » (amour à trois).
+
+## 5. Historique, sauvegarde et rechargement
+
+- `save.json` (ignoré par git) : partie en cours, reprise automatique.
+- `historique/partie_AAAAMMJJ_HHMMSS.json` : archive écrite à la fin de la partie, **versionnée dans le dépôt**. Les parties abandonnées ne sont pas conservées.
+- `log(s, texte, moment)` journalise ; `prendre_instantane(s, "nuit" | "jour")` crée un point de retour utilisé par « Recharger une étape » (menu Option).
+
+## 6. Façon de travailler
+
+- **Une branche + une PR par changement** (`feat/...`, `fix/...`, `refactor/...`, `docs/...`), titre explicite, corps avec sections « Résumé » et « À tester ». C'est l'utilisateur qui fusionne.
+- Ne pousser que le compte **Tcathelineau**.
+- **Ne jamais ajouter au commit** `.DS_Store` ni les fichiers `historique/partie_*.json` laissés par les parties de test de l'utilisateur ; ajouter les fichiers par nom, pas `git add -A`.
+- Réponses à l'utilisateur en **français**, concises ; prose sans tiret cadratin ni flèche.
+- Commits : trailer `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>`.
+- Tests : l'utilisateur teste lui-même l'interface dans son navigateur ; ne pas lancer de test navigateur pour chaque PR (coût en tokens). Vérifier par `pyflakes`, import des modules et, pour le moteur, des tests unitaires ; une partie complète peut se jouer sans navigateur avec `streamlit.testing.v1.AppTest` (limites : `st.rerun` après un formulaire laisse l'arbre périmé, `selectbox(index=None)` ne se pilote pas : injecter la valeur dans `session_state`).
+- Pièges déjà rencontrés : `sed -i` se comporte autrement sur macOS (préférer un remplacement Python) ; un script d'édition doit échouer bruyamment si une ancre est introuvable ; `location.reload()` en JS demande un `setTimeout` ; l'aperçu du navigateur peut avoir un viewport 0x0 ; après un test, tuer le serveur (`pkill -f "streamlit run"`) et supprimer le `save.json` généré.
+
+## 7. Chantiers connus
+
+- **Parties célèbres (presets)** : proposer à l'installation des compositions inspirées de parties médiatisées, avec un court résumé du contexte. Retenus : Classique Thiercelieux, Canal+ saison 1 (2024, 13 joueurs, 3 loups), Canal+ saison 2 (2025, 3 loups, Cupidon, Montreur d'ours, Capitaine), Squeezie Minecraft (2020, plugin LoupGarou). Écartés : Wankil, film Netflix. À reprendre une fois les rôles manquants importés.
+- **Rôles à importer** : Petite Fille, Montreur d'ours, Corbeau, Détective, Ange, Assassin, Pyromane.
+- Vérifier toute affirmation sur ces parties médiatisées (compositions, dates, règles) à la source avant de l'écrire dans le jeu ou le README.

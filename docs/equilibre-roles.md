@@ -1,6 +1,6 @@
 # Équilibre des rôles : classement proposé
 
-Ce fichier attribue à chaque rôle trois notes. Elles serviront à afficher, dans l'écran de composition, trois compteurs qui donnent une idée de l'équilibre de la partie avant de la lancer. **Proposition à relire et à ajuster** : rien n'est encore branché dans le code.
+Ce fichier attribue à chaque rôle trois notes. Elles serviront à afficher, dans l'écran de composition, trois compteurs qui donnent une idée de l'équilibre de la partie avant de la lancer. **Valeurs à relire et à ajuster** après quelques parties : les compteurs sont déjà branchés dans l'écran de composition (`src/loup_garou/equilibre.py`).
 
 ## Les trois notes
 

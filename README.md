@@ -62,6 +62,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 ## ✨ Fonctionnalités
 
 - **Menu d'accueil** : un village qui défile (jour, nuit, loups, victoire) avec deux boutons, « Nouvelle partie » et « Historique ». L'écran Historique affiche chaque partie archivée sous forme de carte (date, joueurs, rôles, camp vainqueur, bordure colorée selon le vainqueur) avec le journal détaillé en cases nuit/jour.
+- **Documentation** : depuis le menu d'accueil, une dalle par rôle avec son résumé et ses notes d'équilibre (force loups / village, information, chaos).
 - **Composition personnalisable** : nombre de joueurs et répartition des rôles, réglables avant chaque partie.
 - **Jauges d'équilibre** : l'écran de composition affiche un rapport de force loups / village, un niveau d'information et un niveau de chaos, recalculés à chaque changement de rôle ou d'option (indicateur approximatif, voir `docs/equilibre-roles.md`).
 - **Options avancées** (menu de composition, « ⚙️ Options avancées ») : potions de soin (1 à 5) et de mort (0 à 5) de la sorcière, couple tiré au sort sans Cupidon (Cupidon est alors remplacé par un villageois), mode fun « trouple » (l'amour lie trois joueurs au lieu de deux), fréquence des visions de la voyante et des festins du Loup Blanc (chaque nuit, une nuit sur 2 ou sur 3), et égalité loups / village (le maire départage, ou les loups gagnent dès l'égalité). Les options ne s'affichent que pour les rôles présents.
@@ -151,7 +152,7 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 │           ├── composants.py    #   cartes, bandeaux, dalles de sélection...
 │           ├── nuit_roles.py    #   tour de nuit de chaque rôle (NUIT_ROLES)
 │           ├── barre_laterale.py#   rechargement d'étape, barre ouverte
-│           └── ecrans/          #   accueil, installation, nuit, jour, fin
+│           └── ecrans/          #   accueil, installation, nuit, jour, fin, documentation
 ├── .claude/skills/projet-gevaudan/SKILL.md  # Guide du projet pour Claude Code (architecture, règles, conventions)
 ├── docs/
 │   ├── equilibre-roles.md       # Force, information et chaos de chaque rôle (proposition)

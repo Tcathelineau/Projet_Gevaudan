@@ -87,3 +87,17 @@ def test_jauges_d_equilibre_dans_la_composition():
     assert "Équilibre de la partie" in texte and "jauge-repere" in texte
     at.checkbox(key="n_voyante").check().run()
     assert not at.exception
+
+
+def test_page_documentation_liste_tous_les_roles():
+    from loup_garou.roles import ROLES
+
+    at = _app()
+    at.button(key="accueil_btn_documentation").click().run()
+    assert not at.exception
+    texte = " ".join(m.value for m in at.markdown)
+    for role in ROLES.values():
+        assert role.nom in texte
+    at.button(key="retour_menu_documentation").click().run()
+    assert not at.exception
+    assert any(b.key == "accueil_btn_nouvelle" for b in at.button)

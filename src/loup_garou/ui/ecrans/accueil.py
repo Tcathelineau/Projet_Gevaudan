@@ -57,6 +57,8 @@ def ecran_accueil():
                 aller_a("installation")
             if st.button("📜 Historique", key="accueil_btn_historique"):
                 aller_a("historique")
+            if st.button("📖 Documentation", key="accueil_btn_documentation"):
+                aller_a("documentation")
 
 
 def _carte_partie(p):

@@ -11,6 +11,7 @@ from loup_garou.roles import ROLES
 from loup_garou.ui.barre_laterale import garder_sidebar_ouverte, panneau_rechargement
 from loup_garou.ui.composants import chronologie_html
 from loup_garou.ui.ecrans.accueil import ecran_accueil, ecran_historique
+from loup_garou.ui.ecrans.documentation import ecran_documentation
 from loup_garou.ui.ecrans.fin import ecran_fin
 from loup_garou.ui.ecrans.installation import ecran_installation
 from loup_garou.ui.ecrans.jour import ecran_conseil, ecran_election_maire, ecran_reveil, ecran_tir_chasseur
@@ -36,6 +37,8 @@ def main():
                 ecran_installation()
             elif ecran == "historique":
                 ecran_historique()
+            elif ecran == "documentation":
+                ecran_documentation()
             else:
                 ecran_accueil()
             return

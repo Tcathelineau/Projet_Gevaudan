@@ -30,6 +30,8 @@ def _pastilles(valeur):
 def _dalle(role):
     notes = NOTES[role.key]
     classe_camp, libelle_camp = _camp(role)
+    if role.lot > 1:
+        libelle_camp += f" · {role.lot} cartes (notes par carte)"
     if notes.force == 0:
         remplissage, signe = "", "0"
     else:

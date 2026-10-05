@@ -548,6 +548,7 @@ def css_cartes():
         }
         div[class*="st-key-dalles_poison_"] button::after { content: "☠️"; }
         div[class*="st-key-dalles_maire_"] button::after { content: "👑"; }
+        div[class*="st-key-dalles_serv_"] button::after { content: "🧹"; }
         div[class*="st-key-dalles_vote_"] button {
             background: rgba(120,60,20,.35);
             border-color: rgba(210,120,50,.55);

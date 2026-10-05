@@ -17,6 +17,7 @@ class Role:
     tir_a_la_mort: bool = False  # à sa mort, ce rôle peut emporter un autre joueur avec lui
     solitaire: bool = False  # gagne seul, en éliminant tout le monde (village et loups compris)
     camp_secret: bool = False  # son camp n'est pas révélé à sa mort (le joueur a choisi le sien)
+    lot: int = 1  # nombre de cartes ajoutées ensemble quand le rôle est coché (Sœurs, Frères)
     description: str = ""  # une ou deux phrases affichées en infobulle à la composition
     priorite_nuit: int = 2  # plus petit = joue plus tôt dans la nuit (à égalité : ordre des joueurs)
 
@@ -117,6 +118,51 @@ ROLES = {
         recommande=False,
         camp_secret=True,
         priorite_nuit=1,
+    ),
+    "louveteau": Role(
+        key="louveteau",
+        nom="Louveteau",
+        emoji="🐶",
+        degrade="radial-gradient(circle at 50% 30%, #7a3a2e, #2e130e 75%)",
+        description="Loup comme les autres, mais s'il meurt, la meute dévore deux victimes la nuit suivante.",
+        camp="loups",
+        etat_initial={"double_victime": False},
+        recommande=False,
+    ),
+    "soeur": Role(
+        key="soeur",
+        nom="Sœur",
+        emoji="👭",
+        degrade="radial-gradient(circle at 50% 30%, #6b3d6b, #261426 75%)",
+        description="Deux cartes jouées ensemble : les sœurs se connaissent dès la première nuit et peuvent compter l'une sur l'autre.",
+        lot=2,
+        recommande=False,
+    ),
+    "frere": Role(
+        key="frere",
+        nom="Frère",
+        emoji="👬",
+        degrade="radial-gradient(circle at 50% 30%, #2f4f7a, #0f1b2e 75%)",
+        description="Trois cartes jouées ensemble : les frères se connaissent dès la première nuit et peuvent compter les uns sur les autres.",
+        lot=3,
+        recommande=False,
+    ),
+    "servante": Role(
+        key="servante",
+        nom="Servante dévouée",
+        emoji="🧹",
+        degrade="radial-gradient(circle at 50% 30%, #5c5c2f, #25250f 75%)",
+        description="Quand le village condamne un joueur, elle peut se manifester avant la révélation de son camp et reprendre son rôle.",
+        recommande=False,
+    ),
+    "juge_begue": Role(
+        key="juge_begue",
+        nom="Juge bègue",
+        emoji="⚖️",
+        degrade="radial-gradient(circle at 50% 30%, #4a4a6b, #17172a 75%)",
+        description="Une seule fois dans la partie, il exige un second vote du village juste après le premier.",
+        etat_initial={"juge_utilise": False, "second_vote": None},
+        recommande=False,
     ),
     "villageois": Role(
         key="villageois",

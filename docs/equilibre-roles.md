@@ -34,6 +34,11 @@ La force est volontairement distincte de l'information : la Voyante est forte *p
 | 🃏 Voleur | Village | **-2** | 0 | 4 | ○ proche de Doppelgänger -2 / Drunk -3 | Peut devenir loup ; ajoute deux cartes inconnues au milieu. |
 | 🌕 Loup Blanc | Loups, solitaire | **-5** | 1 | 4 | ● Lone Wolf -5 | Gagne seul, tue aussi des loups : il fragilise la meute autant que le village. |
 | 🐕 Chien-Loup | Au choix | **0** | 0 | 2 | ○ estimé | Choisit son camp en secret : il s'équilibre de lui-même, mais compte comme un loup caché s'il choisit la meute. |
+| 🐶 Louveteau | Loups | **-8** | 1 | 2 | ● Wolf Cub -8 | Sa mort double les victimes de la meute la nuit suivante. |
+| 👭 Sœur (×2 cartes) | Village | **+2** par carte | 2 | 0 | ● Mason +2 | Les deux sœurs se connaissent : +4 au total. |
+| 👬 Frère (×3 cartes) | Village | **+2** par carte | 2 | 0 | ● Mason +2 | Les trois frères se connaissent : +6 au total, ce qui pèse autant qu'une Voyante. À surveiller en jouant. |
+| 🧹 Servante dévouée | Village | **+2** | 0 | 3 | ○ estimé | Reprend le rôle d'un condamné sans que son camp soit révélé. |
+| ⚖️ Juge bègue | Village | **+2** | 0 | 3 | ○ estimé | Un second vote, une fois par partie : arme à double tranchant pour le village. |
 
 ## Rôles à venir (import prévu)
 

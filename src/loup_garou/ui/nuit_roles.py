@@ -29,14 +29,17 @@ def _cibles_loups(s):
 
 def _vote_loups(s, nom, cle, cibles):
     """Grille de vote de la meute. Renvoie True quand la victime vient d'être désignée."""
-    st.markdown("**Qui dévorez-vous ?**")
-    choix = selection_dalles("loup", cle, cibles, 1)
-    cible = choix[0] if choix else None
+    k = min(2, len(cibles)) if s.get("double_victime") else 1
+    if k == 1:
+        st.markdown("**Qui dévorez-vous ?**")
+    else:
+        st.markdown(f"**Qui dévorez-vous ? Le Louveteau est mort : désignez {k} victimes.**")
+    choix = selection_dalles("loup", cle, cibles, k)
     if bouton_validation(
-        f"🐺 Dévorer {cible}" if cible else "🐺 Dévorer", f"devorer_{cle}", disabled=cible is None,
+        "🐺 Dévorer " + " et ".join(choix) if choix else "🐺 Dévorer", f"devorer_{cle}", disabled=len(choix) != k,
     ):
-        s["votes_loups"].append(cible)
-        log(s, f"{nom} ({ROLES[s['joueurs'][nom]['role']].nom}) désigne {cible}.")
+        s["votes_loups"] += choix
+        log(s, f"{nom} ({ROLES[s['joueurs'][nom]['role']].nom}) désigne {' et '.join(choix)}.")
         st.session_state.pop(f"sel_loup_{cle}", None)
         return True
     return False
@@ -330,6 +333,59 @@ def _nuit_voleur(s, nom, cle):
         st.rerun()
 
 
+def _nuit_louveteau(s, nom, cle):
+    plaquette("Tu es le Louveteau : si tu meurs, la meute dévorera deux victimes la nuit suivante.", icone="🐶")
+    _nuit_loup(s, nom, cle)
+
+
+FRATRIE = {"soeur": ("Ta sœur", "Tes sœurs"), "frere": ("Ton frère", "Tes frères")}
+
+
+def _nuit_fratrie(s, nom, cle):
+    """Sœurs et frères se reconnaissent ; ils n'ont pas d'autre pouvoir."""
+    role = s["joueurs"][nom]["role"]
+    groupe = [n for n, d in s["joueurs"].items() if d["role"] == role]
+    proches = [n for n in groupe if n != nom]
+    singulier, pluriel = FRATRIE[role]
+    if not proches:
+        plaquette("Les autres cartes de ta fratrie sont restées au milieu de la table : tu es seul.", icone=ROLES[role].emoji)
+    else:
+        liste = ", ".join(n if s["joueurs"][n]["vivant"] else f"{n} (mort)" for n in proches)
+        plaquette(f"{singulier if len(proches) == 1 else pluriel} : {liste}.", icone=ROLES[role].emoji, ton="succes")
+    bouton_fin(s, cle)
+
+
+def _nuit_servante(s, nom, cle):
+    plaquette(
+        "Tu es la servante dévouée : quand le village condamne un joueur, tu peux te manifester "
+        "avant la révélation de son camp pour reprendre son rôle. Dors.", icone="🧹",
+    )
+    bouton_fin(s, cle)
+
+
+def _nuit_juge_begue(s, nom, cle):
+    """Une fois par partie, le juge exige un second vote lors du prochain conseil."""
+    if s["jour"] == 0:
+        plaquette("Pas de vote demain : garde ton pouvoir pour plus tard.", icone="⚖️")
+        bouton_fin(s, cle)
+    elif s.get("juge_utilise"):
+        plaquette("Tu as déjà exigé ton second vote. Dors.", icone="⚖️")
+        bouton_fin(s, cle)
+    else:
+        st.markdown("**Exiges-tu un second vote demain ?**")
+        st.caption("Une seule fois par partie : après le premier vote, le village en tient aussitôt un second.")
+        with st.container(key="juge_boutons", horizontal=True, horizontal_alignment="center"):
+            exige = st.button("⚖️ Exiger un second vote", type="primary", key=f"juge_oui_{cle}")
+            garde = st.button("Garder mon pouvoir", key=f"juge_non_{cle}")
+        if exige:
+            s["juge_utilise"] = True
+            s["second_vote"] = s["jour"]
+            log(s, f"Le juge bègue {nom} exige un second vote au prochain conseil.")
+        if exige or garde:
+            fin_de_tour(s)
+            st.rerun()
+
+
 def _nuit_chasseur(s, nom, cle):
     plaquette("Tu es le chasseur : si tu meurs, tu pourras tirer une dernière balle. Dors.", icone="🔫")
     bouton_fin(s, cle)
@@ -352,6 +408,11 @@ NUIT_ROLES = {
     "salvateur": _nuit_salvateur,
     "enfant_sauvage": _nuit_enfant_sauvage,
     "voleur": _nuit_voleur,
+    "louveteau": _nuit_louveteau,
+    "soeur": _nuit_fratrie,
+    "frere": _nuit_fratrie,
+    "servante": _nuit_servante,
+    "juge_begue": _nuit_juge_begue,
     "chasseur": _nuit_chasseur,
     "villageois": _nuit_villageois,
 }

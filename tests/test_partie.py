@@ -2,8 +2,8 @@ import os
 
 from loup_garou.config import HISTORIQUE_DIR
 from loup_garou.moteur.partie import (
-    camp, composition_recommandee, fin_de_tour, nouvelle_partie, resoudre_nuit, terminer_partie, tuer,
-    vainqueur, vivants,
+    camp, composition_recommandee, fin_de_tour, nouvelle_partie, resoudre_nuit, servante_prend_role, terminer_partie,
+    tuer, vainqueur, victimes_loups, vivants,
 )
 from loup_garou.roles import ROLES_SPECIAUX
 
@@ -320,3 +320,79 @@ def test_composition_recommandee_exclut_les_roles_non_recommandes():
         if not role.recommande:
             assert speciaux[role.key] == 0
     assert speciaux["voyante"] == 1
+
+
+# --- Louveteau ---------------------------------------------------------------
+
+def test_victimes_loups_prend_les_plus_designes():
+    assert victimes_loups(["B", "B", "C"], 1) == ["B"]
+    assert victimes_loups(["B", "C"], 1) == []
+    assert victimes_loups(["B", "C"], 2) == ["B", "C"]
+    assert victimes_loups(["A", "A", "B", "C"], 2) == ["A"]
+    assert victimes_loups(["A", "A", "B", "B", "C"], 2) == ["A", "B"]
+    assert victimes_loups([], 2) == []
+
+
+def test_la_mort_du_louveteau_prepare_une_double_victime(faire_partie):
+    s = faire_partie({"A": "loup", "B": "louveteau", "C": "villageois", "D": "villageois", "E": "villageois"})
+    assert camp(s, "B") == "loups"
+    tuer(s, "B")
+    assert s["double_victime"] is True
+
+
+def test_la_nuit_suivante_la_meute_devore_deux_victimes(faire_partie):
+    s = faire_partie({"A": "loup", "B": "louveteau", "C": "villageois", "D": "villageois", "E": "villageois"})
+    tuer(s, "B")
+    s["jour"] = 1
+    s["votes_loups"] = ["C", "D"]
+    resoudre_nuit(s)
+    assert sorted(s["morts_nuit"]) == ["C", "D"]
+    assert s["double_victime"] is False
+
+
+def test_la_potion_ne_sauve_que_la_victime_la_plus_designee(faire_partie):
+    s = faire_partie({"A": "loup", "B": "louveteau", "C": "villageois", "D": "villageois", "E": "villageois"})
+    tuer(s, "B")
+    s["jour"] = 1
+    s["votes_loups"] = ["C", "C", "D"]
+    s["soin_sorciere"] = True
+    resoudre_nuit(s)
+    assert s["morts_nuit"] == ["D"]
+
+
+def test_le_louveteau_tue_cette_nuit_ne_double_que_la_suivante(faire_partie):
+    s = faire_partie({"A": "loup", "B": "louveteau", "C": "villageois", "D": "villageois", "E": "villageois"})
+    s["jour"] = 1
+    s["votes_loups"] = ["D"]
+    s["cible_poison"] = "B"
+    resoudre_nuit(s)
+    assert sorted(s["morts_nuit"]) == ["B", "D"]
+    assert s["double_victime"] is True
+
+
+# --- Servante dévouée --------------------------------------------------------
+
+def test_la_servante_reprend_le_role_d_un_loup(faire_partie):
+    s = faire_partie({"A": "loup", "B": "loup", "C": "servante", "D": "villageois", "E": "villageois"})
+    servante_prend_role(s, "C", "B")
+    tuer(s, "B", "est éliminé par le village")
+    assert s["joueurs"]["C"]["role"] == "loup" and camp(s, "C") == "loups"
+    assert "C" in s["loups"]
+    assert s["joueurs"]["B"]["role_pris_par"] == "C" and not s["joueurs"]["B"]["vivant"]
+    assert any("servante dévouée C prend le rôle de B (Loup-Garou)" in e["texte"] for e in s["journal"])
+
+
+def test_le_chasseur_dont_la_servante_prend_le_role_ne_tire_pas(faire_partie):
+    s = faire_partie({"A": "loup", "B": "chasseur", "C": "servante", "D": "villageois", "E": "villageois"})
+    servante_prend_role(s, "C", "B")
+    tuer(s, "B", "est éliminé par le village")
+    assert s["tirs_en_attente"] == []
+    tuer(s, "C")
+    assert s["tirs_en_attente"] == ["C"]
+
+
+# --- Sœurs et Frères ---------------------------------------------------------
+
+def test_les_soeurs_se_reconnaissent_dans_le_journal():
+    s = nouvelle_partie(list("ABCDE"), {"loup": 1, "soeur": 2, "villageois": 2})
+    assert sum("se reconnaissent" in e["texte"] for e in s["journal"]) == 1

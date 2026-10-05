@@ -24,6 +24,11 @@ NOTES = {
     "voleur": Notes(-2, 0, 4),
     "loup_blanc": Notes(-5, 1, 4),
     "chien_loup": Notes(0, 0, 2),
+    "louveteau": Notes(-8, 1, 2),
+    "soeur": Notes(2, 2, 0),  # par carte : les deux sœurs pèsent donc +4
+    "frere": Notes(2, 2, 0),  # par carte : les trois frères pèsent donc +6
+    "servante": Notes(2, 0, 3),
+    "juge_begue": Notes(2, 0, 3),
 }
 
 FORCE_VOYANTE = {1: 7, 2: 5, 3: 4}

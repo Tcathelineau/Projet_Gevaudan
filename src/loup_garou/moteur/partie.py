@@ -53,6 +53,10 @@ def nouvelle_partie(noms, composition, options=None):
     log(etat, "Distribution : " + ", ".join(
         f"{n} ({ROLES[d['role']].nom})" for n, d in joueurs.items()
     ) + ".", "debut")
+    for cle in ("soeur", "frere"):
+        fratrie = [n for n, d in joueurs.items() if d["role"] == cle]
+        if len(fratrie) > 1:
+            log(etat, f"{ROLES[cle].nom}s : {', '.join(fratrie)} se reconnaissent.", "debut")
     if etat["options"]["couple_hasard"]:
         couple = random.sample(list(joueurs), taille_couple(etat))
         etat["amoureux"] = couple
@@ -106,9 +110,24 @@ def tuer(s, nom, cause="meurt"):
         log(s, f"{mort} ({ROLES[s['joueurs'][mort]['role']].nom}) {raison}.")
     _convertir_enfant_sauvage(s, morts)
     for mort in morts:
-        if ROLES[s["joueurs"][mort]["role"]].tir_a_la_mort:
+        d = s["joueurs"][mort]
+        if ROLES[d["role"]].tir_a_la_mort and not d.get("role_pris_par"):
             s.setdefault("tirs_en_attente", []).append(mort)
+    if any(s["joueurs"][n]["role"] == "louveteau" for n in morts):
+        s["double_victime"] = True
+        log(s, "Le Louveteau est mort : la meute dévorera deux victimes la nuit prochaine.")
     return morts
+
+
+def servante_prend_role(s, servante, mort):
+    """La servante dévouée reprend le rôle de `mort` (à appeler avant `tuer(mort)`) : son camp ne sera pas révélé."""
+    role = s["joueurs"][mort]["role"]
+    s["joueurs"][servante]["role"] = role
+    s["joueurs"][servante]["servante"] = mort
+    s["joueurs"][mort]["role_pris_par"] = servante
+    if ROLES[role].camp == "loups":
+        s["loups"].append(servante)
+    log(s, f"La servante dévouée {servante} prend le rôle de {mort} ({ROLES[role].nom}).")
 
 
 def vainqueur(s):
@@ -156,25 +175,37 @@ def terminer_partie(s, message):
     archiver_partie(s, message)
 
 
+def victimes_loups(votes, n):
+    """Les `n` joueurs les plus désignés ; une égalité à la limite écarte tous les ex æquo."""
+    comptes = Counter(votes).most_common()
+    if len(comptes) > n and comptes[n - 1][1] == comptes[n][1]:
+        seuil = comptes[n - 1][1]
+        comptes = [c for c in comptes if c[1] > seuil]
+    return [nom for nom, _ in comptes[:n]]
+
+
 def resoudre_nuit(s):
     morts = []
+    # Lu avant tout : une mort de cette nuit (Louveteau) prépare la nuit suivante, pas celle-ci.
+    attendues = 2 if s.get("double_victime") else 1
+    s["double_victime"] = False
     if s["jour"] > 0:
-        comptes = Counter(s["votes_loups"]).most_common()
-        victime = None
-        if len(comptes) > 1 and comptes[0][1] == comptes[1][1]:
-            log(s, "Les loups ne s'accordent pas : personne n'est dévoré.")
-        elif comptes:
-            victime = comptes[0][0]
-        sauveurs = []
-        if victime and s["soin_sorciere"]:
-            sauveurs.append("la potion de la sorcière")
-        if victime and victime == s.get("protege_nuit"):
-            sauveurs.append("le salvateur")
-        if sauveurs:
-            log(s, f"{victime} était la cible des loups mais est sauvé par {' et '.join(sauveurs)}.")
-            victime = None
-        if victime:
-            morts = tuer(s, victime, "est dévoré par les loups")
+        victimes = victimes_loups(s["votes_loups"], attendues)
+        if not victimes:
+            if s["votes_loups"]:
+                log(s, "Les loups ne s'accordent pas : personne n'est dévoré.")
+        elif len(victimes) < attendues:
+            log(s, "Les loups ne s'accordent que sur une victime.")
+        for i, victime in enumerate(victimes):
+            sauveurs = []
+            if i == 0 and s["soin_sorciere"]:
+                sauveurs.append("la potion de la sorcière")
+            if victime == s.get("protege_nuit"):
+                sauveurs.append("le salvateur")
+            if sauveurs:
+                log(s, f"{victime} était la cible des loups mais est sauvé par {' et '.join(sauveurs)}.")
+            else:
+                morts += tuer(s, victime, "est dévoré par les loups")
         # Le festin du Loup Blanc échappe à la sorcière et au salvateur.
         if s.get("cible_loup_blanc"):
             morts += tuer(s, s["cible_loup_blanc"], "est dévoré par le Loup Blanc")

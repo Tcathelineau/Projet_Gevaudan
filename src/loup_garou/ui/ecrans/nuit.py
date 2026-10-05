@@ -59,6 +59,8 @@ def ecran_nuit(s):
     cle = f"{s['jour']}_{s['tour']}"
 
     with st.container(height=400, border=False):
+        if donnees.get("servante"):
+            plaquette(f"Ancienne servante dévouée : tu as repris le rôle de {donnees['servante']}.", icone="🧹")
         gerer_nuit = NUIT_ROLES.get(role, NUIT_ROLES["villageois"])
         gerer_nuit(s, nom, cle)
 

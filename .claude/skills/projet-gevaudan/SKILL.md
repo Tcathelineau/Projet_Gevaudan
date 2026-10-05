@@ -66,7 +66,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 ### Registre des rôles
 
-`Role` (dataclass figée) : `key, nom, emoji, degrade, camp ("village" | "loups"), unique, etat_initial, cartes_en_plus, recommande, tir_a_la_mort, solitaire, camp_secret, priorite_nuit`. Rôles actuels : loup, villageois, sorciere, voyante, cupidon, chasseur, salvateur, enfant_sauvage, voleur, renard, loup_blanc, chien_loup.
+`Role` (dataclass figée) : `key, nom, emoji, degrade, camp ("village" | "loups"), unique, etat_initial, cartes_en_plus, recommande, tir_a_la_mort, solitaire, camp_secret, priorite_nuit, lot, description`. Rôles actuels : loup, villageois, sorciere, voyante, cupidon, chasseur, salvateur, enfant_sauvage, voleur, renard, loup_blanc, chien_loup, louveteau, soeur, frere, servante, juge_begue. `lot` = nombre de cartes ajoutées quand la case est cochée (sœurs 2, frères 3) ; les notes d'équilibre de chaque rôle sont dans `equilibre.py` (`NOTES`, un test les exige).
 
 **Ajouter un rôle** :
 1. déclarer l'entrée dans `ROLES` (`roles.py`), avec ses clés d'état dans `etat_initial` ;
@@ -93,6 +93,9 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 - **Amoureux** : meurent ensemble. Couple mixte loup + villageois = camp à part : ni village ni meute ne peut gagner tant qu'il vit ; il gagne s'il est le dernier groupe vivant (2 joueurs, 3 en trouple).
 - **Solitaire** (Loup Blanc) : ne gagne qu'en restant seul ; bloque les victoires des autres tant qu'il vit.
 - **Camp secret** (Chien-Loup) : son camp n'est dévoilé qu'à la fin.
+- **Louveteau** : sa mort pose `s["double_victime"]` ; la nuit suivante les loups désignent 2 victimes (`victimes_loups`), la potion ne sauve que la plus désignée.
+- **Servante dévouée** : au vote, avant la révélation du camp (`vote_en_attente`), elle reprend le rôle du condamné (`servante_prend_role`, appelé avant `tuer`) ; le mort porte `role_pris_par` (camp caché, pas de tir).
+- **Juge bègue** : active `second_vote = jour` pendant sa nuit (une fois, `juge_utilise`) ; le conseil du même `jour` enchaîne un second vote.
 - **Enfant sauvage** : devient loup à la mort de son mentor.
 - **Chasseur** : tir à la mort, ou renonce ; géré par la phase `tir_chasseur` et `tirs_en_attente`.
 
@@ -119,5 +122,5 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 ## 7. Chantiers connus
 
 - **Parties célèbres (presets)** : proposer à l'installation des compositions inspirées de parties médiatisées, avec un court résumé du contexte. Retenus : Classique Thiercelieux, Canal+ saison 1 (2024, 13 joueurs, 3 loups), Canal+ saison 2 (2025, 3 loups, Cupidon, Montreur d'ours, Capitaine), Squeezie Minecraft (2020, plugin LoupGarou). Écartés : Wankil, film Netflix. À reprendre une fois les rôles manquants importés.
-- **Rôles à importer** : Petite Fille, Montreur d'ours, Corbeau, Détective, Ange, Assassin, Pyromane.
+- **Rôles à importer** : Petite Fille, Montreur d'ours, Corbeau, Détective, Ange, Assassin, Pyromane. Autres idées étudiées (barème dans `docs/equilibre-roles.md`) : Idiot du village, Bouc émissaire, Ancien, Grand méchant loup, Infect père des loups, Chevalier à l'épée rouillée, Joueur de flûte, Comédien.
 - Vérifier toute affirmation sur ces parties médiatisées (compositions, dates, règles) à la source avant de l'écrire dans le jeu ou le README.

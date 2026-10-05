@@ -167,8 +167,8 @@ def etape_roles():
             cols = st.columns(4)
             for col, role in zip(cols, uniques[i:i + 4]):
                 with col, st.container(key=f"info_{role.key}"):
-                    composition[role.key] = int(st.checkbox(
-                        f"{role.emoji} {role.nom}",
+                    composition[role.key] = role.lot * int(st.checkbox(
+                        f"{role.emoji} {role.nom}" + (f" ×{role.lot}" if role.lot > 1 else ""),
                         value=bool(speciaux_defaut[role.key]), key=f"n_{role.key}",
                     ))
 

@@ -25,21 +25,24 @@ def _app(partie=None):
     return at.run()
 
 
-def _creer_partie(nb_joueurs=14, nb_loups=3):
+def _creer_partie(nb_joueurs=18, nb_loups=2, sans=()):
     at = _app()
     assert not at.exception
     at.button(key="accueil_btn_nouvelle").click().run()
     for c in at.checkbox:
         c.check()
+    for c in at.checkbox:
+        if c.key in sans:
+            c.uncheck()
     at.number_input[0].set_value(nb_joueurs)
     at.number_input[1].set_value(nb_loups)
     at.run()
     [b for b in at.button if b.label.startswith("Suivant")][0].click().run()
     for i, t in enumerate(at.text_input):
         t.set_value(f"J{i + 1}")
-    at.run()
     [b for b in at.button if b.label == "Distribuer les rôles"][0].click().run()
     assert not at.exception
+    assert "partie" in at.session_state, [e.value for e in at.error]
     return at.session_state["partie"]
 
 
@@ -50,9 +53,17 @@ def test_accueil_et_historique_s_affichent():
     assert not at.run().exception
 
 
-def test_partie_complete_jusqu_a_la_fin():
-    rng = random.Random(7)
-    at = _app(_creer_partie())
+# Deux tables qui, à elles deux, font jouer tous les rôles (les 18 joueurs ne tiennent pas avec tout coché).
+TABLES = [
+    pytest.param(("n_frere",), 7, id="sans_freres"),
+    pytest.param(("n_soeur", "n_voleur", "n_loup_blanc", "n_chien_loup"), 11, id="avec_freres"),
+]
+
+
+@pytest.mark.parametrize("sans, graine", TABLES)
+def test_partie_complete_jusqu_a_la_fin(sans, graine):
+    rng = random.Random(graine)
+    at = _app(_creer_partie(sans=sans))
     ignores = ("Menu", "Recharger")
     for _ in range(1500):
         assert not at.exception, at.exception
@@ -101,3 +112,68 @@ def test_page_documentation_liste_tous_les_roles():
     at.button(key="retour_menu_documentation").click().run()
     assert not at.exception
     assert any(b.key == "accueil_btn_nouvelle" for b in at.button)
+
+
+def _conseil(roles, **etat):
+    """Partie au conseil du jour 1, aux rôles imposés."""
+    from loup_garou.moteur.partie import nouvelle_partie
+
+    composition = {}
+    for role in roles.values():
+        composition[role] = composition.get(role, 0) + 1
+    s = nouvelle_partie(list(roles), composition)
+    for nom, role in roles.items():
+        s["joueurs"][nom]["role"] = role
+    s["loups"] = [n for n, r in roles.items() if r in ("loup", "louveteau")]
+    s.update(jour=1, phase="conseil", **etat)
+    return s
+
+
+def _voter(at, nom, cle, bouton="valider_vote"):
+    at.button(key=f"pick_vote_{cle}_{nom}").click().run()
+    at.button(key=bouton).click().run()
+    return at
+
+
+def test_la_servante_reprend_le_role_du_condamne():
+    roles = {"A": "loup", "B": "loup", "C": "servante", "D": "villageois", "E": "villageois", "F": "villageois"}
+    at = _voter(_app(_conseil(roles)), "B", 1)
+    assert not at.exception
+    at.button(key="servante_moi_resultat_1").click().run()
+    at.button(key="pick_serv_resultat_1_D").click().run()
+    at.run()  # st.rerun laisse l'arbre périmé : on le rafraîchit
+    assert not at.exception
+    assert at.session_state["partie"]["joueurs"]["C"]["role"] == "servante"
+    assert "D n" in " ".join(m.value for m in at.markdown) and "pas la servante" in " ".join(m.value for m in at.markdown)
+    at.button(key="servante_moi_resultat_1").click().run()
+    at.button(key="pick_serv_resultat_1_C").click().run()
+    s = at.session_state["partie"]
+    assert s["joueurs"]["C"]["role"] == "loup" and not s["joueurs"]["B"]["vivant"]
+    assert s["joueurs"]["B"]["role_pris_par"] == "C"
+    assert s["vote_en_attente"] is None
+
+
+def test_personne_ne_se_manifeste_le_condamne_meurt_normalement():
+    roles = {"A": "loup", "B": "villageois", "C": "servante", "D": "villageois", "E": "villageois"}
+    at = _voter(_app(_conseil(roles)), "B", 1)
+    at.button(key="servante_non_resultat_1").click().run()
+    s = at.session_state["partie"]
+    assert not s["joueurs"]["B"]["vivant"] and s["joueurs"]["C"]["role"] == "servante"
+
+
+def test_le_juge_begue_declenche_un_second_vote():
+    roles = {"A": "loup", "B": "villageois", "C": "juge_begue", "D": "villageois", "E": "villageois", "F": "villageois"}
+    at = _voter(_app(_conseil(roles, second_vote=1)), "B", 1)
+    assert not at.exception
+    assert not any(b.label == "La nuit tombe" for b in at.button)
+    at = _voter(at, "D", "1b", "valider_vote2")
+    assert not at.exception
+    s = at.session_state["partie"]
+    assert not s["joueurs"]["B"]["vivant"] and not s["joueurs"]["D"]["vivant"]
+    assert any(b.label == "La nuit tombe" for b in at.button)
+
+
+def test_sans_juge_un_seul_vote():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _voter(_app(_conseil(roles)), "B", 1)
+    assert any(b.label == "La nuit tombe" for b in at.button)

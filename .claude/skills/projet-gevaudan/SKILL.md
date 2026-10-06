@@ -94,7 +94,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 - **Solitaire** (Loup Blanc) : ne gagne qu'en restant seul ; bloque les victoires des autres tant qu'il vit.
 - **Camp secret** (Chien-Loup) : son camp n'est dévoilé qu'à la fin.
 - **Louveteau** : sa mort pose `s["double_victime"]` ; la nuit suivante les loups désignent 2 victimes (`victimes_loups`), la potion ne sauve que la plus désignée.
-- **Servante dévouée** : au vote, avant la révélation du camp (`vote_en_attente`), elle reprend le rôle du condamné (`servante_prend_role`, appelé avant `tuer`) ; le mort porte `role_pris_par` (camp caché, pas de tir).
+- **Servante dévouée** : la nuit suivant un vote, elle peut reprendre le rôle d'un condamné de la veille (`condamnes`, `enregistrer_condamne`, `condamnes_de_la_veille`, `servante_prend_role`) ; `s["servante_nuit"]` fait annoncer l'intervention sur le panneau du réveil, puis est remis à zéro au début de la nuit suivante.
 - **Juge bègue** : active `second_vote = jour` pendant sa nuit (une fois, `juge_utilise`) ; le conseil du même `jour` enchaîne un second vote.
 - **Enfant sauvage** : devient loup à la mort de son mentor.
 - **Chasseur** : tir à la mort, ou renonce ; géré par la phase `tir_chasseur` et `tirs_en_attente`.

@@ -110,8 +110,7 @@ def tuer(s, nom, cause="meurt"):
         log(s, f"{mort} ({ROLES[s['joueurs'][mort]['role']].nom}) {raison}.")
     _convertir_enfant_sauvage(s, morts)
     for mort in morts:
-        d = s["joueurs"][mort]
-        if ROLES[d["role"]].tir_a_la_mort and not d.get("role_pris_par"):
+        if ROLES[s["joueurs"][mort]["role"]].tir_a_la_mort:
             s.setdefault("tirs_en_attente", []).append(mort)
     if any(s["joueurs"][n]["role"] == "louveteau" for n in morts):
         s["double_victime"] = True
@@ -119,12 +118,27 @@ def tuer(s, nom, cause="meurt"):
     return morts
 
 
+def enregistrer_condamne(s, nom):
+    """Retient les joueurs éliminés par le village ce jour-là : la servante dévouée peut reprendre leur rôle."""
+    condamnes = s.get("condamnes")
+    if not condamnes or condamnes["jour"] != s["jour"]:
+        condamnes = {"jour": s["jour"], "noms": []}
+    condamnes["noms"].append(nom)
+    s["condamnes"] = condamnes
+
+
+def condamnes_de_la_veille(s):
+    """Joueurs que le village a éliminés au conseil précédant la nuit en cours."""
+    condamnes = s.get("condamnes")
+    return condamnes["noms"] if condamnes and condamnes["jour"] == s["jour"] - 1 else []
+
+
 def servante_prend_role(s, servante, mort):
-    """La servante dévouée reprend le rôle de `mort` (à appeler avant `tuer(mort)`) : son camp ne sera pas révélé."""
+    """La servante dévouée reprend en secret le rôle de `mort` ; le panneau du lendemain l'annoncera."""
     role = s["joueurs"][mort]["role"]
     s["joueurs"][servante]["role"] = role
     s["joueurs"][servante]["servante"] = mort
-    s["joueurs"][mort]["role_pris_par"] = servante
+    s["servante_nuit"] = {"servante": servante, "mort": mort}
     if ROLES[role].camp == "loups":
         s["loups"].append(servante)
     log(s, f"La servante dévouée {servante} prend le rôle de {mort} ({ROLES[role].nom}).")

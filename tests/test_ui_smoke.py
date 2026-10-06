@@ -135,30 +135,55 @@ def _voter(at, nom, cle, bouton="valider_vote"):
     return at
 
 
-def test_la_servante_reprend_le_role_du_condamne():
+def _nuit_servante(roles, condamne):
+    """Nuit 2, au tour de la servante C ; le village a éliminé `condamne` au jour 1."""
+    from loup_garou.moteur.partie import enregistrer_condamne, tuer
+
+    s = _conseil(roles)
+    s["jour"] = 1
+    tuer(s, condamne, "est éliminé par le village")
+    enregistrer_condamne(s, condamne)
+    s.update(jour=2, phase="nuit", ordre_nuit=["C"], tour=0, devoile=True, transfert=True)
+    return s
+
+
+def test_la_servante_reprend_le_role_du_condamne_de_nuit():
     roles = {"A": "loup", "B": "loup", "C": "servante", "D": "villageois", "E": "villageois", "F": "villageois"}
-    at = _voter(_app(_conseil(roles)), "B", 1)
+    at = _app(_nuit_servante(roles, "B"))
     assert not at.exception
-    at.button(key="servante_moi_resultat_1").click().run()
-    at.button(key="pick_serv_resultat_1_D").click().run()
+    at.button(key="pick_serv_2_0_B").click().run()
     at.run()  # st.rerun laisse l'arbre périmé : on le rafraîchit
     assert not at.exception
-    assert at.session_state["partie"]["joueurs"]["C"]["role"] == "servante"
-    assert "D n" in " ".join(m.value for m in at.markdown) and "pas la servante" in " ".join(m.value for m in at.markdown)
-    at.button(key="servante_moi_resultat_1").click().run()
-    at.button(key="pick_serv_resultat_1_C").click().run()
     s = at.session_state["partie"]
-    assert s["joueurs"]["C"]["role"] == "loup" and not s["joueurs"]["B"]["vivant"]
-    assert s["joueurs"]["B"]["role_pris_par"] == "C"
-    assert s["vote_en_attente"] is None
+    assert s["joueurs"]["C"]["role"] == "loup" and "C" in s["loups"]
+    assert s["servante_nuit"] == {"servante": "C", "mort": "B"}
+    assert "nouvelle carte" in " ".join(m.value for m in at.markdown)
+    at.button(key="fin_2_0").click().run()
+    s = at.session_state["partie"]
+    assert s["phase"] == "reveil"
+    at.run()
+    texte = " ".join(m.value for m in at.markdown)
+    assert "La servante dévouée est intervenue" in texte and "C</div>" in texte
 
 
-def test_personne_ne_se_manifeste_le_condamne_meurt_normalement():
+def test_la_servante_peut_ne_rien_faire():
     roles = {"A": "loup", "B": "villageois", "C": "servante", "D": "villageois", "E": "villageois"}
-    at = _voter(_app(_conseil(roles)), "B", 1)
-    at.button(key="servante_non_resultat_1").click().run()
+    at = _app(_nuit_servante(roles, "B"))
+    at.button(key="servante_rien_2_0").click().run()
     s = at.session_state["partie"]
-    assert not s["joueurs"]["B"]["vivant"] and s["joueurs"]["C"]["role"] == "servante"
+    assert s["joueurs"]["C"]["role"] == "servante" and s["phase"] == "reveil"
+    at.run()
+    assert "La servante dévouée est intervenue" not in " ".join(m.value for m in at.markdown)
+
+
+def test_la_servante_n_a_rien_a_reprendre_sans_condamne_la_veille():
+    roles = {"A": "loup", "B": "villageois", "C": "servante", "D": "villageois", "E": "villageois"}
+    s = _nuit_servante(roles, "B")
+    s["condamnes"] = None
+    at = _app(s)
+    assert not at.exception
+    assert not any((b.key or "").startswith("pick_serv") for b in at.button)
+    assert any(b.key == "fin_2_0" for b in at.button)
 
 
 def test_le_juge_begue_declenche_un_second_vote():

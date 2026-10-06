@@ -2,8 +2,8 @@ import os
 
 from loup_garou.config import HISTORIQUE_DIR
 from loup_garou.moteur.partie import (
-    camp, composition_recommandee, fin_de_tour, nouvelle_partie, resoudre_nuit, servante_prend_role, terminer_partie,
-    tuer, vainqueur, victimes_loups, vivants,
+    camp, composition_recommandee, condamnes_de_la_veille, enregistrer_condamne, fin_de_tour, nouvelle_partie,
+    resoudre_nuit, servante_prend_role, terminer_partie, tuer, vainqueur, victimes_loups, vivants,
 )
 from loup_garou.roles import ROLES_SPECIAUX
 
@@ -374,21 +374,25 @@ def test_le_louveteau_tue_cette_nuit_ne_double_que_la_suivante(faire_partie):
 
 def test_la_servante_reprend_le_role_d_un_loup(faire_partie):
     s = faire_partie({"A": "loup", "B": "loup", "C": "servante", "D": "villageois", "E": "villageois"})
-    servante_prend_role(s, "C", "B")
     tuer(s, "B", "est éliminé par le village")
+    servante_prend_role(s, "C", "B")
     assert s["joueurs"]["C"]["role"] == "loup" and camp(s, "C") == "loups"
     assert "C" in s["loups"]
-    assert s["joueurs"]["B"]["role_pris_par"] == "C" and not s["joueurs"]["B"]["vivant"]
+    assert s["servante_nuit"] == {"servante": "C", "mort": "B"}
     assert any("servante dévouée C prend le rôle de B (Loup-Garou)" in e["texte"] for e in s["journal"])
 
 
-def test_le_chasseur_dont_la_servante_prend_le_role_ne_tire_pas(faire_partie):
-    s = faire_partie({"A": "loup", "B": "chasseur", "C": "servante", "D": "villageois", "E": "villageois"})
-    servante_prend_role(s, "C", "B")
-    tuer(s, "B", "est éliminé par le village")
-    assert s["tirs_en_attente"] == []
-    tuer(s, "C")
-    assert s["tirs_en_attente"] == ["C"]
+def test_les_condamnes_de_la_veille(faire_partie):
+    s = faire_partie({"A": "loup", "B": "villageois", "C": "servante", "D": "villageois"})
+    assert condamnes_de_la_veille(s) == []
+    s["jour"] = 1
+    enregistrer_condamne(s, "B")
+    enregistrer_condamne(s, "D")
+    assert condamnes_de_la_veille(s) == []  # même jour : la nuit n'est pas encore tombée
+    s["jour"] = 2
+    assert condamnes_de_la_veille(s) == ["B", "D"]
+    s["jour"] = 3
+    assert condamnes_de_la_veille(s) == []
 
 
 # --- Sœurs et Frères ---------------------------------------------------------

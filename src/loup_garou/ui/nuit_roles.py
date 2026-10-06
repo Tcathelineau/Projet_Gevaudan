@@ -3,7 +3,7 @@
 import streamlit as st
 
 from loup_garou.moteur.journal import log
-from loup_garou.moteur.partie import camp, fin_de_tour, vivants
+from loup_garou.moteur.partie import camp, condamnes_de_la_veille, fin_de_tour, servante_prend_role, vivants
 from loup_garou.options import nuit_active, opt, prochaine_nuit, taille_couple
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import (
@@ -356,11 +356,25 @@ def _nuit_fratrie(s, nom, cle):
 
 
 def _nuit_servante(s, nom, cle):
-    plaquette(
-        "Tu es la servante dévouée : quand le village condamne un joueur, tu peux te manifester "
-        "avant la révélation de son camp pour reprendre son rôle. Dors.", icone="🧹",
-    )
-    bouton_fin(s, cle)
+    """Après un vote, la servante peut reprendre en secret le rôle du condamné ; le panneau l'annoncera au réveil."""
+    condamnes = condamnes_de_la_veille(s)
+    if not condamnes:
+        plaquette(
+            "Tu es la servante dévouée : la nuit qui suit un vote, tu peux reprendre le rôle du condamné. "
+            "Personne n'a été condamné hier : dors.", icone="🧹",
+        )
+        bouton_fin(s, cle)
+        return
+
+    st.markdown("**Reprends-tu le rôle d'un condamné ?**")
+    st.caption("Tu découvriras sa carte tout de suite. Le village apprendra demain que tu es intervenue.")
+    choix = grille_dalles("serv", cle, condamnes)
+    if st.button("Ne rien faire", key=f"servante_rien_{cle}"):
+        fin_de_tour(s)
+        st.rerun()
+    if choix:
+        servante_prend_role(s, nom, choix)
+        st.rerun()
 
 
 def _nuit_juge_begue(s, nom, cle):

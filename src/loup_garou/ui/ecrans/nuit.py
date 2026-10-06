@@ -6,13 +6,14 @@ from loup_garou.moteur.journal import prendre_instantane
 from loup_garou.moteur.partie import resoudre_nuit, vivants
 from loup_garou.options import opt
 from loup_garou.roles import ROLES
-from loup_garou.ui.composants import badge_amour, bouton_validation, carte_dos, carte_role, plaquette
+from loup_garou.ui.composants import badge_amour, bouton_fin, bouton_validation, carte_dos, carte_role, plaquette
 from loup_garou.ui.nuit_roles import NUIT_ROLES
 
 
 def ecran_nuit(s):
     if not s["ordre_nuit"]:
         prendre_instantane(s, "nuit")
+        s["servante_nuit"] = None
         # Voleur puis Chien-Loup jouent en premier (cf. priorite_nuit) : leur choix de
         # rôle ou de camp doit être fait avant que les autres ne découvrent la meute.
         s["ordre_nuit"] = sorted(vivants(s), key=lambda n: ROLES[s["joueurs"][n]["role"]].priorite_nuit)
@@ -59,10 +60,16 @@ def ecran_nuit(s):
     cle = f"{s['jour']}_{s['tour']}"
 
     with st.container(height=400, border=False):
-        if donnees.get("servante"):
-            plaquette(f"Ancienne servante dévouée : tu as repris le rôle de {donnees['servante']}.", icone="🧹")
-        gerer_nuit = NUIT_ROLES.get(role, NUIT_ROLES["villageois"])
-        gerer_nuit(s, nom, cle)
+        if (s.get("servante_nuit") or {}).get("servante") == nom:
+            plaquette(
+                f"Tu as repris le rôle de {s['servante_nuit']['mort']} : voici ta nouvelle carte. "
+                "Tu la joueras dès la nuit prochaine ; le village apprendra demain que la servante est intervenue.",
+                icone="🧹", ton="succes",
+            )
+            bouton_fin(s, cle)
+        else:
+            gerer_nuit = NUIT_ROLES.get(role, NUIT_ROLES["villageois"])
+            gerer_nuit(s, nom, cle)
 
     if donnees["amoureux"] and (s["jour"] > 0 or opt(s, "couple_hasard")):
         autres = [n for n in s["amoureux"] if n != nom]

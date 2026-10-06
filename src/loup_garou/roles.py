@@ -152,7 +152,7 @@ ROLES = {
         nom="Servante dévouée",
         emoji="🧹",
         degrade="radial-gradient(circle at 50% 30%, #5c5c2f, #25250f 75%)",
-        description="Quand le village condamne un joueur, elle peut se manifester avant la révélation de son camp et reprendre son rôle.",
+        description="La nuit qui suit un vote, elle peut reprendre en secret le rôle du joueur condamné ; le village apprend le lendemain qu'elle est intervenue.",
         recommande=False,
     ),
     "juge_begue": Role(

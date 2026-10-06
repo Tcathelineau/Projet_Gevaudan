@@ -1,10 +1,7 @@
 """Point d'entrée : assemble la page, la barre latérale et l'écran de la phase courante."""
 
-import os
-
 import streamlit as st
 
-from loup_garou.config import MUSIQUE_FILE
 from loup_garou.moteur.partie import camp, vivants
 from loup_garou.moteur.persistance import clear_save, load_game, save_game
 from loup_garou.roles import ROLES
@@ -18,7 +15,7 @@ from loup_garou.ui.ecrans.jour import ecran_conseil, ecran_election_maire, ecran
 from loup_garou.ui.ecrans.nuit import ecran_nuit
 from loup_garou.ui.regles import SECTIONS, afficher_regles, afficher_roles_de_la_partie
 from loup_garou.ui.illustrations import ASSETS
-from loup_garou.ui.sons import jouer, son_courant
+from loup_garou.ui.sons import effet_courant, jouer_effet, jouer_musique, musique_courante
 from loup_garou.ui.styles import CSS_ACCUEIL, css_cartes, CSS_HISTORIQUE, CSS_PASSAGE, CSS_SCENES
 
 
@@ -53,7 +50,8 @@ def main():
 
     with st.sidebar:
         # Réservé en premier : sa position ne bouge pas, donc le son en cours n'est pas relancé à chaque clic.
-        zone_son = st.container(key="zone_son")
+        zone_musique = st.container(key="zone_musique")
+        zone_effet = st.container(key="zone_effet")
         secrets = [n for n in vivants(s) if ROLES[s["joueurs"][n]["role"]].camp_secret]
         loups_vivants = sum(
             1 for n in vivants(s) if n not in secrets and camp(s, n) == "loups"
@@ -112,15 +110,19 @@ def main():
     else:
         ecran_fin(s)
 
-    with zone_son:
-        if st.session_state.get("sons_on", True):
-            jouer(son_courant(s, bool(st.session_state.get(f"resultat_{s['jour']}"))))
+    with zone_musique:
+        if st.session_state.get("musique_on", True):
+            jouer_musique(musique_courante(s))
+    with zone_effet:
+        effet = effet_courant(s)
+        if effet and st.session_state.get("sons_on", True) and (effet != "hurlement" or st.session_state.get("cri_on", True)):
+            jouer_effet(effet)
 
     with st.sidebar:
-        st.checkbox("🔔 Bruitages", value=True, key="sons_on")
-        if os.path.exists(MUSIQUE_FILE):
-            if st.checkbox("🎵 Musique de fond", value=True, key="musique_on"):
-                st.audio(MUSIQUE_FILE, format="audio/mp3", loop=True, autoplay=True)
+        with st.expander("🔊 Son"):
+            st.checkbox("🎵 Musique", value=True, key="musique_on")
+            st.checkbox("🔔 Bruitages (victoire)", value=True, key="sons_on")
+            st.checkbox("🐺 Hurlement d'un loup à la révélation de sa carte", value=True, key="cri_on")
 
         # Le menu flotte au-dessus du bouton (position absolue) : il recouvre le reste sans le déplacer.
         with st.container(key="options"):

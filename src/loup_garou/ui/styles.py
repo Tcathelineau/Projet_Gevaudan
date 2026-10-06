@@ -81,7 +81,7 @@ def css_cartes():
             font-size: 3rem;
             box-shadow: 0 0 22px rgba(201,164,76,.25) inset, 0 0 18px rgba(0,0,0,.45);
         }
-        div[class*="st-key-zone_son"] { position: absolute !important; width: 1px !important; clip-path: inset(50%) !important; opacity: 0 !important; pointer-events: none !important; }
+        div[class*="st-key-zone_musique"], div[class*="st-key-zone_effet"] { position: absolute !important; width: 1px !important; clip-path: inset(50%) !important; opacity: 0 !important; pointer-events: none !important; }
         .carte-art { width: 66%; height: 66%; color: #f0d890; filter: drop-shadow(0 2px 5px rgba(0,0,0,.65)); }
         .icone-art { width: 62%; height: 62%; color: #f0d890; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
         .dos-art { width: 46%; color: #c9a44c; opacity: .8; filter: drop-shadow(0 0 10px rgba(201,164,76,.35)); }
@@ -1087,7 +1087,7 @@ CSS_DOCUMENTATION = """
 .doc-camp { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--c); }
 .doc-resume { font-family: 'EB Garamond', serif; font-size: .98rem; line-height: 1.3; color: #ece3d2; flex: 1; }
 .doc-notes { display: flex; flex-direction: column; gap: .3rem; padding-top: .5rem; border-top: 1px solid color-mix(in srgb, var(--c) 35%, transparent); }
-.doc-note { display: grid; grid-template-columns: 7.2rem 1fr 2.6rem; align-items: center; gap: .5rem; font-size: .85rem; }
+.doc-note { display: grid; grid-template-columns: 7.2rem 1fr 3.8rem; align-items: center; gap: .5rem; font-size: .85rem; }
 .doc-note span { opacity: .85; }
 .doc-note b { text-align: right; color: #f0d890; }
 .doc-force { position: relative; height: 8px; border-radius: 4px; background: rgba(236,227,210,.15); }
@@ -1095,6 +1095,8 @@ CSS_DOCUMENTATION = """
 .doc-force > span { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
 .doc-barre-village { left: 50%; background: #3f7d4f; }
 .doc-barre-loups { right: 50%; background: #b13a3e; }
+.doc-pct { position: relative; height: 8px; border-radius: 4px; background: rgba(236,227,210,.15); }
+.doc-pct > span { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: #c9a44c; }
 .doc-pastilles { display: flex; gap: 4px; }
 .doc-pastilles i { flex: 1; max-width: 22px; height: 8px; border-radius: 4px; background: rgba(236,227,210,.15); }
 .doc-pastilles i.on { background: #c9a44c; }

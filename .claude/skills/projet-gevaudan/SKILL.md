@@ -41,7 +41,7 @@ src/loup_garou/
     composants.py            carte_role, carte_dos, badges, scene_ciel/victoire, annonce, plaquette,
                              grille_dalles, selection_dalles, bouton_validation, bouton_fin, panneau_avis
     illustrations.py         svg_role(clé, classe, repli) : SVG en ligne d'un rôle (couleur = CSS `color`)
-    sons.py                  son_courant(s) -> (nom, boucle) selon la phase ; jouer() insère le lecteur invisible
+    sons.py                  musique_courante(s), effet_courant(s) ; jouer_musique / jouer_effet insèrent les lecteurs invisibles
     nuit_roles.py            une fonction de tour de nuit par rôle + NUIT_ROLES (clé de rôle -> fonction)
     barre_laterale.py        recharger_etape, panneau_rechargement, garder_sidebar_ouverte
     ecrans/                  accueil, installation, nuit, jour (réveil, maire, conseil, tir), fin
@@ -71,7 +71,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 ### Registre des rôles
 
-`Role` (dataclass figée) : `key, nom, emoji, degrade, camp ("village" | "loups"), unique, etat_initial, cartes_en_plus, recommande, tir_a_la_mort, solitaire, camp_secret, priorite_nuit, lot, description`. Rôles actuels : loup, villageois, sorciere, voyante, cupidon, chasseur, salvateur, enfant_sauvage, voleur, renard, loup_blanc, chien_loup, louveteau, soeur, frere, servante, juge_begue. `lot` = nombre de cartes ajoutées quand la case est cochée (sœurs 2, frères 3) ; les notes d'équilibre de chaque rôle sont dans `equilibre.py` (`NOTES`, un test les exige).
+`Role` (dataclass figée) : `key, nom, emoji, degrade, camp ("village" | "loups"), unique, etat_initial, cartes_en_plus, recommande, tir_a_la_mort, solitaire, camp_secret, priorite_nuit, lot, description`. Rôles actuels : loup, villageois, sorciere, voyante, cupidon, chasseur, salvateur, enfant_sauvage, voleur, renard, loup_blanc, chien_loup, louveteau, soeur, frere, servante, juge_begue. `lot` = nombre de cartes ajoutées quand la case est cochée (sœurs 2, frères 3) ; les mesures d'équilibre de chaque rôle (impact, information, chaos) sont dans `assets/equilibre.json`, produit par `outils/simuler_equilibre.py` (un test exige une entrée par rôle ; ne pas éditer à la main).
 
 **Ajouter un rôle** :
 1. déclarer l'entrée dans `ROLES` (`roles.py`), avec ses clés d'état dans `etat_initial` ;
@@ -126,7 +126,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 - **Fichiers locaux** : `joueurs.json` (noms de la dernière partie, ignoré par git, préremplis à l'installation).
 - **Assets générés** : ne pas éditer à la main `assets/roles`, `assets/sons`, `assets/favicon.png` ; modifier `outils/importer_icones.py`, `generer_sons.py`, `generer_favicon.py` et les relancer (la licence CC BY 3.0 impose de garder `CREDITS.md` à jour : le script le réécrit). Un nouveau rôle sans icône retombe sur son emoji, mais un test exige une icône par rôle.
-- **Son** : le lecteur audio est dans le conteneur réservé `zone_son` (premier élément de la barre latérale, masqué par CSS) pour que sa position ne change pas et que le son en cours ne soit pas relancé à chaque clic. Case `sons_on` pour le couper.
+- **Son** : deux lecteurs dans les conteneurs réservés `zone_musique` et `zone_effet` (premiers éléments de la barre latérale, masqués par CSS) pour que leur position ne change pas et que le son en cours ne soit pas relancé à chaque clic. Musique par phase (nuit, jour, conseil), hurlement à la première révélation d'une carte de loup (`cri_loup` sur le joueur), son de victoire ; cases `musique_on`, `sons_on`, `cri_on`.
 
 ## 7. Chantiers connus
 

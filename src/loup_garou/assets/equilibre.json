@@ -1,0 +1,151 @@
+{
+  "meta": {
+    "parties_par_mesure": 5000,
+    "croyance": 0.6,
+    "flair": 0.092,
+    "table_reference": "14 joueurs, 3 loups",
+    "reference_village": 0.2254
+  },
+  "modele": {
+    "intercept": 0.2680013528927777,
+    "joueurs": 1.6484988335896005,
+    "joueurs2": 0.11368000866878175,
+    "roles": {
+      "loup": -1.310962083098377,
+      "sorciere": 0.20158706479446842,
+      "voyante": 0.4900741813617492,
+      "cupidon": 0.16463306155520305,
+      "chasseur": 0.3636816690812325,
+      "salvateur": 0.11832031423284017,
+      "enfant_sauvage": -0.5232783995739795,
+      "voleur": 0.4728391377128198,
+      "renard": 0.6102687731981048,
+      "loup_blanc": -0.8610066160558575,
+      "chien_loup": -0.6074547256081587,
+      "louveteau": -1.5392949852336173,
+      "soeur": 0.011316115105554456,
+      "frere": 0.07670598180797827,
+      "servante": 0.007570539480690442,
+      "juge_begue": 0.19599161146403699
+    }
+  },
+  "roles": {
+    "loup": {
+      "impact_pts": -32.8,
+      "info": 0,
+      "chaos": 0,
+      "marge_pts": -18.4
+    },
+    "sorciere": {
+      "impact_pts": 5.0,
+      "info": 0,
+      "chaos": 0,
+      "marge_pts": 6.3
+    },
+    "voyante": {
+      "impact_pts": 12.3,
+      "info": 69,
+      "chaos": 0,
+      "marge_pts": 12.4
+    },
+    "cupidon": {
+      "impact_pts": 4.1,
+      "info": 0,
+      "chaos": 63,
+      "marge_pts": 7.6
+    },
+    "chasseur": {
+      "impact_pts": 9.1,
+      "info": 0,
+      "chaos": 53,
+      "marge_pts": 10.1
+    },
+    "salvateur": {
+      "impact_pts": 3.0,
+      "info": 0,
+      "chaos": 0,
+      "marge_pts": 3.6
+    },
+    "enfant_sauvage": {
+      "impact_pts": -13.1,
+      "info": 0,
+      "chaos": 28,
+      "marge_pts": -7.8
+    },
+    "voleur": {
+      "impact_pts": 11.8,
+      "info": 0,
+      "chaos": 0,
+      "marge_pts": 8.5
+    },
+    "renard": {
+      "impact_pts": 15.3,
+      "info": 100,
+      "chaos": 0,
+      "marge_pts": 18.4
+    },
+    "loup_blanc": {
+      "impact_pts": -21.5,
+      "info": 0,
+      "chaos": 100,
+      "marge_pts": -10.6
+    },
+    "chien_loup": {
+      "impact_pts": -15.2,
+      "info": 0,
+      "chaos": 33,
+      "marge_pts": -8.6
+    },
+    "louveteau": {
+      "impact_pts": -38.5,
+      "info": 0,
+      "chaos": 14,
+      "marge_pts": -18.3
+    },
+    "soeur": {
+      "impact_pts": 0.3,
+      "info": 0,
+      "chaos": 0,
+      "marge_pts": 0.6
+    },
+    "frere": {
+      "impact_pts": 1.9,
+      "info": 8,
+      "chaos": 0,
+      "marge_pts": 1.8
+    },
+    "servante": {
+      "impact_pts": 0.2,
+      "info": 0,
+      "chaos": 51,
+      "marge_pts": 0.0
+    },
+    "juge_begue": {
+      "impact_pts": 4.9,
+      "info": 0,
+      "chaos": 66,
+      "marge_pts": 8.0
+    }
+  },
+  "options": {
+    "cadence_voyante": {
+      "1": 0.32540434209378954,
+      "3": -0.19003388392358722
+    },
+    "cadence_loup_blanc": {
+      "1": 0.2490222187274571,
+      "3": -0.8419512855145217
+    },
+    "potions_sorciere": 0.04534311471953478,
+    "potions_mort": 0.07926552651472762,
+    "maire_depart_faux": 0.03417399980594382,
+    "couple_hasard": 0.3537303385936321,
+    "trouple": 0.048884857436988116
+  },
+  "validation": {
+    "brier": 0.006798889051138979,
+    "pente_calibration": 1.0162743917235169,
+    "compositions": 2400,
+    "parties_par_composition": 25
+  }
+}

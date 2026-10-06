@@ -294,3 +294,13 @@ def test_le_hurlement_accompagne_la_carte_d_un_loup_et_se_coupe():
     assert len(at.get("audio")) == 2  # musique de nuit + hurlement
     at.checkbox(key="cri_on").uncheck().run()
     assert len(at.get("audio")) == 1
+
+
+def test_les_roles_a_cocher_sont_ranges_par_categorie():
+    at = _app()
+    at.button(key="accueil_btn_nouvelle").click().run()
+    texte = " ".join(m.value for m in at.markdown)
+    for titre in ("Information", "Protection et pouvoirs de mort", "Chaos", "Loups spéciaux"):
+        assert titre in texte
+    assert texte.index("Information") < texte.index("Protection et pouvoirs") < texte.index("Loups spéciaux")
+    assert "cat-titre" in texte

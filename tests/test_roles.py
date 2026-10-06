@@ -1,6 +1,6 @@
 import pytest
 
-from loup_garou.roles import ROLES, ROLES_SPECIAUX
+from loup_garou.roles import CATEGORIES, ROLES, ROLES_SPECIAUX
 
 
 def test_chaque_role_est_range_sous_sa_cle():
@@ -40,3 +40,19 @@ def test_chaque_role_a_un_tour_de_nuit():
 def test_chaque_role_a_une_description():
     for role in ROLES.values():
         assert role.description.strip(), role.key
+
+
+def test_chaque_role_special_a_une_categorie_connue():
+    for role in ROLES_SPECIAUX:
+        assert role.categorie in CATEGORIES, role.key
+
+
+def test_chaque_categorie_a_au_moins_un_role():
+    utilisees = {role.categorie for role in ROLES_SPECIAUX}
+    assert set(CATEGORIES) == utilisees
+
+
+def test_les_roles_de_loups_sont_classes_chez_les_loups_speciaux():
+    for role in ROLES_SPECIAUX:
+        if role.camp == "loups":
+            assert role.categorie == "loups"

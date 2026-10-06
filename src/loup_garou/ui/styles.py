@@ -441,6 +441,13 @@ def css_cartes():
             color: #f0a0a0;
         }
         div[class*="st-key-setup_roles"] [data-testid="stVerticalBlock"] { gap: 0.55rem; }
+        .cat-titre {
+            display: flex; align-items: baseline; gap: .6rem; margin-top: .5rem; padding-bottom: .25rem;
+            border-bottom: 1px solid rgba(201,164,76,.35);
+            font-family: 'Cinzel', serif; font-weight: 600; font-size: .95rem; color: #f0d890;
+        }
+        .cat-titre small { font-family: 'EB Garamond', serif; font-weight: 400; font-size: .85rem; color: #b9b09c; }
+        .cat-titre b { margin-left: auto; font-size: .8rem; color: #c9a44c; }
         div[class*="st-key-setup_roles"] [data-testid="stHorizontalBlock"] { gap: 0.6rem; }
         div[class*="st-key-dalles_"] {
             max-width: min(760px, 95%);

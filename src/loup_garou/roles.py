@@ -17,6 +17,7 @@ class Role:
     tir_a_la_mort: bool = False  # à sa mort, ce rôle peut emporter un autre joueur avec lui
     solitaire: bool = False  # gagne seul, en éliminant tout le monde (village et loups compris)
     camp_secret: bool = False  # son camp n'est pas révélé à sa mort (le joueur a choisi le sien)
+    categorie: str = "pouvoir"  # rangement dans l'écran de composition (clés de CATEGORIES)
     lot: int = 1  # nombre de cartes ajoutées ensemble quand le rôle est coché (Sœurs, Frères)
     description: str = ""  # une ou deux phrases affichées en infobulle à la composition
     priorite_nuit: int = 2  # plus petit = joue plus tôt dans la nuit (à égalité : ordre des joueurs)
@@ -42,6 +43,7 @@ ROLES = {
     ),
     "voyante": Role(
         key="voyante",
+        categorie="info",
         description="Sonde un joueur lors de ses nuits de vision et découvre son rôle.",
         nom="Voyante",
         emoji="🔮",
@@ -49,6 +51,7 @@ ROLES = {
     ),
     "cupidon": Role(
         key="cupidon",
+        categorie="chaos",
         description="La première nuit, lie deux joueurs par l'amour (lui compris) : si l'un meurt, l'autre le suit.",
         nom="Cupidon",
         emoji="🏹",
@@ -73,6 +76,7 @@ ROLES = {
     ),
     "enfant_sauvage": Role(
         key="enfant_sauvage",
+        categorie="chaos",
         description="Choisit un mentor la première nuit ; si celui-ci meurt, il devient loup-garou.",
         nom="Enfant sauvage",
         emoji="🧒",
@@ -82,6 +86,7 @@ ROLES = {
     ),
     "voleur": Role(
         key="voleur",
+        categorie="chaos",
         description="Deux cartes restent au milieu de la table : la première nuit, il peut prendre le rôle de l'une d'elles.",
         nom="Voleur",
         emoji="🃏",
@@ -92,6 +97,7 @@ ROLES = {
     ),
     "renard": Role(
         key="renard",
+        categorie="info",
         description="Dès la deuxième nuit, flaire un groupe de trois joueurs et apprend si un loup s'y cache ; sans loup, il perd son flair.",
         nom="Renard",
         emoji="🦊",
@@ -100,6 +106,7 @@ ROLES = {
     ),
     "loup_blanc": Role(
         key="loup_blanc",
+        categorie="loups",
         description="Loup solitaire : une nuit sur deux, il peut dévorer l'un de ses frères. Il gagne seul, en éliminant tout le monde.",
         nom="Loup Blanc",
         emoji="🌕",
@@ -111,6 +118,7 @@ ROLES = {
     ),
     "chien_loup": Role(
         key="chien_loup",
+        categorie="chaos",
         description="Choisit son camp en secret la première nuit : villageois ou loup-garou. Son camp n'est pas dévoilé à sa mort.",
         nom="Chien-Loup",
         emoji="🐕",
@@ -121,6 +129,7 @@ ROLES = {
     ),
     "louveteau": Role(
         key="louveteau",
+        categorie="loups",
         nom="Louveteau",
         emoji="🐶",
         degrade="radial-gradient(circle at 50% 30%, #7a3a2e, #2e130e 75%)",
@@ -131,6 +140,7 @@ ROLES = {
     ),
     "soeur": Role(
         key="soeur",
+        categorie="info",
         nom="Sœur",
         emoji="👭",
         degrade="radial-gradient(circle at 50% 30%, #6b3d6b, #261426 75%)",
@@ -140,6 +150,7 @@ ROLES = {
     ),
     "frere": Role(
         key="frere",
+        categorie="info",
         nom="Frère",
         emoji="👬",
         degrade="radial-gradient(circle at 50% 30%, #2f4f7a, #0f1b2e 75%)",
@@ -149,6 +160,7 @@ ROLES = {
     ),
     "servante": Role(
         key="servante",
+        categorie="chaos",
         nom="Servante dévouée",
         emoji="🧹",
         degrade="radial-gradient(circle at 50% 30%, #5c5c2f, #25250f 75%)",
@@ -157,6 +169,7 @@ ROLES = {
     ),
     "juge_begue": Role(
         key="juge_begue",
+        categorie="chaos",
         nom="Juge bègue",
         emoji="⚖️",
         degrade="radial-gradient(circle at 50% 30%, #4a4a6b, #17172a 75%)",
@@ -172,6 +185,15 @@ ROLES = {
         degrade="radial-gradient(circle at 50% 30%, #35431f, #141a0d 75%)",
         unique=False,
     ),
+}
+
+
+# Catégories de l'écran de composition, dans l'ordre d'affichage : clé -> (emoji, titre, sous-titre).
+CATEGORIES = {
+    "info": ("🔮", "Information", "Apprennent qui est qui"),
+    "pouvoir": ("🛡️", "Protection et pouvoirs de mort", "Sauvent ou tuent"),
+    "chaos": ("🌀", "Chaos", "Changent les camps, les rôles ou les votes"),
+    "loups": ("🐺", "Loups spéciaux", "Renforcent ou trahissent la meute"),
 }
 
 

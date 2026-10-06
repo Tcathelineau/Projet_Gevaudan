@@ -71,7 +71,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 ### Registre des rôles
 
-`Role` (dataclass figée) : `key, nom, emoji, degrade, camp ("village" | "loups"), unique, etat_initial, cartes_en_plus, recommande, tir_a_la_mort, solitaire, camp_secret, priorite_nuit, lot, description`. Rôles actuels : loup, villageois, sorciere, voyante, cupidon, chasseur, salvateur, enfant_sauvage, voleur, renard, loup_blanc, chien_loup, louveteau, soeur, frere, servante, juge_begue. `lot` = nombre de cartes ajoutées quand la case est cochée (sœurs 2, frères 3) ; les mesures d'équilibre de chaque rôle (impact, information, chaos) sont dans `assets/equilibre.json`, produit par `outils/simuler_equilibre.py` (un test exige une entrée par rôle ; ne pas éditer à la main).
+`Role` (dataclass figée) : `key, nom, emoji, degrade, camp ("village" | "loups"), unique, etat_initial, cartes_en_plus, recommande, tir_a_la_mort, solitaire, camp_secret, priorite_nuit, categorie, lot, description`. `categorie` range le rôle dans l'écran de composition (clés de `CATEGORIES` : info, pouvoir, chaos, loups ; un test exige qu'elle soit connue). Rôles actuels : loup, villageois, sorciere, voyante, cupidon, chasseur, salvateur, enfant_sauvage, voleur, renard, loup_blanc, chien_loup, louveteau, soeur, frere, servante, juge_begue. `lot` = nombre de cartes ajoutées quand la case est cochée (sœurs 2, frères 3) ; les mesures d'équilibre de chaque rôle (impact, information, chaos) sont dans `assets/equilibre.json`, produit par `outils/simuler_equilibre.py` (un test exige une entrée par rôle ; ne pas éditer à la main).
 
 **Ajouter un rôle** :
 1. déclarer l'entrée dans `ROLES` (`roles.py`), avec ses clés d'état dans `etat_initial` ;

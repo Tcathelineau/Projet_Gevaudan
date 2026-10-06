@@ -69,6 +69,17 @@ def badge_meute(nom, complices):
     )
 
 
+# Silhouettes portées par le vent (de gauche à droite, comme les nuages) : moitié chauves-souris, moitié feuilles.
+SILHOUETTES_VENT = (("chauve", "🦇", 14, 14), ("feuille", "🍂", 22, 17), ("chauve", "🦇", 30, 19), ("feuille", "🍃", 8, 23))
+
+
+def silhouettes_vent():
+    return "".join(
+        f'<span class="ciel-{genre}" style="top:{haut}%;animation-duration:{duree}s;animation-delay:-{i * 6}s">{emoji}</span>'
+        for i, (genre, emoji, haut, duree) in enumerate(SILHOUETTES_VENT)
+    )
+
+
 def scene_ciel(mode, titre, sous_titre=""):
     """Bandeau animé : "nuit" (lune, étoiles) ou "jour" (lever de soleil), nuages et village."""
     rnd = random.Random(7)
@@ -121,11 +132,7 @@ def scene_victoire(camp_gagnant, titre, sous_titre=""):
                 f'width:{taille}px;height:{taille}px;animation-delay:-{rnd.uniform(0, 3):.1f}s"></span>'
             )
         elements.append('<div class="ciel-astre ciel-lune-sang"></div>')
-        for i, (haut, duree) in enumerate(((14, 14), (30, 19), (8, 23))):
-            elements.append(
-                f'<span class="ciel-chauve" style="top:{haut}%;animation-duration:{duree}s;'
-                f'animation-delay:-{i * 6}s">🦇</span>'
-            )
+        elements.append(silhouettes_vent())
     for i, (haut, largeur, duree) in enumerate(((16, 70, 46), (52, 90, 62))):
         elements.append(
             f'<div class="ciel-nuage" style="top:{haut}%;width:{largeur}px;'
@@ -137,7 +144,7 @@ def scene_victoire(camp_gagnant, titre, sous_titre=""):
         for gauche, largeur, hauteur in maisons
     ) + '<div class="ciel-sol"></div></div>')
     if camp_gagnant == "loups":
-        elements.append('<div class="ciel-colline"></div><span class="ciel-loup">🐺</span>')
+        elements.append('<div class="ciel-colline"></div>')
     sous = f'<div class="ciel-sous">{sous_titre}</div>' if sous_titre else ""
     elements.append(f'<div class="ciel-texte"><div class="ciel-titre">{titre}</div>{sous}</div>')
     st.markdown(

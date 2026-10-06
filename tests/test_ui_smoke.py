@@ -294,3 +294,10 @@ def test_le_hurlement_accompagne_la_carte_d_un_loup_et_se_coupe():
     assert len(at.get("audio")) == 2  # musique de nuit + hurlement
     at.checkbox(key="cri_on").uncheck().run()
     assert len(at.get("audio")) == 1
+
+
+def test_la_nuit_du_menu_a_des_chauves_souris_et_des_feuilles_sans_silhouette_de_loup():
+    at = _app()
+    texte = " ".join(m.value for m in at.markdown)
+    assert texte.count('class="ciel-chauve"') == 2 and texte.count('class="ciel-feuille"') == 2
+    assert "ciel-loup" not in texte and "🐺</span></div>" not in texte

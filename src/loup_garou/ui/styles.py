@@ -721,14 +721,11 @@ CSS_SCENES = """
     position: absolute; right: -8%; bottom: -70px; width: 46%; height: 130px;
     border-radius: 50%; background: #050205;
 }
-.ciel-loup {
-    position: absolute; right: 16%; bottom: 52px; font-size: 64px; line-height: 1;
-    filter: brightness(0);
-}
-.ciel-chauve {
+.ciel-chauve, .ciel-feuille {
     position: absolute; font-size: 20px; line-height: 1; filter: brightness(0);
     animation: vole linear infinite;
 }
+.ciel-feuille { font-size: 17px; animation-name: souffle; }
 @keyframes tourne { to { transform: rotate(360deg); } }
 @keyframes chute {
     0% { transform: translateY(0) rotate(0deg); opacity: 0; }
@@ -736,12 +733,20 @@ CSS_SCENES = """
     100% { transform: translateY(270px) rotate(540deg); opacity: 1; }
 }
 @keyframes pulse-sang { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+/* L'emoji de chauve-souris regarde vers la gauche : on le retourne pour qu'elle vole dans le sens du vent. */
 @keyframes vole {
-    0% { transform: translate(-40px, 0); }
-    25% { transform: translate(25cqw, 18px); }
-    50% { transform: translate(50cqw, -6px); }
-    75% { transform: translate(75cqw, 14px); }
-    100% { transform: translate(100cqw, 0); }
+    0% { transform: translate(-40px, 0) scaleX(-1); }
+    25% { transform: translate(25cqw, 18px) scaleX(-1); }
+    50% { transform: translate(50cqw, -6px) scaleX(-1); }
+    75% { transform: translate(75cqw, 14px) scaleX(-1); }
+    100% { transform: translate(100cqw, 0) scaleX(-1); }
+}
+@keyframes souffle {
+    0% { transform: translate(-40px, 0) rotate(0deg); }
+    25% { transform: translate(25cqw, 24px) rotate(130deg); }
+    50% { transform: translate(50cqw, -10px) rotate(250deg); }
+    75% { transform: translate(75cqw, 20px) rotate(380deg); }
+    100% { transform: translate(100cqw, 0) rotate(500deg); }
 }
 @keyframes scintille { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.25); } }
 @keyframes derive { from { transform: translateX(-140px); } to { transform: translateX(100cqw); } }
@@ -970,7 +975,6 @@ div[class*="st-key-scene_accueil"] > div[data-testid="stElementContainer"]:has(.
 .acc-couche .ciel-lune { width: 110px; height: 110px; right: 12%; top: 70px; }
 .acc-couche .ciel-lune-sang { width: 190px; height: 190px; right: 12%; top: 60px; }
 .acc-couche .ciel-colline { bottom: -90px; height: 190px; }
-.acc-couche .ciel-loup { right: 14%; bottom: 120px; font-size: 110px; }
 .acc-couche .ciel-rayons, .acc-couche .ciel-soleil-haut { left: 80%; }
 .acc-couche .ciel-confetti { animation-name: acc-chute; }
 .acc-titre-bloc { text-align: center; }

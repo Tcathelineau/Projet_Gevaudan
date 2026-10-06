@@ -8,7 +8,7 @@ import streamlit as st
 
 from loup_garou.moteur.persistance import date_partie, gagnant_partie, lister_historique
 from loup_garou.roles import ROLES
-from loup_garou.ui.composants import scene_ciel
+from loup_garou.ui.composants import scene_ciel, silhouettes_vent
 from loup_garou.ui.illustrations import svg_role
 from loup_garou.ui.ecrans.fin import afficher_historique, afficher_roles
 from loup_garou.ui.styles import CSS_SANS_SIDEBAR
@@ -23,16 +23,13 @@ def _fond_accueil():
         f'animation-duration:{rnd.uniform(3.2, 5.6):.1f}s;animation-delay:-{rnd.uniform(0, 5):.1f}s"></span>'
         for _ in range(40)
     )
-    chauves = "".join(
-        f'<span class="ciel-chauve" style="top:{haut}%;animation-duration:{duree}s;animation-delay:-{i * 6}s">🦇</span>'
-        for i, (haut, duree) in enumerate(((14, 14), (30, 19), (8, 23)))
-    )
+    chauves = silhouettes_vent()
     return (
         '<div class="acc-fond">'
         '<div class="acc-couche acc-jour"><div class="ciel-astre ciel-soleil"></div></div>'
         '<div class="acc-couche acc-nuit"><div class="ciel-astre ciel-lune"></div></div>'
         '<div class="acc-couche acc-loups"><div class="ciel-astre ciel-lune-sang"></div>' + chauves +
-        '<div class="ciel-colline"></div><span class="ciel-loup">🐺</span></div>'
+        '<div class="ciel-colline"></div></div>'
         '<div class="acc-couche acc-victoire"><div class="ciel-rayons"></div>'
         '<div class="ciel-astre ciel-soleil-haut"></div>' + confettis + '</div>'
         '</div>'

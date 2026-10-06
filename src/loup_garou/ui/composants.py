@@ -8,6 +8,7 @@ import streamlit as st
 from loup_garou.moteur.journal import etapes_chronologie
 from loup_garou.moteur.partie import fin_de_tour
 from loup_garou.roles import ROLES
+from loup_garou.ui.illustrations import svg_role
 
 
 def carte_role(nom, role):
@@ -17,7 +18,7 @@ def carte_role(nom, role):
         <div class="carte" style="background: {r.degrade};">
             <span class="coin-bd"></span><span class="coin-bg"></span>
             <div class="carte-titre">{r.nom}</div>
-            <div class="carte-medaillon">{r.emoji}</div>
+            <div class="carte-medaillon">{svg_role(role, "carte-art", r.emoji)}</div>
             <div class="carte-nom">{nom}</div>
         </div>
         """,
@@ -26,7 +27,7 @@ def carte_role(nom, role):
 
 
 def carte_dos():
-    st.markdown('<div class="carte-dos">🐺</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="carte-dos">{svg_role("loup", "dos-art", "🐺")}</div>', unsafe_allow_html=True)
 
 
 def badge_amour(autres):

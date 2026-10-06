@@ -273,3 +273,14 @@ def test_distribuer_retient_les_noms():
         "sorciere", "voyante", "cupidon", "chasseur", "salvateur", "enfant_sauvage", "voleur", "renard",
         "loup_blanc", "chien_loup", "louveteau", "soeur", "frere", "servante", "juge_begue")))
     assert sorted(load_joueurs()) == [f"J{i}" for i in range(1, 8)]
+
+
+def test_le_bruitage_suit_la_phase_et_se_coupe():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    nuit = _conseil(roles)
+    nuit.update(phase="nuit", jour=1)
+    at = _app(nuit)
+    assert len(at.get("audio")) == 1
+    at.checkbox(key="sons_on").uncheck().run()
+    assert len(at.get("audio")) == 0
+    assert len(_app(_conseil(roles)).get("audio")) == 0

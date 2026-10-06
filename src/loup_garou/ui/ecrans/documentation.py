@@ -8,6 +8,7 @@ from loup_garou.equilibre import NOTES
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import scene_ciel
 from loup_garou.ui.ecrans.accueil import aller_a
+from loup_garou.ui.illustrations import ASSETS, svg_role
 from loup_garou.ui.regles import afficher_regles
 from loup_garou.ui.styles import CSS_DOCUMENTATION, CSS_SANS_SIDEBAR
 
@@ -42,7 +43,7 @@ def _dalle(role):
         signe = f"+{notes.force}" if notes.force > 0 else str(notes.force)
     return (
         f'<div class="doc-dalle doc-{classe_camp}">'
-        f'<div class="doc-tete"><div class="icone-role" style="background: {role.degrade};">{role.emoji}</div>'
+        f'<div class="doc-tete"><div class="icone-role" style="background: {role.degrade};">{svg_role(role.key, "icone-art", role.emoji)}</div>'
         f'<div><div class="doc-nom">{html.escape(role.nom)}</div>'
         f'<div class="doc-camp">{libelle_camp}</div></div></div>'
         f'<div class="doc-resume">{html.escape(role.description)}</div>'
@@ -54,6 +55,11 @@ def _dalle(role):
         f'<b>{notes.chaos}/5</b></div>'
         '</div></div>'
     )
+
+
+def _credits():
+    fichier = ASSETS / "CREDITS.md"
+    return fichier.read_text(encoding="utf-8") if fichier.exists() else ""
 
 
 def ecran_documentation():
@@ -74,3 +80,5 @@ def ecran_documentation():
         st.markdown(
             f'<div class="doc-grille">{"".join(_dalle(r) for r in ROLES.values())}</div>', unsafe_allow_html=True,
         )
+    with st.expander("🎨 Crédits"):
+        st.markdown(_credits())

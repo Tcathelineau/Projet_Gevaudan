@@ -8,7 +8,7 @@ from loup_garou.equilibre import (
 from loup_garou.moteur.partie import composition_recommandee, nouvelle_partie
 from loup_garou.moteur.persistance import load_joueurs, save_joueurs
 from loup_garou.options import CADENCES, OPTIONS_DEFAUT
-from loup_garou.roles import ROLES, ROLES_SPECIAUX
+from loup_garou.roles import CATEGORIES, ROLES, ROLES_SPECIAUX
 from loup_garou.ui.ecrans.accueil import aller_a
 from loup_garou.ui.illustrations import svg_role
 from loup_garou.ui.styles import css_infobulles
@@ -163,18 +163,30 @@ def etape_roles():
             )
         composition = {"loup": n_loup}
 
-        # Rôles uniques (au plus un exemplaire) : une simple case à cocher, en
-        # grille de 4 colonnes ; le reste de la table devient Villageois.
+        # Rôles uniques (au plus un exemplaire) : une simple case à cocher, rangée par catégorie
+        # en grille de 4 colonnes ; le reste de la table devient Villageois.
         st.markdown("**Autres rôles** · coche ceux qui jouent")
         uniques = [role for role in ROLES_SPECIAUX if role.unique]
-        for i in range(0, len(uniques), 4):
-            cols = st.columns(4)
-            for col, role in zip(cols, uniques[i:i + 4]):
-                with col, st.container(key=f"info_{role.key}"):
-                    composition[role.key] = role.lot * int(st.checkbox(
-                        f"{role.emoji} {role.nom}" + (f" ×{role.lot}" if role.lot > 1 else ""),
-                        value=bool(speciaux_defaut[role.key]), key=f"n_{role.key}",
-                    ))
+        for cle_categorie, (emoji, titre, sous_titre) in CATEGORIES.items():
+            roles = [role for role in uniques if role.categorie == cle_categorie]
+            if not roles:
+                continue
+            coches = sum(
+                bool(st.session_state.get(f"n_{role.key}", bool(speciaux_defaut[role.key]))) for role in roles
+            )
+            st.markdown(
+                f'<div class="cat-titre"><span>{emoji} {titre}</span><small>{sous_titre}</small>'
+                f'<b>{coches} / {len(roles)}</b></div>',
+                unsafe_allow_html=True,
+            )
+            for i in range(0, len(roles), 4):
+                cols = st.columns(4)
+                for col, role in zip(cols, roles[i:i + 4]):
+                    with col, st.container(key=f"info_{role.key}"):
+                        composition[role.key] = role.lot * int(st.checkbox(
+                            f"{role.emoji} {role.nom}" + (f" ×{role.lot}" if role.lot > 1 else ""),
+                            value=bool(speciaux_defaut[role.key]), key=f"n_{role.key}",
+                        ))
 
         # Rôles spéciaux en quantité libre (aucun aujourd'hui, mais le prochain
         # rôle de ce type n'aura besoin que d'une entrée dans ROLES).

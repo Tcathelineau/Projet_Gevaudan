@@ -17,11 +17,13 @@ SRC = str(Path(__file__).resolve().parent.parent / "src")
 ENTREE = str(Path(SRC) / "loup_garou_app.py")
 
 
-def _app(partie=None):
+def _app(partie=None, **session):
     sys.path.insert(0, SRC)
     at = AppTest.from_file(ENTREE, default_timeout=60)
     if partie is not None:
         at.session_state["partie"] = partie
+    for cle, valeur in session.items():
+        at.session_state[cle] = valeur
     return at.run()
 
 
@@ -275,25 +277,47 @@ def test_distribuer_retient_les_noms():
     assert sorted(load_joueurs()) == [f"J{i}" for i in range(1, 8)]
 
 
-def test_la_musique_suit_la_phase_et_se_coupe():
+def test_aucun_son_par_defaut():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    nuit = _conseil(roles)
+    nuit.update(phase="nuit", jour=1, ordre_nuit=["A"], tour=0, devoile=True, transfert=True)
+    assert len(_app(nuit).get("audio")) == 0  # même sur la carte d'un loup
+    assert len(_app(_conseil(roles)).get("audio")) == 0
+    assert len(_app(_fin(roles)).get("audio")) == 0
+
+
+def test_la_musique_suit_la_phase_et_se_coupe_depuis_le_menu_option():
     roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
     nuit = _conseil(roles)
     nuit.update(phase="nuit", jour=1)
-    at = _app(nuit)
+    at = _app(nuit, musique_on=True)
     assert len(at.get("audio")) == 1
-    at.checkbox(key="musique_on").uncheck().run()
+    at.session_state["options_ouvert"] = True
+    at.run()
+    at.checkbox(key="case_musique_on").uncheck().run()
     assert len(at.get("audio")) == 0
-    assert len(_app(_conseil(roles)).get("audio")) == 1  # musique du conseil
+    assert len(_app(_conseil(roles), musique_on=True).get("audio")) == 1  # musique du conseil
+
+
+def test_les_reglages_du_son_survivent_a_la_fermeture_du_menu():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    at = _app(_conseil(roles), options_ouvert=True)
+    at.checkbox(key="case_musique_on").check().run()
+    assert at.session_state["musique_on"] is True and len(at.get("audio")) == 1
+    at.session_state["options_ouvert"] = False
+    at.run()
+    assert at.session_state["musique_on"] is True and len(at.get("audio")) == 1
 
 
 def test_le_hurlement_accompagne_la_carte_d_un_loup_et_se_coupe():
     roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
     s = _conseil(roles)
     s.update(phase="nuit", jour=1, ordre_nuit=["A"], tour=0, devoile=True, transfert=True)
-    at = _app(s)
+    at = _app(s, musique_on=True, sons_on=True, cri_on=True, options_ouvert=True)
     assert len(at.get("audio")) == 2  # musique de nuit + hurlement
-    at.checkbox(key="cri_on").uncheck().run()
+    at.checkbox(key="case_cri_on").uncheck().run()
     assert len(at.get("audio")) == 1
+
 
 
 def test_les_roles_a_cocher_sont_ranges_par_categorie():

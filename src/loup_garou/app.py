@@ -15,7 +15,9 @@ from loup_garou.ui.ecrans.jour import ecran_conseil, ecran_election_maire, ecran
 from loup_garou.ui.ecrans.nuit import ecran_nuit
 from loup_garou.ui.regles import SECTIONS, afficher_regles, afficher_roles_de_la_partie
 from loup_garou.ui.illustrations import ASSETS
-from loup_garou.ui.sons import effet_courant, jouer_effet, jouer_musique, musique_courante
+from loup_garou.ui.sons import (
+    actif, cases_a_cocher, effet_courant, jouer_effet, jouer_musique, musique_courante, vider_session,
+)
 from loup_garou.ui.styles import CSS_ACCUEIL, css_cartes, CSS_HISTORIQUE, CSS_PASSAGE, CSS_SCENES
 
 
@@ -111,28 +113,25 @@ def main():
         ecran_fin(s)
 
     with zone_musique:
-        if st.session_state.get("musique_on", True):
+        if actif("musique_on"):
             jouer_musique(musique_courante(s))
     with zone_effet:
         effet = effet_courant(s)
-        if effet and st.session_state.get("sons_on", True) and (effet != "hurlement" or st.session_state.get("cri_on", True)):
+        if effet and actif("sons_on") and (effet != "hurlement" or actif("cri_on")):
             jouer_effet(effet)
 
     with st.sidebar:
-        with st.expander("🔊 Son"):
-            st.checkbox("🎵 Musique", value=True, key="musique_on")
-            st.checkbox("🔔 Bruitages (victoire)", value=True, key="sons_on")
-            st.checkbox("🐺 Hurlement d'un loup à la révélation de sa carte", value=True, key="cri_on")
-
         # Le menu flotte au-dessus du bouton (position absolue) : il recouvre le reste sans le déplacer.
         with st.container(key="options"):
             if st.session_state.get("options_ouvert"):
                 with st.container(key="menu_option"):
+                    st.markdown("**🔊 Son** (désactivé par défaut)")
+                    cases_a_cocher()
                     panneau_rechargement(s)
                     libelle = "🏠 Retour au menu" if s["phase"] == "fin" else "🚪 Abandonner la partie"
                     if st.button(libelle, key="abandon"):
                         clear_save()
-                        st.session_state.clear()
+                        vider_session()
                         st.rerun()
             ouvert = st.session_state.get("options_ouvert", False)
             st.button(

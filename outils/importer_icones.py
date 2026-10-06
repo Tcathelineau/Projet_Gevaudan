@@ -57,8 +57,15 @@ def main():
         "sous licence [Creative Commons Attribution 3.0](https://creativecommons.org/licenses/by/3.0/). "
         "Elles ont été recolorées (fond retiré). Auteurs : Lorc (lorcblog.blogspot.com) et "
         "Delapouite (delapouite.com).\n\n" + "\n".join(credits) + "\n"
-        "\nRégénérer : `python3 outils/importer_icones.py`. Les sons sont synthétisés par "
-        "`outils/generer_sons.py` (aucun échantillon tiers).\n",
+        "\n## Musiques\n\n"
+        "Les trois musiques viennent de [FreePD](https://freepd.com), morceaux en domaine public "
+        "([CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/), aucune attribution requise ; remerciements "
+        "à leurs auteurs), récupérés via le miroir GitHub [0lhi/FreePD](https://github.com/0lhi/FreePD) :\n\n"
+        "- nuit : « Creepy Hallow » (Horror)\n- jour : « Happy Whistling Ukulele » (Upbeat)\n"
+        "- conseil : « Find Them » (Scoring)\n\n"
+        "Préparées (mono, volume commun, fondus, MP3) par `outils/importer_musiques.py`.\n\n"
+        "## Bruitages\n\nLe hurlement et les sons de victoire sont synthétisés par `outils/generer_sons.py` "
+        "(aucun échantillon tiers).\n\nRégénérer les icônes : `python3 outils/importer_icones.py`.\n",
         encoding="utf-8",
     )
     print(f"{len(credits)} icônes importées")

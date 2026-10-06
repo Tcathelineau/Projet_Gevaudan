@@ -9,6 +9,7 @@ import streamlit as st
 from loup_garou.moteur.persistance import date_partie, gagnant_partie, lister_historique
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import scene_ciel
+from loup_garou.ui.illustrations import svg_role
 from loup_garou.ui.ecrans.fin import afficher_historique, afficher_roles
 from loup_garou.ui.styles import CSS_SANS_SIDEBAR
 
@@ -48,7 +49,7 @@ def ecran_accueil():
     with st.container(key="scene_accueil"):
         st.markdown(_fond_accueil(), unsafe_allow_html=True)
         st.markdown(
-            '<div class="acc-titre-bloc"><div class="acc-surtitre">🐺</div>'
+            f'<div class="acc-titre-bloc"><div class="acc-surtitre">{svg_role("logo", "acc-logo", "🐺")}</div>'
             '<div class="acc-titre">Projet Gévaudan</div></div>',
             unsafe_allow_html=True,
         )

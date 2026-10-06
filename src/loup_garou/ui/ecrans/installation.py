@@ -7,6 +7,7 @@ from loup_garou.moteur.partie import composition_recommandee, nouvelle_partie
 from loup_garou.options import CADENCES, OPTIONS_DEFAUT
 from loup_garou.roles import ROLES, ROLES_SPECIAUX
 from loup_garou.ui.ecrans.accueil import aller_a
+from loup_garou.ui.illustrations import svg_role
 from loup_garou.ui.styles import css_infobulles
 
 
@@ -53,7 +54,7 @@ def afficher_composition(nb, total, composition, n_villageois, options):
     )
 
     icones = "".join(
-        f'<div class="icone-role" style="background: {ROLES[cle].degrade};" title="{ROLES[cle].nom}">{ROLES[cle].emoji}</div>'
+        f'<div class="icone-role" style="background: {ROLES[cle].degrade};" title="{ROLES[cle].nom}">{svg_role(cle, "icone-art", ROLES[cle].emoji)}</div>'
         for cle, n in composition.items()
         for _ in range(n)
     )

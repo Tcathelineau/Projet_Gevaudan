@@ -70,17 +70,21 @@ def css_cartes():
             width: 80%;
         }
         .carte-medaillon {
-            width: 78px;
-            height: 78px;
+            width: 118px;
+            height: 118px;
             border-radius: 50%;
             border: 2px solid #c9a44c;
-            background: rgba(0,0,0,.25);
+            background: radial-gradient(circle at 50% 35%, rgba(255,235,170,.14), rgba(0,0,0,.35) 75%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.1rem;
-            box-shadow: 0 0 22px rgba(201,164,76,.25) inset;
+            font-size: 3rem;
+            box-shadow: 0 0 22px rgba(201,164,76,.25) inset, 0 0 18px rgba(0,0,0,.45);
         }
+        div[class*="st-key-zone_son"] { position: absolute !important; width: 1px !important; clip-path: inset(50%) !important; opacity: 0 !important; pointer-events: none !important; }
+        .carte-art { width: 66%; height: 66%; color: #f0d890; filter: drop-shadow(0 2px 5px rgba(0,0,0,.65)); }
+        .icone-art { width: 62%; height: 62%; color: #f0d890; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+        .dos-art { width: 46%; color: #c9a44c; opacity: .8; filter: drop-shadow(0 0 10px rgba(201,164,76,.35)); }
         .carte-nom {
             font-family: 'Cinzel', serif;
             font-size: 1.3rem;
@@ -971,6 +975,7 @@ div[class*="st-key-scene_accueil"] > div[data-testid="stElementContainer"]:has(.
 .acc-couche .ciel-confetti { animation-name: acc-chute; }
 .acc-titre-bloc { text-align: center; }
 .acc-surtitre { font-size: 4.4rem; line-height: 1; filter: drop-shadow(0 3px 10px rgba(0,0,0,.6)); }
+.acc-logo { width: clamp(84px, 14vw, 128px); height: auto; color: #f6dc9a; filter: drop-shadow(0 0 16px rgba(246,220,154,.45)); }
 .acc-titre {
     font-family: 'Cinzel', serif; font-weight: 700; text-transform: uppercase;
     font-size: clamp(2.4rem, 7vw, 5rem); letter-spacing: .08em; color: #fff4d0;

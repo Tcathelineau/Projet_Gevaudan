@@ -202,3 +202,14 @@ def test_sans_juge_un_seul_vote():
     roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois", "E": "villageois"}
     at = _voter(_app(_conseil(roles)), "B", 1)
     assert any(b.label == "La nuit tombe" for b in at.button)
+
+
+def test_le_bruitage_suit_la_phase_et_se_coupe():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    nuit = _conseil(roles)
+    nuit.update(phase="nuit", jour=1)
+    at = _app(nuit)
+    assert len(at.get("audio")) == 1
+    at.checkbox(key="sons_on").uncheck().run()
+    assert len(at.get("audio")) == 0
+    assert len(_app(_conseil(roles)).get("audio")) == 0

@@ -70,17 +70,21 @@ def css_cartes():
             width: 80%;
         }
         .carte-medaillon {
-            width: 78px;
-            height: 78px;
+            width: 118px;
+            height: 118px;
             border-radius: 50%;
             border: 2px solid #c9a44c;
-            background: rgba(0,0,0,.25);
+            background: radial-gradient(circle at 50% 35%, rgba(255,235,170,.14), rgba(0,0,0,.35) 75%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.1rem;
-            box-shadow: 0 0 22px rgba(201,164,76,.25) inset;
+            font-size: 3rem;
+            box-shadow: 0 0 22px rgba(201,164,76,.25) inset, 0 0 18px rgba(0,0,0,.45);
         }
+        div[class*="st-key-zone_son"] { position: absolute !important; width: 1px !important; clip-path: inset(50%) !important; opacity: 0 !important; pointer-events: none !important; }
+        .carte-art { width: 66%; height: 66%; color: #f0d890; filter: drop-shadow(0 2px 5px rgba(0,0,0,.65)); }
+        .icone-art { width: 62%; height: 62%; color: #f0d890; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+        .dos-art { width: 46%; color: #c9a44c; opacity: .8; filter: drop-shadow(0 0 10px rgba(201,164,76,.35)); }
         .carte-nom {
             font-family: 'Cinzel', serif;
             font-size: 1.3rem;
@@ -971,6 +975,7 @@ div[class*="st-key-scene_accueil"] > div[data-testid="stElementContainer"]:has(.
 .acc-couche .ciel-confetti { animation-name: acc-chute; }
 .acc-titre-bloc { text-align: center; }
 .acc-surtitre { font-size: 4.4rem; line-height: 1; filter: drop-shadow(0 3px 10px rgba(0,0,0,.6)); }
+.acc-logo { width: clamp(84px, 14vw, 128px); height: auto; color: #f6dc9a; filter: drop-shadow(0 0 16px rgba(246,220,154,.45)); }
 .acc-titre {
     font-family: 'Cinzel', serif; font-weight: 700; text-transform: uppercase;
     font-size: clamp(2.4rem, 7vw, 5rem); letter-spacing: .08em; color: #fff4d0;
@@ -1093,6 +1098,25 @@ CSS_DOCUMENTATION = """
 .doc-pastilles { display: flex; gap: 4px; }
 .doc-pastilles i { flex: 1; max-width: 22px; height: 8px; border-radius: 4px; background: rgba(236,227,210,.15); }
 .doc-pastilles i.on { background: #c9a44c; }
+</style>
+"""
+
+
+CSS_BILAN = """
+<style>
+.bil-tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: .6rem; margin: .6rem 0 1rem; }
+.bil-tuile {
+    display: flex; flex-direction: column; align-items: center; gap: .1rem; padding: .7rem .4rem; text-align: center;
+    border-radius: 12px; border: 1.5px solid rgba(201,164,76,.55); background: rgba(20,16,10,.4);
+    font-family: 'EB Garamond', serif; color: #ece3d2;
+}
+.bil-tuile .bil-emoji { font-size: 1.5rem; }
+.bil-tuile b { font-family: 'Cinzel', serif; font-size: 1.7rem; color: #f0d890; line-height: 1.1; }
+.bil-tuile span:last-child { font-size: .85rem; opacity: .85; }
+.bil-dist { display: flex; gap: .8rem; align-items: center; padding: .55rem .9rem; margin-bottom: .45rem; border-radius: 10px;
+    border-left: 4px solid #c9a44c; background: rgba(201,164,76,.08); font-family: 'EB Garamond', serif; color: #ece3d2; }
+.bil-dist-emoji { font-size: 1.6rem; }
+.bil-dist-titre { font-family: 'Cinzel', serif; font-weight: 600; color: #f0d890; font-size: .95rem; }
 </style>
 """
 

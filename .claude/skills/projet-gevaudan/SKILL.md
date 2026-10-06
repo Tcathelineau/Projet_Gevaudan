@@ -25,6 +25,7 @@ uv run --python 3.12 --with streamlit streamlit run src/loup_garou_app.py
 ```
 src/loup_garou_app.py        point d'entrée (importe loup_garou.app.main)
 src/loup_garou/
+  assets/                    roles/<clé>.svg (icônes CC BY 3.0, cf. CREDITS.md), sons/*.wav (synthétisés), favicon.png
   config.py                  SAVE_FILE, HISTORIQUE_DIR, MUSIQUE_FILE (chemins relatifs au dossier courant)
   options.py                 OPTIONS_DEFAUT, opt(), taille_couple(), nuit_active(), prochaine_nuit(), CADENCES
   roles.py                   dataclass Role, registre ROLES, ROLES_SPECIAUX (données seulement)
@@ -32,12 +33,15 @@ src/loup_garou/
     partie.py                nouvelle_partie, vivants, camp, tuer, vainqueur, fin_de_tour,
                              terminer_partie, resoudre_nuit, composition_recommandee
     journal.py               log, prendre_instantane, etapes_chronologie
+    bilan.py                 bilan_partie : chiffres clés, distinctions, frise (lit s["morts"])
     persistance.py           save_game/load_game/clear_save, archiver_partie, lister_historique,
                              date_partie, gagnant_partie
   ui/                        interface Streamlit
     styles.py                CSS (cartes, scènes, passage, accueil, historique) et décors SVG
     composants.py            carte_role, carte_dos, badges, scene_ciel/victoire, annonce, plaquette,
                              grille_dalles, selection_dalles, bouton_validation, bouton_fin, panneau_avis
+    illustrations.py         svg_role(clé, classe, repli) : SVG en ligne d'un rôle (couleur = CSS `color`)
+    sons.py                  son_courant(s) -> (nom, boucle) selon la phase ; jouer() insère le lecteur invisible
     nuit_roles.py            une fonction de tour de nuit par rôle + NUIT_ROLES (clé de rôle -> fonction)
     barre_laterale.py        recharger_etape, panneau_rechargement, garder_sidebar_ouverte
     ecrans/                  accueil, installation, nuit, jour (réveil, maire, conseil, tir), fin
@@ -62,6 +66,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 | `amoureux`, `maire`, `dernier_maire`, `loups`, `cartes_milieu` | état social |
 | `options` | options de partie (voir §4) |
 | clés propres aux rôles | viennent de `Role.etat_initial` (ex. `potions_sorciere`, `protege_nuit`, `mentor_enfant`, `cible_loup_blanc`) |
+| `morts`, `composition` | `morts` : une entrée par mort (nom, role, camp, genre, jour, moment) alimentée par `tuer(..., genre)` ; `composition` : le paquet, pour « Rejouer » et le rappel des règles |
 | `journal`, `instantanes` | historique daté par moment, points de retour pour le rechargement d'étape |
 
 ### Registre des rôles
@@ -118,6 +123,10 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 - Commits : trailer `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>`.
 - Tests : l'utilisateur teste lui-même l'interface dans son navigateur ; ne pas lancer de test navigateur pour chaque PR (coût en tokens). Vérifier par `pyflakes`, import des modules et, pour le moteur, des tests unitaires ; une partie complète peut se jouer sans navigateur avec `streamlit.testing.v1.AppTest` (limites : `st.rerun` après un formulaire laisse l'arbre périmé, `selectbox(index=None)` ne se pilote pas : injecter la valeur dans `session_state`).
 - Pièges déjà rencontrés : `sed -i` se comporte autrement sur macOS (préférer un remplacement Python) ; un script d'édition doit échouer bruyamment si une ancre est introuvable ; `location.reload()` en JS demande un `setTimeout` ; l'aperçu du navigateur peut avoir un viewport 0x0 ; après un test, tuer le serveur (`pkill -f "streamlit run"`) et supprimer le `save.json` généré.
+
+- **Fichiers locaux** : `joueurs.json` (noms de la dernière partie, ignoré par git, préremplis à l'installation).
+- **Assets générés** : ne pas éditer à la main `assets/roles`, `assets/sons`, `assets/favicon.png` ; modifier `outils/importer_icones.py`, `generer_sons.py`, `generer_favicon.py` et les relancer (la licence CC BY 3.0 impose de garder `CREDITS.md` à jour : le script le réécrit). Un nouveau rôle sans icône retombe sur son emoji, mais un test exige une icône par rôle.
+- **Son** : le lecteur audio est dans le conteneur réservé `zone_son` (premier élément de la barre latérale, masqué par CSS) pour que sa position ne change pas et que le son en cours ne soit pas relancé à chaque clic. Case `sons_on` pour le couper.
 
 ## 7. Chantiers connus
 

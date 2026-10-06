@@ -4,9 +4,11 @@ import streamlit as st
 
 from loup_garou.equilibre import bilan, niveau_chaos, niveau_info, position_equilibre
 from loup_garou.moteur.partie import composition_recommandee, nouvelle_partie
+from loup_garou.moteur.persistance import load_joueurs, save_joueurs
 from loup_garou.options import CADENCES, OPTIONS_DEFAUT
 from loup_garou.roles import ROLES, ROLES_SPECIAUX
 from loup_garou.ui.ecrans.accueil import aller_a
+from loup_garou.ui.illustrations import svg_role
 from loup_garou.ui.styles import css_infobulles
 
 
@@ -53,7 +55,7 @@ def afficher_composition(nb, total, composition, n_villageois, options):
     )
 
     icones = "".join(
-        f'<div class="icone-role" style="background: {ROLES[cle].degrade};" title="{ROLES[cle].nom}">{ROLES[cle].emoji}</div>'
+        f'<div class="icone-role" style="background: {ROLES[cle].degrade};" title="{ROLES[cle].nom}">{svg_role(cle, "icone-art", ROLES[cle].emoji)}</div>'
         for cle, n in composition.items()
         for _ in range(n)
     )
@@ -207,12 +209,17 @@ def etape_noms():
     st.subheader("2. Qui joue ?")
     st.caption(f"{nb} joueurs — vous vous passerez l'appareil à tour de rôle pendant la nuit.")
 
+    recents = load_joueurs()
+    if recents:
+        st.caption("Les noms de la dernière partie sont préremplis.")
     with st.form("noms"):
         noms = []
         cols = st.columns(2)
         for i in range(nb):
             with cols[i % 2]:
-                noms.append(st.text_input(f"Joueur {i + 1}", key=f"nom_{i}").strip())
+                noms.append(st.text_input(
+                    f"Joueur {i + 1}", value=recents[i] if i < len(recents) else "", key=f"nom_{i}",
+                ).strip())
 
         col_retour, col_lance = st.columns([1, 2])
         retour = col_retour.form_submit_button("← Retour")
@@ -228,6 +235,7 @@ def etape_noms():
         elif len(set(noms)) != nb:
             st.error("Deux joueurs portent le même nom.")
         else:
+            save_joueurs(noms)
             st.session_state.partie = nouvelle_partie(
                 noms, st.session_state.config_composition, st.session_state.get("config_options"),
             )

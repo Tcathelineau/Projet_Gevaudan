@@ -70,7 +70,13 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 ## ✨ Fonctionnalités
 
 - **Menu d'accueil** : un village qui défile (jour, nuit, loups, victoire) avec deux boutons, « Nouvelle partie » et « Historique ». L'écran Historique affiche chaque partie archivée sous forme de carte (date, joueurs, rôles, camp vainqueur, bordure colorée selon le vainqueur) avec le journal détaillé en cases nuit/jour.
-- **Documentation** : depuis le menu d'accueil, une dalle par rôle avec son résumé et ses notes d'équilibre (force loups / village, information, chaos).
+- **Documentation** : depuis le menu d'accueil, un onglet « Comment jouer » (principe, déroulement, victoire, maire, passage de l'appareil) et un onglet « Les rôles » avec une dalle par rôle (résumé, force loups / village, information, chaos).
+- **Rappel des règles en partie** : un volet de la barre latérale rappelle le déroulement, les conditions de victoire et les rôles du paquet.
+- **Bilan de fin de partie** : chiffres clés (nuits, morts, loups démasqués, innocents condamnés...), distinctions (première victime, erreur judiciaire, loup le plus discret...), frise des disparitions, puis « Rejouer avec les mêmes joueurs » ou retour au menu.
+- **Noms mémorisés** : les noms de la dernière partie sont préremplis (fichier `joueurs.json`, ignoré par git).
+- **Cartes de rôle illustrées** : chaque rôle a son illustration vectorielle (icônes game-icons.net, voir les crédits), sur la carte de nuit, les bulles de la composition et la page Documentation.
+- **Bruitages** : ambiance de nuit en boucle, carillon du réveil, glas à chaque mort, fanfare ou hurlement à la victoire. Ils sont synthétisés par un script (aucun échantillon tiers) et se coupent depuis la case « 🔔 Bruitages » de la barre latérale. Le navigateur ne démarre un son qu'après un premier clic dans la page.
+- **Identité** : logo (loup hurlant) sur l'accueil, icône d'onglet, dos de carte au loup.
 - **Composition personnalisable** : nombre de joueurs et répartition des rôles, réglables avant chaque partie.
 - **Jauges d'équilibre** : l'écran de composition affiche un rapport de force loups / village, un niveau d'information et un niveau de chaos, recalculés à chaque changement de rôle ou d'option (indicateur approximatif, voir `docs/equilibre-roles.md`).
 - **Options avancées** (menu de composition, « ⚙️ Options avancées ») : potions de soin (1 à 5) et de mort (0 à 5) de la sorcière, couple tiré au sort sans Cupidon (Cupidon est alors remplacé par un villageois), mode fun « trouple » (l'amour lie trois joueurs au lieu de deux), fréquence des visions de la voyante et des festins du Loup Blanc (chaque nuit, une nuit sur 2 ou sur 3), et égalité loups / village (le maire départage, ou les loups gagnent dès l'égalité). Les options ne s'affichent que pour les rôles présents.
@@ -147,21 +153,25 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 │   ├── loup_garou_app.py        # Point d'entrée Streamlit (quelques lignes)
 │   └── loup_garou/
 │       ├── app.py               # main() : page, barre latérale, aiguillage selon la phase
+│       ├── assets/              # Illustrations SVG des rôles, bruitages WAV, favicon, CREDITS.md
 │       ├── config.py            # Chemins (save.json, historique/, musique.mp3)
 │       ├── options.py           # Options avancées et leurs valeurs par défaut
 │       ├── equilibre.py         # Jauges d'équilibre (force, information, chaos) d'une composition
 │       ├── roles.py             # Registre ROLES (données des rôles, sans interface)
 │       ├── moteur/              # Règles du jeu, sans dépendance à l'interface
 │       │   ├── partie.py        #   nouvelle partie, morts, résolution de la nuit, victoire
+│       │   ├── bilan.py         #   bilan de fin de partie (chiffres, distinctions, frise)
 │       │   ├── journal.py       #   journal et instantanés de la chronologie
 │       │   └── persistance.py   #   sauvegarde, archives et lecture de l'historique
 │       └── ui/                  # Interface Streamlit
 │           ├── styles.py        #   CSS et décors SVG
 │           ├── composants.py    #   cartes, bandeaux, dalles de sélection...
 │           ├── nuit_roles.py    #   tour de nuit de chaque rôle (NUIT_ROLES)
+│           ├── regles.py        #   texte des règles (tutoriel et rappel en partie)
 │           ├── barre_laterale.py#   rechargement d'étape, barre ouverte
 │           └── ecrans/          #   accueil, installation, nuit, jour, fin, documentation
 ├── .claude/skills/projet-gevaudan/SKILL.md  # Guide du projet pour Claude Code (architecture, règles, conventions)
+├── outils/                      # Scripts de génération des assets (icônes, sons, favicon)
 ├── docs/
 │   ├── equilibre-roles.md       # Force, information et chaos de chaque rôle (proposition)
 │   ├── banniere.svg             # Bannière de nuit du README
@@ -187,9 +197,19 @@ uv run --python 3.12 --with pytest --with streamlit python -m pytest
 - `tests/test_ui_smoke.py` : joue une partie complète au hasard (graine fixe) avec le banc d'essai `streamlit.testing`, pour repérer une exception d'affichage ou un écran sans issue. Il est ignoré si Streamlit n'est pas installé.
 - La CI (`.gitlab-ci.yml` et `.github/workflows/tests.yml`) lance cette suite sur chaque merge request / pull request.
 
+## Illustrations et sons
+
+Les illustrations viennent de [game-icons.net](https://game-icons.net) (licence CC BY 3.0, auteurs Lorc et Delapouite) : la liste des crédits est dans `src/loup_garou/assets/CREDITS.md` et dans la page Documentation de l'app. Pour changer une icône, modifier `outils/importer_icones.py` puis le relancer :
+
+```bash
+python3 outils/importer_icones.py                                          # icônes des rôles
+uv run --python 3.12 --with numpy python outils/generer_sons.py            # bruitages
+uv run --python 3.12 --with cairosvg python outils/generer_favicon.py      # icône d'onglet
+```
+
 ## Ajouter un rôle
 
-1. Déclarer le rôle dans le registre `ROLES` de `src/loup_garou/roles.py` (dataclass `Role`) : nom, emoji, dégradé de la carte, camp, état de départ, priorité de nuit, description (une ou deux phrases, affichées en infobulle dans l'écran de composition). Pour les jauges d'équilibre, ajouter aussi ses notes dans `src/loup_garou/equilibre.py`.
+1. Déclarer le rôle dans le registre `ROLES` de `src/loup_garou/roles.py` (dataclass `Role`) : nom, emoji, dégradé de la carte, camp, état de départ, priorité de nuit, description (une ou deux phrases, affichées en infobulle dans l'écran de composition), et son illustration (une entrée dans `ICONES` de `outils/importer_icones.py`, puis relancer le script). Pour les jauges d'équilibre, ajouter aussi ses notes dans `src/loup_garou/equilibre.py`.
 2. Écrire sa fonction de tour de nuit dans `src/loup_garou/ui/nuit_roles.py` et l'inscrire dans le dictionnaire `NUIT_ROLES`. Un rôle absent de `NUIT_ROLES` dort comme un villageois. Un rôle qui se joue à plusieurs cartes (Sœurs, Frères) renseigne `lot` : cocher la case en ajoute `lot` cartes.
 
 Les règles (`moteur/`) lisent le registre : elles n'ont pas à changer pour un rôle sans effet particulier sur la victoire ou les morts.

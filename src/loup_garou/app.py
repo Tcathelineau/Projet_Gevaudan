@@ -16,11 +16,17 @@ from loup_garou.ui.ecrans.fin import ecran_fin
 from loup_garou.ui.ecrans.installation import ecran_installation
 from loup_garou.ui.ecrans.jour import ecran_conseil, ecran_election_maire, ecran_reveil, ecran_tir_chasseur
 from loup_garou.ui.ecrans.nuit import ecran_nuit
+from loup_garou.ui.regles import SECTIONS, afficher_regles, afficher_roles_de_la_partie
+from loup_garou.ui.illustrations import ASSETS
+from loup_garou.ui.sons import jouer, son_courant
 from loup_garou.ui.styles import CSS_ACCUEIL, css_cartes, CSS_HISTORIQUE, CSS_PASSAGE, CSS_SCENES
 
 
 def main():
-    st.set_page_config(page_title="Loup-Garou", page_icon="🐺", layout="wide", initial_sidebar_state="expanded")
+    st.set_page_config(
+        page_title="Projet Gévaudan", page_icon=str(ASSETS / "favicon.png"), layout="wide",
+        initial_sidebar_state="expanded",
+    )
     css_cartes()
     st.markdown(CSS_SCENES, unsafe_allow_html=True)
     st.markdown(CSS_PASSAGE, unsafe_allow_html=True)
@@ -46,6 +52,8 @@ def main():
     s = st.session_state.partie
 
     with st.sidebar:
+        # Réservé en premier : sa position ne bouge pas, donc le son en cours n'est pas relancé à chaque clic.
+        zone_son = st.container(key="zone_son")
         secrets = [n for n in vivants(s) if ROLES[s["joueurs"][n]["role"]].camp_secret]
         loups_vivants = sum(
             1 for n in vivants(s) if n not in secrets and camp(s, n) == "loups"
@@ -82,6 +90,10 @@ def main():
             """,
             unsafe_allow_html=True,
         )
+        with st.expander("📖 Rappel des règles"):
+            afficher_regles(SECTIONS[1:3])
+            st.markdown("**🃏 Les rôles de la partie**")
+            afficher_roles_de_la_partie(s)
 
     # Les écrans de phase (ex. le badge "en couple avec" pendant la nuit)
     # peuvent encore ajouter du contenu à la sidebar : on les appelle avant
@@ -100,7 +112,12 @@ def main():
     else:
         ecran_fin(s)
 
+    with zone_son:
+        if st.session_state.get("sons_on", True):
+            jouer(son_courant(s, bool(st.session_state.get(f"resultat_{s['jour']}"))))
+
     with st.sidebar:
+        st.checkbox("🔔 Bruitages", value=True, key="sons_on")
         if os.path.exists(MUSIQUE_FILE):
             if st.checkbox("🎵 Musique de fond", value=True, key="musique_on"):
                 st.audio(MUSIQUE_FILE, format="audio/mp3", loop=True, autoplay=True)

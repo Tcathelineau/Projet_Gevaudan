@@ -10,6 +10,7 @@ from loup_garou.moteur.partie import nouvelle_partie
 from loup_garou.moteur.persistance import clear_save
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import scene_victoire
+from loup_garou.ui.sons import vider_session
 from loup_garou.ui.styles import CSS_BILAN
 
 
@@ -60,7 +61,7 @@ def afficher_bilan(s):
 
 def _quitter():
     clear_save()
-    st.session_state.clear()
+    vider_session()
 
 
 def ecran_fin(s):

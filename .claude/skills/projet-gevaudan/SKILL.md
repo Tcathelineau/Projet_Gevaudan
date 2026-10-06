@@ -25,7 +25,7 @@ uv run --python 3.12 --with streamlit streamlit run src/loup_garou_app.py
 ```
 src/loup_garou_app.py        point d'entrée (importe loup_garou.app.main)
 src/loup_garou/
-  assets/                    roles/<clé>.svg (icônes CC BY 3.0, cf. CREDITS.md), sons/*.wav (synthétisés), favicon.png
+  assets/                    roles/<clé>.svg (icônes CC BY 3.0, cf. CREDITS.md), sons/ (musiques MP3 CC0 FreePD, bruitages WAV synthétisés), favicon.png
   config.py                  SAVE_FILE, HISTORIQUE_DIR, MUSIQUE_FILE (chemins relatifs au dossier courant)
   options.py                 OPTIONS_DEFAUT, opt(), taille_couple(), nuit_active(), prochaine_nuit(), CADENCES
   roles.py                   dataclass Role, registre ROLES, ROLES_SPECIAUX (données seulement)
@@ -33,6 +33,7 @@ src/loup_garou/
     partie.py                nouvelle_partie, vivants, camp, tuer, vainqueur, fin_de_tour,
                              terminer_partie, resoudre_nuit, composition_recommandee
     journal.py               log, prendre_instantane, etapes_chronologie
+    statistiques.py          statistiques(parties archivées) : victoires par camp, par taille de table, fiche par rôle
     bilan.py                 bilan_partie : chiffres clés, distinctions, frise (lit s["morts"])
     persistance.py           save_game/load_game/clear_save, archiver_partie, lister_historique,
                              date_partie, gagnant_partie
@@ -121,12 +122,13 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 - **Ne jamais ajouter au commit** `.DS_Store` ni les fichiers `historique/partie_*.json` laissés par les parties de test de l'utilisateur ; ajouter les fichiers par nom, pas `git add -A`.
 - Réponses à l'utilisateur en **français**, concises ; prose sans tiret cadratin ni flèche.
 - Commits : trailer `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>`.
+- **Son pendant les tests** : le laisser désactivé (c'est le défaut) ; l'utilisateur travaille en open space.
 - Tests : l'utilisateur teste lui-même l'interface dans son navigateur ; ne pas lancer de test navigateur pour chaque PR (coût en tokens). Vérifier par `pyflakes`, import des modules et, pour le moteur, des tests unitaires ; une partie complète peut se jouer sans navigateur avec `streamlit.testing.v1.AppTest` (limites : `st.rerun` après un formulaire laisse l'arbre périmé, `selectbox(index=None)` ne se pilote pas : injecter la valeur dans `session_state`).
 - Pièges déjà rencontrés : `sed -i` se comporte autrement sur macOS (préférer un remplacement Python) ; un script d'édition doit échouer bruyamment si une ancre est introuvable ; `location.reload()` en JS demande un `setTimeout` ; l'aperçu du navigateur peut avoir un viewport 0x0 ; après un test, tuer le serveur (`pkill -f "streamlit run"`) et supprimer le `save.json` généré.
 
 - **Fichiers locaux** : `joueurs.json` (noms de la dernière partie, ignoré par git, préremplis à l'installation).
-- **Assets générés** : ne pas éditer à la main `assets/roles`, `assets/sons`, `assets/favicon.png` ; modifier `outils/importer_icones.py`, `generer_sons.py`, `generer_favicon.py` et les relancer (la licence CC BY 3.0 impose de garder `CREDITS.md` à jour : le script le réécrit). Un nouveau rôle sans icône retombe sur son emoji, mais un test exige une icône par rôle.
-- **Son** : deux lecteurs dans les conteneurs réservés `zone_musique` et `zone_effet` (premiers éléments de la barre latérale, masqués par CSS) pour que leur position ne change pas et que le son en cours ne soit pas relancé à chaque clic. Musique par phase (nuit, jour, conseil), hurlement à la première révélation d'une carte de loup (`cri_loup` sur le joueur), son de victoire ; cases `musique_on`, `sons_on`, `cri_on`.
+- **Assets générés** : ne pas éditer à la main `assets/roles`, `assets/sons`, `assets/favicon.png` ; modifier `outils/importer_icones.py`, `importer_musiques.py`, `generer_sons.py`, `generer_favicon.py` et les relancer (la licence CC BY 3.0 impose de garder `CREDITS.md` à jour : le script le réécrit). Un nouveau rôle sans icône retombe sur son emoji, mais un test exige une icône par rôle.
+- **Son** : deux lecteurs dans les conteneurs réservés `zone_musique` et `zone_effet` (premiers éléments de la barre latérale, masqués par CSS) pour que leur position ne change pas et que le son en cours ne soit pas relancé à chaque clic. Musique par phase (nuit, jour, conseil), hurlement à la première révélation d'une carte de loup (`cri_loup` sur le joueur), son de victoire ; réglages `musique_on`, `sons_on`, `cri_on` **désactivés par défaut** (rien ne doit jouer à l'arrivée sur la page), activés par des cases du menu Option (`cases_a_cocher`, widgets `case_<réglage>` recopiés vers le réglage pour survivre à la fermeture du menu ; `vider_session` garde ces réglages).
 
 ## 7. Chantiers connus
 

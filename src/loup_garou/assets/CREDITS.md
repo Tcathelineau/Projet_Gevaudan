@@ -21,4 +21,18 @@ Les icônes des rôles viennent de [game-icons.net](https://game-icons.net), sou
 - `juge_begue` : « gavel » par Lorc, https://game-icons.net/1x1/lorc/gavel.html
 - `logo` : « wolf-howl » par Lorc, https://game-icons.net/1x1/lorc/wolf-howl.html
 
-Régénérer : `python3 outils/importer_icones.py`. Les sons sont synthétisés par `outils/generer_sons.py` (aucun échantillon tiers).
+## Musiques
+
+Les trois musiques viennent de [FreePD](https://freepd.com), morceaux en domaine public ([CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/), aucune attribution requise ; remerciements à leurs auteurs), récupérés via le miroir GitHub [0lhi/FreePD](https://github.com/0lhi/FreePD) :
+
+- nuit : « Creepy Hallow » (Horror)
+- jour : « Happy Whistling Ukulele » (Upbeat)
+- conseil : « Find Them » (Scoring)
+
+Préparées (mono, volume commun, fondus, MP3) par `outils/importer_musiques.py`.
+
+## Bruitages
+
+Le hurlement et les sons de victoire sont synthétisés par `outils/generer_sons.py` (aucun échantillon tiers).
+
+Régénérer les icônes : `python3 outils/importer_icones.py`.

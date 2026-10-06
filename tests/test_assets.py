@@ -23,6 +23,7 @@ def test_les_credits_citent_chaque_illustration():
     for cle in ROLES:
         assert f"`{cle}`" in credits
     assert "Creative Commons Attribution 3.0" in credits
+    assert "FreePD" in credits and "Creepy Hallow" in credits
 
 
 @pytest.mark.parametrize("nom", ["hurlement", "victoire_village", "victoire_loups"])
@@ -34,7 +35,7 @@ def test_les_bruitages_sont_des_wav_mono_16_bits(nom):
 
 @pytest.mark.parametrize("nom", ["musique_nuit", "musique_jour", "musique_conseil"])
 def test_les_musiques_durent_plus_d_une_minute(nom):
-    # MP3 mono à 64 kbit/s : 8 ko par seconde, donc plus de 60 s dépasse 480 ko.
+    # MP3 mono à 64 kbit/s : 8 ko par seconde, donc plus de 60 s dépasse 480 ko (les pistes durent 2 minutes ou plus).
     assert (ASSETS / "sons" / f"{nom}.mp3").stat().st_size > 480_000
 
 

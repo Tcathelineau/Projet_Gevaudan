@@ -75,7 +75,9 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 - **Bilan de fin de partie** : chiffres clés (nuits, morts, loups démasqués, innocents condamnés...), distinctions (première victime, erreur judiciaire, loup le plus discret...), frise des disparitions, puis « Rejouer avec les mêmes joueurs » ou retour au menu.
 - **Noms mémorisés** : les noms de la dernière partie sont préremplis (fichier `joueurs.json`, ignoré par git).
 - **Cartes de rôle illustrées** : chaque rôle a son illustration vectorielle (icônes game-icons.net, voir les crédits), sur la carte de nuit, les bulles de la composition et la page Documentation.
-- **Musiques et bruitages** : trois musiques d'environ 96 s (nuit inquiétante, jour joyeux, conseil tendu), un hurlement quand un loup découvre sa carte, et un son de victoire (joie pour le village, hurlements pour les loups). Tout est synthétisé par un script (aucun échantillon tiers) ; des cases du volet « 🔊 Son » de la barre latérale coupent la musique, les bruitages ou le hurlement (qui trahit le camp du joueur à ceux qui l'entendent). Un fichier `musique.mp3` posé à la racine remplace les musiques. Le navigateur ne démarre un son qu'après un premier clic dans la page.
+- **Musiques et bruitages** : trois musiques libres de droits (CC0, FreePD) de plus de deux minutes (nuit inquiétante « Creepy Hallow », jour joyeux « Happy Whistling Ukulele », conseil tendu « Find Them »), un hurlement quand un loup découvre sa carte, et un son de victoire (joie pour le village, hurlements pour les loups), ces deux derniers synthétisés par un script ; **le son est désactivé par défaut** : trois cases du menu Option de la barre latérale (musique, bruitages, hurlement) l'activent, et le hurlement trahit le camp du joueur à ceux qui l'entendent. Un fichier `musique.mp3` posé à la racine remplace les musiques. Le navigateur ne démarre un son qu'après un premier clic dans la page.
+- **Retournement de carte** : à la révélation, le dos de la carte se retourne pour montrer le rôle (désactivé si le système demande de réduire les animations).
+- **Statistiques** : l'écran Historique a un onglet « Statistiques » : victoires par camp, victoire du village selon la taille de la table, taux de victoire et de survie de chaque rôle, calculés sur les parties archivées.
 - **Identité** : logo (loup hurlant) sur l'accueil, icône d'onglet, dos de carte au loup.
 - **Composition personnalisable** : nombre de joueurs et répartition des rôles, réglables avant chaque partie. Les rôles à cocher sont rangés en quatre catégories (Information, Protection et pouvoirs de mort, Chaos, Loups spéciaux), avec le nombre de rôles cochés par catégorie.
 - **Jauges d'équilibre** : l'écran de composition affiche, à côté de la composition, la chance de victoire du village en % (curseur loups / village), un niveau d'information et un niveau de chaos, recalculés à chaque changement de rôle ou d'option. Les coefficients sont mesurés par simulation de parties automatiques (méthode, résultats et limites dans `docs/equilibre-roles.md`).
@@ -161,6 +163,7 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 │       ├── moteur/              # Règles du jeu, sans dépendance à l'interface
 │       │   ├── partie.py        #   nouvelle partie, morts, résolution de la nuit, victoire
 │       │   ├── bilan.py         #   bilan de fin de partie (chiffres, distinctions, frise)
+│       │   ├── statistiques.py  #   statistiques sur les parties archivées
 │       │   ├── journal.py       #   journal et instantanés de la chronologie
 │       │   └── persistance.py   #   sauvegarde, archives et lecture de l'historique
 │       └── ui/                  # Interface Streamlit
@@ -203,7 +206,8 @@ Les illustrations viennent de [game-icons.net](https://game-icons.net) (licence 
 
 ```bash
 python3 outils/importer_icones.py                                          # icônes des rôles
-uv run --python 3.12 --with numpy --with lameenc python outils/generer_sons.py   # musiques et bruitages
+uv run --python 3.12 --with numpy --with lameenc python outils/importer_musiques.py   # musiques (CC0)
+uv run --python 3.12 --with numpy python outils/generer_sons.py            # bruitages
 uv run --python 3.12 --with numpy python outils/simuler_equilibre.py       # mesures d'équilibre (3 min)
 uv run --python 3.12 --with cairosvg python outils/generer_favicon.py      # icône d'onglet
 ```

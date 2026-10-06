@@ -1,4 +1,4 @@
-"""Musiques et bruitages synthétisés (assets/sons, cf. outils/generer_sons.py).
+"""Musiques (CC0, outils/importer_musiques.py) et bruitages synthétisés (outils/generer_sons.py) de assets/sons.
 
 Deux lecteurs invisibles, créés à position fixe dans la barre latérale : la musique de la phase en cours
 et un bruitage ponctuel. Streamlit ne remonte un lecteur (donc ne relance le son) que si son contenu change,
@@ -59,3 +59,32 @@ def jouer_musique(nom):
 def jouer_effet(nom):
     if nom:
         st.audio(_octets(f"{nom}.wav"), format="audio/wav", autoplay=True)
+
+
+# Réglages du son : désactivé par défaut (rien ne doit jouer à l'arrivée sur la page), activé depuis le menu Option.
+REGLAGES = {
+    "musique_on": "🎵 Musique",
+    "sons_on": "🔔 Bruitages (victoire)",
+    "cri_on": "🐺 Hurlement d'un loup à la révélation de sa carte",
+}
+
+
+def actif(cle):
+    return bool(st.session_state.get(cle, False))
+
+
+def _memoriser(cle):
+    st.session_state[cle] = st.session_state[f"case_{cle}"]
+
+
+def cases_a_cocher():
+    """Les cases du menu Option. Le réglage vit sous sa propre clé : une case non affichée (menu fermé) perdrait le sien."""
+    for cle, libelle in REGLAGES.items():
+        st.checkbox(libelle, value=actif(cle), key=f"case_{cle}", on_change=_memoriser, args=(cle,))
+
+
+def vider_session():
+    """Efface la partie de la session en gardant les réglages du son."""
+    reglages = {cle: st.session_state[cle] for cle in REGLAGES if cle in st.session_state}
+    st.session_state.clear()
+    st.session_state.update(reglages)

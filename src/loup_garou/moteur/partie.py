@@ -40,6 +40,8 @@ def nouvelle_partie(noms, composition, options=None):
         "tirs_en_attente": [],
         "retour_tir": None,
         "journal": [],
+        "morts": [],
+        "composition": {cle: n for cle, n in composition.items() if n > 0},
         "maire": None,
         "dernier_maire": None,
     }
@@ -91,8 +93,10 @@ def _convertir_enfant_sauvage(s, morts):
             s["loups"].append(n)
 
 
-def tuer(s, nom, cause="meurt"):
-    """Tue un joueur et entraîne son amoureux dans la mort. Renvoie la liste des morts."""
+def tuer(s, nom, cause="meurt", genre="autre"):
+    """Tue un joueur et entraîne son amoureux dans la mort. Renvoie la liste des morts.
+
+    `genre` classe la mort pour le bilan : loups, loup_blanc, poison, village, tir, autre."""
     if nom not in s["joueurs"] or not s["joueurs"][nom]["vivant"]:
         return []
     s["joueurs"][nom]["vivant"] = False
@@ -108,6 +112,11 @@ def tuer(s, nom, cause="meurt"):
     for i, mort in enumerate(morts):
         raison = cause if i == 0 else "meurt de chagrin (amoureux)"
         log(s, f"{mort} ({ROLES[s['joueurs'][mort]['role']].nom}) {raison}.")
+        s.setdefault("morts", []).append({
+            "nom": mort, "role": s["joueurs"][mort]["role"], "camp": camp(s, mort),
+            "genre": genre if i == 0 else "chagrin", "jour": s["jour"],
+            "moment": "nuit" if s["phase"] == "nuit" else "jour",
+        })
     _convertir_enfant_sauvage(s, morts)
     for mort in morts:
         if ROLES[s["joueurs"][mort]["role"]].tir_a_la_mort:
@@ -219,13 +228,13 @@ def resoudre_nuit(s):
             if sauveurs:
                 log(s, f"{victime} était la cible des loups mais est sauvé par {' et '.join(sauveurs)}.")
             else:
-                morts += tuer(s, victime, "est dévoré par les loups")
+                morts += tuer(s, victime, "est dévoré par les loups", "loups")
         # Le festin du Loup Blanc échappe à la sorcière et au salvateur.
         if s.get("cible_loup_blanc"):
-            morts += tuer(s, s["cible_loup_blanc"], "est dévoré par le Loup Blanc")
+            morts += tuer(s, s["cible_loup_blanc"], "est dévoré par le Loup Blanc", "loup_blanc")
         # Le poison échappe à la potion de soin et au salvateur.
         if s.get("cible_poison"):
-            morts += tuer(s, s["cible_poison"], "est empoisonné par la sorcière")
+            morts += tuer(s, s["cible_poison"], "est empoisonné par la sorcière", "poison")
         if not morts:
             log(s, "Personne ne meurt cette nuit.")
 

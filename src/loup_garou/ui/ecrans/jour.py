@@ -160,7 +160,7 @@ def _saisie_vote(s, rang):
         "valider_vote" if rang == 1 else "valider_vote2", disabled=condamne is None,
     ):
         st.session_state.pop(f"sel_vote_{cle_sel}", None)
-        st.session_state[cle_resultat] = tuer(s, condamne, "est éliminé par le village")
+        st.session_state[cle_resultat] = tuer(s, condamne, "est éliminé par le village", "village")
         enregistrer_condamne(s, condamne)
         st.rerun()
 
@@ -235,7 +235,7 @@ def ecran_tir_chasseur(s):
     if tirer or renoncer:
         s["tirs_en_attente"].pop(0)
         if tirer:
-            s["morts_tir"] += tuer(s, choix, f"est abattu par le chasseur {chasseur}")
+            s["morts_tir"] += tuer(s, choix, f"est abattu par le chasseur {chasseur}", "tir")
         else:
             log(s, f"Le chasseur {chasseur} renonce à tirer.")
         st.session_state.pop(cle_cible, None)

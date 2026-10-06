@@ -3,7 +3,8 @@ import os
 
 from loup_garou.config import HISTORIQUE_DIR, SAVE_FILE
 from loup_garou.moteur.persistance import (
-    archiver_partie, clear_save, date_partie, gagnant_partie, load_game, lister_historique, save_game,
+    archiver_partie, clear_save, date_partie, gagnant_partie, load_game, load_joueurs, lister_historique, save_game,
+    save_joueurs,
 )
 
 
@@ -69,3 +70,15 @@ def test_gagnant_partie():
     assert gagnant_partie("Les amoureux l'emportent : ils sont les deux derniers survivants.")[0] == "couple"
     assert gagnant_partie("Zoé (Loup Blanc) l'emporte seul.")[0] == "loupblanc"
     assert gagnant_partie("Partie abandonnée")[0] == "autre"
+
+
+def test_noms_des_joueurs_aller_retour():
+    assert load_joueurs() == []
+    save_joueurs(["Élodie", "Bob"])
+    assert load_joueurs() == ["Élodie", "Bob"]
+
+
+def test_fichier_de_noms_illisible_est_ignore():
+    with open("joueurs.json", "w", encoding="utf-8") as f:
+        f.write("pas du json")
+    assert load_joueurs() == []

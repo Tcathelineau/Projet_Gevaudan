@@ -70,7 +70,10 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 ## ✨ Fonctionnalités
 
 - **Menu d'accueil** : un village qui défile (jour, nuit, loups, victoire) avec deux boutons, « Nouvelle partie » et « Historique ». L'écran Historique affiche chaque partie archivée sous forme de carte (date, joueurs, rôles, camp vainqueur, bordure colorée selon le vainqueur) avec le journal détaillé en cases nuit/jour.
-- **Documentation** : depuis le menu d'accueil, une dalle par rôle avec son résumé et ses notes d'équilibre (force loups / village, information, chaos).
+- **Documentation** : depuis le menu d'accueil, un onglet « Comment jouer » (principe, déroulement, victoire, maire, passage de l'appareil) et un onglet « Les rôles » avec une dalle par rôle (résumé, force loups / village, information, chaos).
+- **Rappel des règles en partie** : un volet de la barre latérale rappelle le déroulement, les conditions de victoire et les rôles du paquet.
+- **Bilan de fin de partie** : chiffres clés (nuits, morts, loups démasqués, innocents condamnés...), distinctions (première victime, erreur judiciaire, loup le plus discret...), frise des disparitions, puis « Rejouer avec les mêmes joueurs » ou retour au menu.
+- **Noms mémorisés** : les noms de la dernière partie sont préremplis (fichier `joueurs.json`, ignoré par git).
 - **Composition personnalisable** : nombre de joueurs et répartition des rôles, réglables avant chaque partie.
 - **Jauges d'équilibre** : l'écran de composition affiche un rapport de force loups / village, un niveau d'information et un niveau de chaos, recalculés à chaque changement de rôle ou d'option (indicateur approximatif, voir `docs/equilibre-roles.md`).
 - **Options avancées** (menu de composition, « ⚙️ Options avancées ») : potions de soin (1 à 5) et de mort (0 à 5) de la sorcière, couple tiré au sort sans Cupidon (Cupidon est alors remplacé par un villageois), mode fun « trouple » (l'amour lie trois joueurs au lieu de deux), fréquence des visions de la voyante et des festins du Loup Blanc (chaque nuit, une nuit sur 2 ou sur 3), et égalité loups / village (le maire départage, ou les loups gagnent dès l'égalité). Les options ne s'affichent que pour les rôles présents.
@@ -153,12 +156,14 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 │       ├── roles.py             # Registre ROLES (données des rôles, sans interface)
 │       ├── moteur/              # Règles du jeu, sans dépendance à l'interface
 │       │   ├── partie.py        #   nouvelle partie, morts, résolution de la nuit, victoire
+│       │   ├── bilan.py         #   bilan de fin de partie (chiffres, distinctions, frise)
 │       │   ├── journal.py       #   journal et instantanés de la chronologie
 │       │   └── persistance.py   #   sauvegarde, archives et lecture de l'historique
 │       └── ui/                  # Interface Streamlit
 │           ├── styles.py        #   CSS et décors SVG
 │           ├── composants.py    #   cartes, bandeaux, dalles de sélection...
 │           ├── nuit_roles.py    #   tour de nuit de chaque rôle (NUIT_ROLES)
+│           ├── regles.py        #   texte des règles (tutoriel et rappel en partie)
 │           ├── barre_laterale.py#   rechargement d'étape, barre ouverte
 │           └── ecrans/          #   accueil, installation, nuit, jour, fin, documentation
 ├── .claude/skills/projet-gevaudan/SKILL.md  # Guide du projet pour Claude Code (architecture, règles, conventions)

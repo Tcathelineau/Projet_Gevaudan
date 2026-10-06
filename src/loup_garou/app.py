@@ -16,6 +16,7 @@ from loup_garou.ui.ecrans.fin import ecran_fin
 from loup_garou.ui.ecrans.installation import ecran_installation
 from loup_garou.ui.ecrans.jour import ecran_conseil, ecran_election_maire, ecran_reveil, ecran_tir_chasseur
 from loup_garou.ui.ecrans.nuit import ecran_nuit
+from loup_garou.ui.regles import SECTIONS, afficher_regles, afficher_roles_de_la_partie
 from loup_garou.ui.styles import CSS_ACCUEIL, css_cartes, CSS_HISTORIQUE, CSS_PASSAGE, CSS_SCENES
 
 
@@ -82,6 +83,10 @@ def main():
             """,
             unsafe_allow_html=True,
         )
+        with st.expander("📖 Rappel des règles"):
+            afficher_regles(SECTIONS[1:3])
+            st.markdown("**🃏 Les rôles de la partie**")
+            afficher_roles_de_la_partie(s)
 
     # Les écrans de phase (ex. le badge "en couple avec" pendant la nuit)
     # peuvent encore ajouter du contenu à la sidebar : on les appelle avant

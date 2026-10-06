@@ -1097,6 +1097,25 @@ CSS_DOCUMENTATION = """
 """
 
 
+CSS_BILAN = """
+<style>
+.bil-tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: .6rem; margin: .6rem 0 1rem; }
+.bil-tuile {
+    display: flex; flex-direction: column; align-items: center; gap: .1rem; padding: .7rem .4rem; text-align: center;
+    border-radius: 12px; border: 1.5px solid rgba(201,164,76,.55); background: rgba(20,16,10,.4);
+    font-family: 'EB Garamond', serif; color: #ece3d2;
+}
+.bil-tuile .bil-emoji { font-size: 1.5rem; }
+.bil-tuile b { font-family: 'Cinzel', serif; font-size: 1.7rem; color: #f0d890; line-height: 1.1; }
+.bil-tuile span:last-child { font-size: .85rem; opacity: .85; }
+.bil-dist { display: flex; gap: .8rem; align-items: center; padding: .55rem .9rem; margin-bottom: .45rem; border-radius: 10px;
+    border-left: 4px solid #c9a44c; background: rgba(201,164,76,.08); font-family: 'EB Garamond', serif; color: #ece3d2; }
+.bil-dist-emoji { font-size: 1.6rem; }
+.bil-dist-titre { font-family: 'Cinzel', serif; font-weight: 600; color: #f0d890; font-size: .95rem; }
+</style>
+"""
+
+
 def css_infobulles():
     """Infobulle au survol de chaque rôle de l'écran de composition (conteneurs `info_<rôle>`)."""
     regles = "".join(

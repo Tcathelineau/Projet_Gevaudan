@@ -5,8 +5,12 @@ import json
 
 import streamlit as st
 
+from loup_garou.moteur.bilan import CAUSES, bilan_partie
+from loup_garou.moteur.partie import nouvelle_partie
+from loup_garou.moteur.persistance import clear_save
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import scene_victoire
+from loup_garou.ui.styles import CSS_BILAN
 
 
 def afficher_roles(joueurs):
@@ -21,7 +25,46 @@ def afficher_roles(joueurs):
         st.write(f"{ROLES[d['role']].emoji} **{nom}** — {ROLES[d['role']].nom}{ancien} ({etat}){coeur}")
 
 
+def afficher_bilan(s):
+    """Chiffres clés, distinctions et frise des disparitions."""
+    bilan = bilan_partie(s)
+    tuiles = "".join(
+        f'<div class="bil-tuile"><span class="bil-emoji">{emoji}</span><b>{valeur}</b><span>{libelle}</span></div>'
+        for emoji, libelle, valeur in bilan["chiffres"]
+    )
+    st.markdown(f'<div class="bil-tuiles">{tuiles}</div>', unsafe_allow_html=True)
+
+    if bilan["distinctions"]:
+        st.subheader("Les distinctions")
+        st.markdown("".join(
+            f'<div class="bil-dist"><span class="bil-dist-emoji">{emoji}</span><div>'
+            f'<div class="bil-dist-titre">{html.escape(titre)}</div><div>{html.escape(texte)}</div></div></div>'
+            for emoji, titre, texte in bilan["distinctions"]
+        ), unsafe_allow_html=True)
+
+    if bilan["frise"]:
+        st.subheader("Les disparitions")
+        for titre, morts in bilan["frise"]:
+            classe = "jrn-nuit" if titre.startswith("🌙") else "jrn-jour"
+            lignes = "".join(
+                f'<div class="jrn-ligne"><span>{CAUSES[m["genre"]][0]}</span><span>'
+                f'<b>{html.escape(m["nom"])}</b> ({ROLES[m["role"]].emoji} {ROLES[m["role"]].nom}), '
+                f'{CAUSES[m["genre"]][1]}</span></div>'
+                for m in morts
+            )
+            st.markdown(
+                f'<div class="jrn-bloc {classe}"><div class="jrn-tete">{titre}</div>{lignes}</div>',
+                unsafe_allow_html=True,
+            )
+
+
+def _quitter():
+    clear_save()
+    st.session_state.clear()
+
+
 def ecran_fin(s):
+    st.markdown(CSS_BILAN, unsafe_allow_html=True)
     message = s["message_fin"]
     if message.startswith("Le village a gagné"):
         scene_victoire("village", "Le village a gagné !", "Fin de la partie")
@@ -30,6 +73,7 @@ def ecran_fin(s):
     else:
         st.title("🏁 Fin de la partie")
     st.header(message)
+    afficher_bilan(s)
     st.subheader("Les rôles")
     afficher_roles(s["joueurs"])
 
@@ -46,6 +90,19 @@ def ecran_fin(s):
     )
     if s.get("archive"):
         st.caption(f"Archive enregistrée dans {s['archive']}")
+
+    col_rejouer, col_menu = st.columns(2)
+    if col_rejouer.button(
+        "🔁 Rejouer avec les mêmes joueurs", type="primary", key="fin_rejouer",
+        disabled="composition" not in s, use_container_width=True,
+    ):
+        nouvelle = nouvelle_partie(list(s["joueurs"]), s["composition"], s.get("options"))
+        _quitter()
+        st.session_state.partie = nouvelle
+        st.rerun()
+    if col_menu.button("🏠 Retour au menu", key="fin_menu", use_container_width=True):
+        _quitter()
+        st.rerun()
 
 
 # Premier motif trouvé dans le texte gagne : les morts passent avant les rôles.

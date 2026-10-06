@@ -5,7 +5,7 @@ import json
 import os
 from datetime import datetime
 
-from loup_garou.config import HISTORIQUE_DIR, SAVE_FILE
+from loup_garou.config import HISTORIQUE_DIR, JOUEURS_FILE, SAVE_FILE
 
 
 def save_game(s):
@@ -23,6 +23,23 @@ def load_game():
 def clear_save():
     if os.path.exists(SAVE_FILE):
         os.remove(SAVE_FILE)
+
+
+def save_joueurs(noms):
+    """Retient les noms de la dernière partie pour les proposer à la suivante."""
+    with open(JOUEURS_FILE, "w", encoding="utf-8") as f:
+        json.dump(list(noms), f, ensure_ascii=False)
+
+
+def load_joueurs():
+    if os.path.exists(JOUEURS_FILE):
+        try:
+            with open(JOUEURS_FILE, "r", encoding="utf-8") as f:
+                noms = json.load(f)
+        except (OSError, ValueError):
+            return []
+        return [n for n in noms if isinstance(n, str)]
+    return []
 
 
 def archiver_partie(s, issue):

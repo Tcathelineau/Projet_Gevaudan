@@ -202,3 +202,74 @@ def test_sans_juge_un_seul_vote():
     roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois", "E": "villageois"}
     at = _voter(_app(_conseil(roles)), "B", 1)
     assert any(b.label == "La nuit tombe" for b in at.button)
+
+
+def _fin(roles, message="Le village a gagné : tous les loups sont morts."):
+    from loup_garou.moteur.partie import terminer_partie, tuer
+
+    s = _conseil(roles)
+    s["phase"] = "conseil"
+    tuer(s, "A", "est éliminé par le village", "village")
+    terminer_partie(s, message)
+    return s
+
+
+def test_le_bilan_de_fin_s_affiche():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    at = _app(_fin(roles))
+    assert not at.exception
+    texte = " ".join(m.value for m in at.markdown)
+    assert "bil-tuile" in texte and "Loups démasqués" in texte and "Bon flair" in texte
+    assert "Les disparitions" in " ".join(h.value for h in at.subheader)
+
+
+def test_rejouer_relance_une_partie_avec_les_memes_joueurs():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    at = _app(_fin(roles))
+    at.button(key="fin_rejouer").click().run()
+    s = at.session_state["partie"]
+    assert not at.exception and s["phase"] == "nuit" and s["jour"] == 0
+    assert sorted(s["joueurs"]) == ["A", "B", "C", "D"]
+    assert sorted(d["role"] for d in s["joueurs"].values()) == ["loup", "villageois", "villageois", "villageois"]
+
+
+def test_retour_au_menu_apres_la_partie():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    at = _app(_fin(roles))
+    at.button(key="fin_menu").click().run()
+    assert "partie" not in at.session_state
+    assert any(b.key == "accueil_btn_nouvelle" for b in at.button)
+
+
+def test_documentation_a_un_onglet_regles_et_un_onglet_roles():
+    at = _app()
+    at.button(key="accueil_btn_documentation").click().run()
+    assert [t.label for t in at.tabs] == ["📖 Comment jouer", "🃏 Les rôles"]
+    assert "Comment gagner" in " ".join(m.value for m in at.markdown)
+
+
+def test_rappel_des_regles_dans_la_barre_laterale():
+    roles = {"A": "loup", "B": "villageois", "C": "voyante", "D": "villageois"}
+    at = _app(_conseil(roles))
+    assert any(e.label == "📖 Rappel des règles" for e in at.sidebar.expander)
+    assert "Voyante" in " ".join(m.value for m in at.sidebar.markdown)
+
+
+def test_les_noms_de_la_derniere_partie_sont_preremplis():
+    from loup_garou.moteur.persistance import save_joueurs
+
+    save_joueurs(["Alice", "Bob", "Chloé"])
+    at = _app()
+    at.button(key="accueil_btn_nouvelle").click().run()
+    [b for b in at.button if b.label.startswith("Suivant")][0].click().run()
+    valeurs = [at.text_input(key=f"nom_{i}").value for i in range(len(at.text_input))]
+    assert valeurs[:3] == ["Alice", "Bob", "Chloé"] and set(valeurs[3:]) == {""}
+
+
+def test_distribuer_retient_les_noms():
+    from loup_garou.moteur.persistance import load_joueurs
+
+    _creer_partie(nb_joueurs=7, nb_loups=1, sans=tuple(f"n_{r}" for r in (
+        "sorciere", "voyante", "cupidon", "chasseur", "salvateur", "enfant_sauvage", "voleur", "renard",
+        "loup_blanc", "chien_loup", "louveteau", "soeur", "frere", "servante", "juge_begue")))
+    assert sorted(load_joueurs()) == [f"J{i}" for i in range(1, 8)]

@@ -10,6 +10,7 @@ from loup_garou.moteur.persistance import date_partie, gagnant_partie, lister_hi
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import scene_ciel, silhouettes_vent
 from loup_garou.ui.illustrations import svg_role
+from loup_garou.ui.ecrans.statistiques import afficher_statistiques
 from loup_garou.ui.ecrans.fin import afficher_historique, afficher_roles
 from loup_garou.ui.styles import CSS_SANS_SIDEBAR
 
@@ -83,6 +84,14 @@ def ecran_historique():
     scene_ciel("nuit", "Historique des parties", "Les parties terminées, de la plus récente à la plus ancienne")
 
     parties = lister_historique()
+    onglet_parties, onglet_stats = st.tabs(["📜 Parties", "📊 Statistiques"])
+    with onglet_stats:
+        afficher_statistiques(parties)
+    with onglet_parties:
+        _liste_parties(parties)
+
+
+def _liste_parties(parties):
     if not parties:
         st.info("Aucune partie terminée pour l'instant. Les parties abandonnées ne sont pas conservées.")
         return

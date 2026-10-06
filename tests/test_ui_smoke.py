@@ -304,3 +304,30 @@ def test_les_roles_a_cocher_sont_ranges_par_categorie():
         assert titre in texte
     assert texte.index("Information") < texte.index("Protection et pouvoirs") < texte.index("Loups spéciaux")
     assert "cat-titre" in texte
+
+
+def test_la_page_statistiques_lit_les_parties_archivees():
+    import json
+    import os
+
+    os.makedirs("historique")
+    for i, issue in enumerate(("Le village a gagné : x", "Les loups ont gagné : y")):
+        with open(f"historique/partie_2026010{i}_000000.json", "w", encoding="utf-8") as f:
+            json.dump({"date": "2026-01-01T00:00:00", "issue": issue, "journal": [], "joueurs": {
+                "A": {"role": "loup", "vivant": i == 1, "amoureux": False},
+                "B": {"role": "voyante", "vivant": i == 0, "amoureux": False},
+            }}, f)
+    at = _app()
+    at.session_state["ecran"] = "historique"
+    at.run()
+    assert not at.exception
+    assert [t.label for t in at.tabs] == ["📜 Parties", "📊 Statistiques"]
+    texte = " ".join(m.value for m in at.markdown)
+    assert "Voyante" in texte and "bil-tuile" in texte and "5 à 8 joueurs" in texte
+
+
+def test_la_page_statistiques_sans_partie():
+    at = _app()
+    at.session_state["ecran"] = "historique"
+    at.run()
+    assert not at.exception

@@ -94,6 +94,18 @@ def css_cartes():
             border-top: 1px solid rgba(201,164,76,.5);
             width: 80%;
         }
+        .carte-scene { width: min(230px, 60vw); aspect-ratio: 5 / 7; margin: 0.8rem auto 1rem auto; perspective: 900px; }
+        .carte-retournee { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; animation: retourne 1.1s cubic-bezier(.3,.7,.3,1) both; }
+        .carte-retournee .carte, .carte-retournee .carte-dos {
+            position: absolute; inset: 0; width: 100%; margin: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+        }
+        .carte-retournee .carte-dos { transform: rotateY(180deg); }
+        @keyframes retourne {
+            0% { transform: rotateY(180deg) scale(.92); }
+            70% { transform: rotateY(-8deg) scale(1.03); }
+            100% { transform: rotateY(0deg) scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) { .carte-retournee { animation: none; } }
         .carte-dos {
             width: min(230px, 60vw);
             aspect-ratio: 5 / 7;
@@ -1129,6 +1141,11 @@ CSS_BILAN = """
 .bil-dist { display: flex; gap: .8rem; align-items: center; padding: .55rem .9rem; margin-bottom: .45rem; border-radius: 10px;
     border-left: 4px solid #c9a44c; background: rgba(201,164,76,.08); font-family: 'EB Garamond', serif; color: #ece3d2; }
 .bil-dist-emoji { font-size: 1.6rem; }
+.stat-ligne { display: grid; grid-template-columns: 11rem 1fr 3rem; gap: .2rem .7rem; align-items: center; margin: .35rem 0;
+    font-family: 'EB Garamond', serif; color: #ece3d2; }
+.stat-ligne .stat-val { text-align: right; color: #f0d890; font-weight: 600; }
+.stat-ligne .stat-detail { grid-column: 2 / 4; font-size: .78rem; opacity: .65; margin-top: -.15rem; }
+.stat-faible { opacity: .55; }
 .bil-dist-titre { font-family: 'Cinzel', serif; font-weight: 600; color: #f0d890; font-size: .95rem; }
 </style>
 """

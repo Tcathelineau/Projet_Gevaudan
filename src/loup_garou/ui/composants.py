@@ -12,15 +12,19 @@ from loup_garou.ui.illustrations import svg_role
 
 
 def carte_role(nom, role):
+    """Carte du rôle, retournée à son apparition : le dos (loup) se retourne pour révéler la face."""
     r = ROLES[role]
     st.markdown(
         f"""
-        <div class="carte" style="background: {r.degrade};">
-            <span class="coin-bd"></span><span class="coin-bg"></span>
-            <div class="carte-titre">{r.nom}</div>
-            <div class="carte-medaillon">{svg_role(role, "carte-art", r.emoji)}</div>
-            <div class="carte-nom">{nom}</div>
-        </div>
+        <div class="carte-scene"><div class="carte-retournee">
+            <div class="carte-dos">{svg_role("loup", "dos-art", "🐺")}</div>
+            <div class="carte" style="background: {r.degrade};">
+                <span class="coin-bd"></span><span class="coin-bg"></span>
+                <div class="carte-titre">{r.nom}</div>
+                <div class="carte-medaillon">{svg_role(role, "carte-art", r.emoji)}</div>
+                <div class="carte-nom">{nom}</div>
+            </div>
+        </div></div>
         """,
         unsafe_allow_html=True,
     )

@@ -1,86 +1,73 @@
-"""Jauges d'équilibre d'une composition : force, information et chaos (voir docs/equilibre-roles.md).
+"""Jauges d'équilibre d'une composition : chance de victoire du village, information et chaos.
 
-Valeurs proposées, à ajuster après quelques parties. Pas de dépendance à Streamlit.
+Les coefficients viennent de `assets/equilibre.json`, produit par `outils/simuler_equilibre.py` (des milliers de
+parties jouées par des joueurs automatiques avec le vrai moteur ; méthode et limites dans docs/equilibre-roles.md).
+Pas de dépendance à Streamlit.
 """
 
+import json
+import math
 from collections import namedtuple
+from pathlib import Path
 
 from loup_garou.options import OPTIONS_DEFAUT
 
-Notes = namedtuple("Notes", "force info chaos")
-Bilan = namedtuple("Bilan", "force info chaos joueurs")
+Bilan = namedtuple("Bilan", "chance info chaos joueurs")
 
-# force : positif = avantage village, négatif = avantage loups ; info et chaos : 0 à 5.
-NOTES = {
-    "loup": Notes(-6, 1, 0),
-    "villageois": Notes(1, 0, 0),
-    "voyante": Notes(7, 5, 0),  # une vision par nuit ; la cadence choisie l'ajuste (ci-dessous)
-    "sorciere": Notes(3, 1, 2),
-    "cupidon": Notes(-3, 0, 4),
-    "chasseur": Notes(3, 0, 1),
-    "salvateur": Notes(3, 0, 1),
-    "renard": Notes(3, 3, 0),
-    "enfant_sauvage": Notes(-1, 0, 3),
-    "voleur": Notes(-2, 0, 4),
-    "loup_blanc": Notes(-5, 1, 4),
-    "chien_loup": Notes(0, 0, 2),
-    "louveteau": Notes(-8, 1, 2),
-    "soeur": Notes(2, 2, 0),  # par carte : les deux sœurs pèsent donc +4
-    "frere": Notes(2, 2, 0),  # par carte : les trois frères pèsent donc +6
-    "servante": Notes(2, 0, 3),
-    "juge_begue": Notes(2, 0, 3),
-}
+DONNEES = json.loads((Path(__file__).resolve().parent / "assets" / "equilibre.json").read_text(encoding="utf-8"))
+MODELE = DONNEES["modele"]
+# clé de rôle -> {impact_pts, info, chaos, marge_pts} ; le villageois est la référence (tout à zéro)
+ROLES_NOTES = {"villageois": {"impact_pts": 0.0, "info": 0, "chaos": 0, "marge_pts": 0.0}, **DONNEES["roles"]}
+EFFETS_OPTIONS = DONNEES["options"]
 
-FORCE_VOYANTE = {1: 7, 2: 5, 3: 4}
-FORCE_LOUP_BLANC = {1: -6, 2: -5, 3: -4}
-
-# Demi-largeur de la jauge d'équilibre : 2 points de force par joueur (au moins 10), pour qu'un
-# rôle pèse moins sur le curseur à une grande table qu'à une petite.
-FORCE_PAR_JOUEUR = 2
-DEMI_LARGEUR_MIN = 10
-# Seuils des jauges d'information et de chaos, rapportées à la table.
-SEUILS_INFO = (0.4, 0.9)    # information par joueur : faible / moyenne / forte
-SEUILS_CHAOS = (0.3, 0.8)  # chaos par joueur : calme / mouvementée / imprévisible
+# Niveaux des jauges d'information et de chaos : valeur moyenne par joueur (échelle 0-100 par carte).
+SEUILS_INFO = (4, 8)
+SEUILS_CHAOS = (7, 13)
+# Valeur par joueur qui remplit entièrement la barre.
+MAX_INFO = 14
+MAX_CHAOS = 24
 
 
 def _option(options, cle):
     return (options or {}).get(cle, OPTIONS_DEFAUT[cle])
 
 
-def bilan(composition, nb_joueurs, options=None):
-    """Somme des notes de la composition (`{rôle: nombre}`, villageois compris), options incluses."""
-    force = info = chaos = 0
-    for cle, n in composition.items():
-        notes = NOTES[cle]
-        force += notes.force * n
-        info += notes.info * n
-        chaos += notes.chaos * n
-
+def _ajustement_options(composition, options):
+    """Somme des effets (en log-cotes) des options sur la victoire du village."""
+    total = 0.0
     if composition.get("voyante"):
-        force += composition["voyante"] * (FORCE_VOYANTE[_option(options, "cadence_voyante")] - NOTES["voyante"].force)
+        total += EFFETS_OPTIONS["cadence_voyante"].get(str(_option(options, "cadence_voyante")), 0.0)
     if composition.get("loup_blanc"):
-        force += composition["loup_blanc"] * (
-            FORCE_LOUP_BLANC[_option(options, "cadence_loup_blanc")] - NOTES["loup_blanc"].force
-        )
+        total += EFFETS_OPTIONS["cadence_loup_blanc"].get(str(_option(options, "cadence_loup_blanc")), 0.0)
     if composition.get("sorciere"):
-        potions_mort = _option(options, "potions_mort")
-        force += composition["sorciere"] * (_option(options, "potions_sorciere") - 1 + potions_mort)
-        if potions_mort:
-            chaos += 1
-    if _option(options, "couple_hasard"):
-        chaos += 2
-    if _option(options, "trouple") and (composition.get("cupidon") or _option(options, "couple_hasard")):
-        chaos += 3
+        total += EFFETS_OPTIONS["potions_sorciere"] * (_option(options, "potions_sorciere") - 1)
+        total += EFFETS_OPTIONS["potions_mort"] * _option(options, "potions_mort")
     if not _option(options, "maire_depart"):
-        force -= 2
+        total += EFFETS_OPTIONS["maire_depart_faux"]
+    if _option(options, "couple_hasard"):
+        total += EFFETS_OPTIONS["couple_hasard"]
+        if _option(options, "trouple"):
+            total += EFFETS_OPTIONS["trouple"]
+    return total
 
-    return Bilan(force, info, chaos, nb_joueurs)
+
+def bilan(composition, nb_joueurs, options=None):
+    """Chance de victoire du village (0 à 1), information et chaos totaux de la composition (`{rôle: cartes}`)."""
+    x = nb_joueurs / 10
+    cotes = MODELE["intercept"] + MODELE["joueurs"] * x + MODELE["joueurs2"] * x * x
+    info = chaos = 0
+    for cle, n in composition.items():
+        cotes += MODELE["roles"].get(cle, 0.0) * n
+        notes = ROLES_NOTES.get(cle, {})
+        info += notes.get("info", 0) * n
+        chaos += notes.get("chaos", 0) * n
+    cotes += _ajustement_options(composition, options)
+    return Bilan(1 / (1 + math.exp(-cotes)), info, chaos, nb_joueurs)
 
 
 def position_equilibre(b):
-    """Position du curseur entre 0 (avantage loups) et 100 (avantage village), 50 = équilibre."""
-    demi = max(DEMI_LARGEUR_MIN, FORCE_PAR_JOUEUR * b.joueurs)
-    return 50 + max(-demi, min(demi, b.force)) / demi * 50
+    """Position du curseur entre 0 (avantage loups) et 100 (avantage village) : la chance de victoire du village en %."""
+    return 100 * b.chance
 
 
 def _niveau(total, joueurs, seuils, libelles):
@@ -94,3 +81,8 @@ def niveau_info(b):
 
 def niveau_chaos(b):
     return _niveau(b.chaos, b.joueurs, SEUILS_CHAOS, ("Calme", "Mouvementée", "Imprévisible"))
+
+
+def remplissage(total, joueurs, maximum):
+    """Part (0 à 1) d'une barre d'information ou de chaos."""
+    return min(1.0, total / max(joueurs, 1) / maximum)

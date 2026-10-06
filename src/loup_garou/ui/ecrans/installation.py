@@ -2,7 +2,9 @@
 
 import streamlit as st
 
-from loup_garou.equilibre import bilan, niveau_chaos, niveau_info, position_equilibre
+from loup_garou.equilibre import (
+    MAX_CHAOS, MAX_INFO, bilan, niveau_chaos, niveau_info, position_equilibre, remplissage,
+)
 from loup_garou.moteur.partie import composition_recommandee, nouvelle_partie
 from loup_garou.moteur.persistance import load_joueurs, save_joueurs
 from loup_garou.options import CADENCES, OPTIONS_DEFAUT
@@ -67,8 +69,8 @@ def afficher_composition(nb, total, composition, n_villageois, options):
 def jauges_html(b):
     """Panneau d'équilibre : curseur loups / village, information et chaos."""
 
-    def barre(titre, niveau, valeur):
-        pct = min(100, valeur / 1.5 * 100)
+    def barre(titre, niveau, fraction):
+        pct = 100 * fraction
         return (
             f'<div class="jauge"><div class="jauge-entete"><span>{titre}</span>'
             f'<span class="jauge-valeur">{niveau}</span></div>'
@@ -80,9 +82,9 @@ def jauges_html(b):
             <div class="panneau-titre">Équilibre de la partie</div>
             <div class="jauge">
                 <div class="jauge-piste"><div class="jauge-repere" style="left: {position_equilibre(b):.1f}%;"></div></div>
-                <div class="jauge-extremites"><span>🐺 Loups</span><span>Village 🏡</span></div></div>
-            {barre("🔮 Information", niveau_info(b), b.info / max(b.joueurs, 1))}
-            {barre("🌀 Chaos", niveau_chaos(b), b.chaos / max(b.joueurs, 1))}
+                <div class="jauge-extremites"><span>🐺 Loups {100 - round(position_equilibre(b))} %</span><span>Village {round(position_equilibre(b))} % 🏡</span></div></div>
+            {barre("🔮 Information", niveau_info(b), remplissage(b.info, b.joueurs, MAX_INFO))}
+            {barre("🌀 Chaos", niveau_chaos(b), remplissage(b.chaos, b.joueurs, MAX_CHAOS))}
         </div>
     """
 

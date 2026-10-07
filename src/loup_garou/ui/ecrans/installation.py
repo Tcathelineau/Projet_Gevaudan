@@ -37,24 +37,7 @@ def afficher_composition(nb, total, composition, n_villageois, options):
         )
         return
 
-    lignes = "".join(
-        f'<div class="panneau-ligne"><span>{ROLES[cle].emoji} {ROLES[cle].nom}</span><span>{n}</span></div>'
-        for cle, n in composition.items()
-        if n > 0
-    )
-    st.markdown(
-        f"""
-        <div class="apercu-grille">
-            <div class="panneau panneau-dense">
-                <div class="panneau-titre">Composition</div>
-                {lignes}
-                <div class="panneau-ligne panneau-total"><span><b>Total</b></span><span><b>{total} / {total}</b></span></div>
-            </div>
-            {jauges_html(bilan(composition, nb, options)).strip()}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown(f'<div class="apercu-centre">{jauges_html(bilan(composition, nb, options)).strip()}</div>', unsafe_allow_html=True)
 
     icones = "".join(
         f'<div class="icone-role" style="background: {ROLES[cle].degrade};" title="{ROLES[cle].nom}">{svg_role(cle, "icone-art", ROLES[cle].emoji)}</div>'

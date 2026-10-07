@@ -36,8 +36,8 @@ def _creer_partie(nb_joueurs=18, nb_loups=2, sans=()):
     for c in at.checkbox:
         if c.key in sans:
             c.uncheck()
-    at.number_input[0].set_value(nb_joueurs)
-    at.number_input[1].set_value(nb_loups)
+    at.session_state["nb_joueurs_setup"] = nb_joueurs
+    at.session_state["n_loup"] = nb_loups
     at.run()
     [b for b in at.button if b.label.startswith("Suivant")][0].click().run()
     for i, t in enumerate(at.text_input):
@@ -529,3 +529,39 @@ def test_pas_de_fenetre_de_couple_pour_un_joueur_seul():
     roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
     at = _app(_tour_de_nuit(roles, "B"))
     assert not at.exception and not at.session_state["partie"]["joueurs"]["B"].get("couple_vu")
+
+
+def test_les_compteurs_de_joueurs_et_de_loups_se_pilotent_par_boutons_ronds():
+    at = _app()
+    at.button(key="accueil_btn_nouvelle").click().run()
+    assert at.session_state["nb_joueurs_setup"] == 7 and at.session_state["n_loup"] == 1
+    at.button(key="nb_joueurs_setup_plus").click().run()
+    assert at.session_state["nb_joueurs_setup"] == 8
+    at.button(key="n_loup_plus").click().run()
+    assert at.session_state["n_loup"] == 2
+    at.button(key="n_loup_moins").click().run()
+    assert at.session_state["n_loup"] == 1 and at.button(key="n_loup_moins").disabled
+
+
+def test_le_nombre_de_joueurs_est_borne():
+    at = _app(nb_joueurs_setup=5)
+    at.button(key="accueil_btn_nouvelle").click().run()
+    assert at.button(key="nb_joueurs_setup_moins").disabled
+    at.session_state["nb_joueurs_setup"] = 18
+    at.run()
+    assert at.button(key="nb_joueurs_setup_plus").disabled
+
+
+def test_le_nombre_de_loups_suit_le_plafond_quand_les_joueurs_diminuent():
+    at = _app(nb_joueurs_setup=8, n_loup=7)
+    at.button(key="accueil_btn_nouvelle").click().run()
+    at.session_state["nb_joueurs_setup"] = 5
+    at.run()
+    assert at.session_state["n_loup"] == 4  # au plus joueurs - 1
+
+
+def test_les_categories_n_ont_plus_de_precisions():
+    at = _app()
+    at.button(key="accueil_btn_nouvelle").click().run()
+    texte = " ".join(m.value for m in at.markdown)
+    assert "Information" in texte and "Apprennent qui est qui" not in texte and "Changent les camps" not in texte

@@ -188,12 +188,12 @@ ROLES = {
 }
 
 
-# Catégories de l'écran de composition, dans l'ordre d'affichage : clé -> (emoji, titre, sous-titre).
+# Catégories de l'écran de composition, dans l'ordre d'affichage : clé -> (emoji, titre).
 CATEGORIES = {
-    "info": ("🔮", "Information", "Apprennent qui est qui"),
-    "pouvoir": ("🛡️", "Protection et pouvoirs de mort", "Sauvent ou tuent"),
-    "chaos": ("🌀", "Chaos", "Changent les camps, les rôles ou les votes"),
-    "loups": ("🐺", "Loups spéciaux", "Renforcent ou trahissent la meute"),
+    "info": ("🔮", "Information"),
+    "pouvoir": ("🛡️", "Protection et pouvoirs de mort"),
+    "chaos": ("🌀", "Chaos"),
+    "loups": ("🐺", "Loups spéciaux"),
 }
 
 

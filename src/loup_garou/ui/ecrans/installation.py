@@ -116,6 +116,24 @@ def saisir_options(composition):
     return options
 
 
+def _pas(cle, sens, mini, maxi):
+    st.session_state[cle] = min(max(st.session_state[cle] + sens, mini), maxi)
+
+
+def compteur(titre, cle, mini, maxi, defaut):
+    """Compteur centré : un « − » rond, la valeur, un « + » rond. Le réglage vit sous `cle` (hors widget)."""
+    valeur = int(min(max(st.session_state.get(cle, defaut), mini), maxi))
+    st.session_state[cle] = valeur
+    st.markdown(f'<div class="compteur-titre">{titre}</div>', unsafe_allow_html=True)
+    with st.container(key=f"compteur_{cle}", horizontal=True, horizontal_alignment="center", vertical_alignment="center"):
+        st.button("−", key=f"{cle}_moins", disabled=valeur <= mini, on_click=_pas, args=(cle, -1, mini, maxi),
+                  help=f"Un de moins : {titre.lower()}")
+        st.markdown(f'<div class="compteur-valeur" aria-live="polite">{valeur}</div>', unsafe_allow_html=True)
+        st.button("+", key=f"{cle}_plus", disabled=valeur >= maxi, on_click=_pas, args=(cle, 1, mini, maxi),
+                  help=f"Un de plus : {titre.lower()}")
+    return valeur
+
+
 def etape_roles():
     st.markdown(css_infobulles(), unsafe_allow_html=True)
     with st.container(key="setup_roles"):
@@ -125,24 +143,14 @@ def etape_roles():
         # les rôles ci-dessous connus.
         apercu = st.empty()
 
-        nb = st.number_input(
-            "Nombre de joueurs",
-            min_value=5,
-            max_value=18,
-            value=7,
-            step=1,
-            key="nb_joueurs_setup",
-        )
+        nb = compteur("Nombre de joueurs", "nb_joueurs_setup", 5, 18, 7)
 
         loups_defaut, speciaux_defaut = composition_recommandee(nb)
 
         with st.container(key="info_loup"):
-            st.markdown(f"**{ROLES['loup'].emoji} {ROLES['loup'].nom}**")
-            n_loup = st.number_input(
-                f"{ROLES['loup'].emoji} {ROLES['loup'].nom}s",
-                min_value=1, max_value=max(1, nb - 1),
-                value=min(loups_defaut, max(1, nb - 1)), key="n_loup",
-                label_visibility="collapsed",
+            n_loup = compteur(
+                f"{ROLES['loup'].emoji} {ROLES['loup'].nom}", "n_loup", 1, max(1, nb - 1),
+                min(loups_defaut, max(1, nb - 1)),
             )
         composition = {"loup": n_loup}
 
@@ -150,7 +158,7 @@ def etape_roles():
         # en grille de 4 colonnes ; le reste de la table devient Villageois.
         st.markdown("**Autres rôles** · coche ceux qui jouent")
         uniques = [role for role in ROLES_SPECIAUX if role.unique]
-        for cle_categorie, (emoji, titre, sous_titre) in CATEGORIES.items():
+        for cle_categorie, (emoji, titre) in CATEGORIES.items():
             roles = [role for role in uniques if role.categorie == cle_categorie]
             if not roles:
                 continue
@@ -158,7 +166,7 @@ def etape_roles():
                 bool(st.session_state.get(f"n_{role.key}", bool(speciaux_defaut[role.key]))) for role in roles
             )
             st.markdown(
-                f'<div class="cat-titre"><span>{emoji} {titre}</span><small>{sous_titre}</small>'
+                f'<div class="cat-titre"><span>{emoji} {titre}</span>'
                 f'<b>{coches} / {len(roles)}</b></div>',
                 unsafe_allow_html=True,
             )

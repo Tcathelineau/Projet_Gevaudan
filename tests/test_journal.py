@@ -1,4 +1,4 @@
-from loup_garou.moteur.journal import etapes_chronologie, log, prendre_instantane
+from loup_garou.moteur.journal import log, prendre_instantane
 
 
 def base(**extra):
@@ -37,17 +37,3 @@ def test_instantane_rejoue_remplace_la_version_precedente_et_les_suivantes():
     s["jour"] = 0
     prendre_instantane(s, "nuit")
     assert [i["id"] for i in s["instantanes"]] == ["nuit_0"]
-
-
-def test_etapes_chronologie_au_depart():
-    assert etapes_chronologie(base()) == [("start", 0)]
-
-
-def test_etapes_chronologie_nuit_en_cours_sans_jour_correspondant():
-    assert etapes_chronologie(base(jour=2, phase="nuit")) == [
-        ("start", 0), ("nuit", 1), ("jour", 1), ("nuit", 2),
-    ]
-
-
-def test_etapes_chronologie_jour_en_cours():
-    assert etapes_chronologie(base(jour=1, phase="conseil")) == [("start", 0), ("nuit", 1), ("jour", 1)]

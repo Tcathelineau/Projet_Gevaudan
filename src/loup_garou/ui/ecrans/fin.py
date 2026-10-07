@@ -5,7 +5,7 @@ import json
 
 import streamlit as st
 
-from loup_garou.moteur.bilan import CAUSES, bilan_partie
+from loup_garou.moteur.bilan import CAUSES, bilan_partie, coulisses
 from loup_garou.moteur.partie import nouvelle_partie
 from loup_garou.moteur.persistance import clear_save
 from loup_garou.roles import ROLES
@@ -15,15 +15,42 @@ from loup_garou.ui.styles import CSS_BILAN
 
 
 def afficher_roles(joueurs):
+    """Liste compacte des joueurs, en deux colonnes : rôle, rôles d'origine, état et amour."""
+    lignes = []
     for nom, d in joueurs.items():
-        etat = "en vie" if d["vivant"] else "mort"
-        coeur = " 💘" if d["amoureux"] else ""
+        role = ROLES.get(d["role"])
         ancien = " (ex-enfant sauvage)" if d.get("enfant_sauvage") else ""
         ancien += " (ex-voleur)" if d.get("voleur") else ""
         ancien += " (ex-renard)" if d.get("renard") else ""
         if d.get("camp_choisi"):
             ancien += " (loup-garou)" if d["camp_choisi"] == "loups" else " (villageois)"
-        st.write(f"{ROLES[d['role']].emoji} **{nom}** — {ROLES[d['role']].nom}{ancien} ({etat}){coeur}")
+        etat = "en vie" if d["vivant"] else "mort"
+        coeur = " 💘" if d["amoureux"] else ""
+        classe = "" if d["vivant"] else " roles-mort"
+        lignes.append(
+            f'<div class="roles-ligne{classe}"><span class="roles-emoji">{role.emoji if role else "?"}</span>'
+            f'<span><b>{html.escape(nom)}</b> · {html.escape(role.nom if role else d["role"])}{ancien}'
+            f' <small>({etat})</small>{coeur}</span></div>'
+        )
+    st.markdown(f'<div class="roles-grille">{"".join(lignes)}</div>', unsafe_allow_html=True)
+
+
+def afficher_coulisses(joueurs, journal, complement=()):
+    """Les événements de rôle (couples, potions, protections, visions...) rangés par thème."""
+    themes = coulisses(joueurs, journal)
+    if complement:
+        themes = themes + [("🧪", "Potions restantes", list(complement))]
+    if not themes:
+        st.caption("Aucun pouvoir de rôle n'a laissé de trace dans cette partie.")
+        return
+    for emoji, titre, lignes in themes:
+        corps = "".join(
+            f'<div class="jrn-ligne"><span>▪</span><span>{html.escape(ligne)}</span></div>' for ligne in lignes
+        )
+        st.markdown(
+            f'<div class="jrn-bloc jrn-fin"><div class="jrn-tete">{emoji} {html.escape(titre)}</div>{corps}</div>',
+            unsafe_allow_html=True,
+        )
 
 
 def afficher_bilan(s):
@@ -59,6 +86,13 @@ def afficher_bilan(s):
             )
 
 
+def _potions_restantes(s):
+    if not any(d["role"] == "sorciere" for d in s["joueurs"].values()):
+        return ()
+    soin, mort = s.get("potions_sorciere", 0), s.get("potions_mort_sorciere", 0)
+    return (f"Il restait {soin} potion(s) de soin et {mort} potion(s) de mort à la fin de la partie.",)
+
+
 def _quitter():
     clear_save()
     vider_session()
@@ -77,6 +111,8 @@ def ecran_fin(s):
     afficher_bilan(s)
     st.subheader("Les rôles")
     afficher_roles(s["joueurs"])
+    st.subheader("Les coulisses")
+    afficher_coulisses(s["joueurs"], s["journal"], _potions_restantes(s))
 
     with st.expander("📜 Afficher le log de la partie"):
         afficher_historique(s)
@@ -143,6 +179,12 @@ def afficher_historique(s):
     blocs = []
     for e in s["journal"]:
         if e["moment"] == "debut":
+            cle, classe, titre = ("debut", None), "jrn-fin", "🎬 Mise en place"
+            if not blocs or blocs[-1][0] != cle:
+                blocs.append((cle, classe, titre, []))
+            blocs[-1][3].append(
+                f'<div class="jrn-ligne"><span>▪</span><span>{html.escape(e["texte"])}</span></div>'
+            )
             continue
         if e["moment"] == "fin":
             cle, classe, titre = ("fin", None), "jrn-fin", "🏁 Issue de la partie"

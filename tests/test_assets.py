@@ -23,10 +23,10 @@ def test_les_credits_citent_chaque_illustration():
     for cle in ROLES:
         assert f"`{cle}`" in credits
     assert "Creative Commons Attribution 3.0" in credits
-    assert "FreePD" in credits and "Creepy Hallow" in credits
+    assert "FreePD" in credits and "Creepy Hallow" in credits and "Nostalgic Piano" in credits
 
 
-@pytest.mark.parametrize("nom", ["hurlement", "victoire_village", "victoire_loups"])
+@pytest.mark.parametrize("nom", ["hurlement", "victoire_village", "victoire_loups", "mort_gentil"])
 def test_les_bruitages_sont_des_wav_mono_16_bits(nom):
     with wave.open(str(ASSETS / "sons" / f"{nom}.wav")) as f:
         assert f.getnchannels() == 1 and f.getsampwidth() == 2

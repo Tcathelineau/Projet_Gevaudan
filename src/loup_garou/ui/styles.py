@@ -1077,9 +1077,14 @@ CSS_HISTORIQUE = """
     border-bottom: 1.5px solid var(--c);
 }
 .jrn-tete small { font-family: inherit; font-weight: 400; opacity: .8; text-transform: none; letter-spacing: 0; }
-.jrn-ligne { display: flex; gap: .6rem; padding: .35rem .9rem; align-items: baseline; }
+.jrn-ligne { display: flex; gap: .5rem; padding: .3rem .9rem; align-items: baseline; }
+.roles-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .1rem .8rem; margin: .4rem 0 .8rem; }
+.roles-ligne { display: flex; gap: .45rem; align-items: baseline; padding: .15rem 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+.roles-ligne .roles-emoji { flex: 0 0 1.3rem; text-align: center; font-size: .95rem; line-height: 1; }
+.roles-ligne small { opacity: .8; }
+.roles-mort { opacity: .75; }
 .jrn-ligne + .jrn-ligne { border-top: 1px solid color-mix(in srgb, var(--c) 28%, transparent); }
-.jrn-ligne > span:first-child { flex: 0 0 1.6rem; text-align: center; }
+.jrn-ligne > span:first-child { flex: 0 0 1.2rem; text-align: center; font-size: .9rem; line-height: 1; }
 div[class*="st-key-histo_"] {
     --c: #8a8a9a; border: 2px solid var(--c) !important; border-radius: 12px;
     background: color-mix(in srgb, var(--c) 8%, transparent);

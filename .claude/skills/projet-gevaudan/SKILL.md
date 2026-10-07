@@ -92,7 +92,8 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 - **Première nuit (`jour` 0)** : seul Cupidon agit ; les loups se découvrent mais personne n'est dévoré ; pas de vote le premier jour. Le Renard ne flaire pas la nuit 0.
 - **Ordre de nuit** par `priorite_nuit` : Voleur (0), Chien-Loup (1), puis les autres (2) dans l'ordre des joueurs.
-- **Loups en désaccord** (égalité des votes) : personne n'est dévoré.
+- **Loups en désaccord** (égalité des votes) : personne n'est dévoré. Les loups peuvent désigner n'importe quel autre vivant, y compris l'un des leurs.
+- **Couple tiré au sort** (`couple_hasard`) : Cupidon est remplacé par un villageois (case grisée à la composition) ; la voyante peut, une fois (`voyante_a_vu_couple`), découvrir le couple au lieu de sonder un rôle.
 - **Sorcière à l'aveugle** : elle ne sait pas qui est la victime. Potion de soin sauve du festin des loups ; le poison et le festin du Loup Blanc échappent au soin et au Salvateur.
 - **Maire** : élu au premier jour ; s'il meurt, il désigne lui-même son successeur.
 - **Égalité loups / village** : la partie continue tant que le maire n'est pas un loup ; option `maire_depart` désactivée = les loups gagnent dès l'égalité.
@@ -130,7 +131,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 - **Fichiers locaux** : `joueurs.json` (noms de la dernière partie, ignoré par git, préremplis à l'installation).
 - **Assets générés** : ne pas éditer à la main `assets/roles`, `assets/sons`, `assets/favicon.png` ; modifier `outils/importer_icones.py`, `importer_musiques.py`, `generer_sons.py`, `generer_favicon.py` et les relancer (la licence CC BY 3.0 impose de garder `CREDITS.md` à jour : le script le réécrit). Un nouveau rôle sans icône retombe sur son emoji, mais un test exige une icône par rôle.
-- **Son** : deux lecteurs dans les conteneurs réservés `zone_musique` et `zone_effet` (premiers éléments de la barre latérale, masqués par CSS) pour que leur position ne change pas et que le son en cours ne soit pas relancé à chaque clic. Musique par phase (nuit, jour, conseil), hurlement à la première révélation d'une carte de loup (`cri_loup` sur le joueur), son de victoire ; réglages `musique_on`, `sons_on`, `cri_on` **désactivés par défaut** (rien ne doit jouer à l'arrivée sur la page), activés par des cases du menu Option (`cases_a_cocher`, widgets `case_<réglage>` recopiés vers le réglage pour survivre à la fermeture du menu ; `vider_session` garde ces réglages).
+- **Son** : deux lecteurs dans les conteneurs réservés `zone_musique` et `zone_effet` (premiers éléments de la barre latérale, masqués par CSS) pour que leur position ne change pas et que le son en cours ne soit pas relancé à chaque clic. Musique par phase (nuit, jour, conseil ; le conseil commence dès le réveil s'il y a des morts), gong grave quand un innocent meurt (`mort_gentil`), hurlement à la première révélation d'une carte de loup (`cri_loup` sur le joueur, marqué par `marquer_cri` seulement s'il est joué) et à la victoire des loups, ovation à la victoire du village ;  réglages `musique_on`, `sons_on`, `cri_on` **désactivés par défaut** (rien ne doit jouer à l'arrivée sur la page), activés par des cases du menu Option (`cases_a_cocher`, widgets `case_<réglage>` recopiés vers le réglage pour survivre à la fermeture du menu ; `vider_session` garde ces réglages).
 
 ## 7. Chantiers connus
 

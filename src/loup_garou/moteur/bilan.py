@@ -90,3 +90,49 @@ def _frise(morts):
         (f"🌙 Nuit {j}" if moment == "nuit" else f"☀️ Jour {j}", liste)
         for (moment, j), liste in groupes
     ]
+
+
+# --- coulisses : les événements de rôle, rangés par thème --------------------------------------------
+
+# (emoji, titre, motifs du journal). Un événement va dans le premier thème dont un motif apparaît dans son texte.
+THEMES = (
+    ("💘", "Les amoureux", (" lie ", "Le hasard lie", "meurt de chagrin", "découvre le couple")),
+    ("🧪", "Les potions", ("potion de soin", "empoisonne", "empoisonné par la sorcière", "sorcière")),
+    ("🛡️", "Les protections", ("protège", "sauvé par le salvateur")),
+    ("🔮", "Les visions", ("sonde", "flaire")),
+    ("🌕", "Le Loup Blanc", ("Le Loup Blanc", "dévoré par le Loup Blanc")),
+    ("🐶", "Le Louveteau", ("Louveteau est mort",)),
+    ("🐾", "L'enfant sauvage et son mentor", ("mentor",)),
+    ("🔫", "Les tirs du chasseur", ("abattu par le chasseur", "renonce à tirer")),
+    ("🃏", "Changements de rôle et de camp", ("Chien-Loup", "(Voleur)", "prend le rôle", "devient simple Villageois")),
+    ("⚖️", "Le juge bègue", ("juge bègue",)),
+    ("👑", "Le maire", ("élu maire", "successeur")),
+)
+
+
+def coulisses(joueurs, journal):
+    """Événements de rôle d'une partie, par thème : [(emoji, titre, [ligne, ...]), ...] (thèmes vides omis).
+
+    Fonctionne sur le journal seul, donc aussi sur les parties archivées avant l'existence de cette fonction."""
+    par_theme = {titre: [] for _, titre, _ in THEMES}
+    for e in journal:
+        if e["moment"] in ("debut", "fin"):
+            continue
+        for _, titre, motifs in THEMES:
+            if any(m in e["texte"] for m in motifs):
+                quand = f"Nuit {e['jour']}" if e["moment"] == "nuit" else f"Jour {e['jour']}"
+                par_theme[titre].append(f"{quand} : {e['texte']}")
+                break
+    resultat = []
+    for emoji, titre, _ in THEMES:
+        lignes = par_theme[titre]
+        if titre == "Les amoureux":
+            amoureux = [n for n, d in joueurs.items() if d.get("amoureux")]
+            if amoureux:
+                roles = ", ".join(f"{n} ({ROLES[joueurs[n]['role']].nom})" for n in amoureux if joueurs[n]["role"] in ROLES)
+                camps = {(joueurs[n].get("camp_choisi") or ROLES[joueurs[n]["role"]].camp) for n in amoureux if joueurs[n]["role"] in ROLES}
+                mixte = " : couple mixte, un camp à part" if len(camps) > 1 else ""
+                lignes = [f"Le couple : {roles}{mixte}."] + lignes
+        if lignes:
+            resultat.append((emoji, titre, lignes))
+    return resultat

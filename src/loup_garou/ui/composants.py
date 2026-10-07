@@ -184,7 +184,8 @@ def annonce(texte, signe="!", ton="alerte"):
 def plaquette(texte, icone="🌙", ton="neutre"):
     classe = "plaquette" if ton == "neutre" else f"plaquette plaquette-{ton}"
     st.markdown(
-        f'<div class="{classe}"><span class="plaquette-icone">{icone}</span><span class="plaquette-texte">{texte}</span></div>',
+        f'<div class="{classe}"><span class="plaquette-icone">{icone}</span><span class="plaquette-texte">{texte}</span>'
+        f'<span class="plaquette-icone">{icone}</span></div>',
         unsafe_allow_html=True,
     )
 

@@ -1,5 +1,7 @@
 """Tour de nuit de chaque rôle : ce que voit et choisit le joueur appelé."""
 
+import random
+
 import streamlit as st
 
 from loup_garou.moteur.journal import log
@@ -20,7 +22,8 @@ def _afficher_meute(s, nom):
     if s["joueurs"][nom].get("enfant_sauvage"):
         plaquette("Ton mentor est mort : tu as rejoint la meute.", icone="🐾")
     complices = [l for l in s["loups"] if l != nom and s["joueurs"][l]["vivant"]]
-    badge_meute(nom, complices)
+    with st.sidebar:  # comme le badge des amoureux : le rappel de la meute reste dans le menu de gauche
+        badge_meute(nom, complices)
 
 
 def _cibles_loups(s, nom):
@@ -427,6 +430,95 @@ def _nuit_juge_begue(s, nom, cle):
             st.rerun()
 
 
+def _nuit_montreur_ours(s, nom, cle):
+    plaquette(
+        "Tu es le Montreur d'ours : chaque matin, ton ours grogne si l'un de tes deux voisins vivants "
+        "est un loup-garou. Dors.", icone="🐻",
+    )
+    bouton_fin(s, cle)
+
+
+def _nuit_idiot(s, nom, cle):
+    plaquette(
+        "Tu es l'idiot du village : si le village te condamne, tu révèles ton rôle et tu survis, "
+        "mais tu ne votes plus. Dors.", icone="🤡",
+    )
+    bouton_fin(s, cle)
+
+
+def _nuit_bouc_emissaire(s, nom, cle):
+    plaquette("Tu es le bouc émissaire : en cas d'égalité des voix au vote du village, c'est toi qui es condamné. Dors.",
+              icone="🐐")
+    bouton_fin(s, cle)
+
+
+def _nuit_corbeau(s, nom, cle):
+    """Chaque nuit, le corbeau désigne un joueur qui recevra deux voix de plus au prochain vote du village."""
+    if s["jour"] == 0:
+        plaquette("Pas de vote demain : le corbeau attend la nuit prochaine.", icone="🐦")
+        bouton_fin(s, cle)
+        return
+    st.markdown("**Qui le corbeau désigne-t-il ?**")
+    st.caption("Il recevra deux voix de plus au prochain vote du village. Le village saura qui est désigné, pas qui l'a fait.")
+    choix = selection_dalles("corb", cle, [n for n in vivants(s) if n != nom], 1)
+    cible = choix[0] if choix else None
+    if bouton_validation(f"🐦 Désigner {cible}" if cible else "🐦 Désigner", f"corbeau_{cle}", disabled=cible is None):
+        s["corbeau_cible"] = cible
+        log(s, f"Le corbeau {nom} désigne {cible} : deux voix de plus contre lui au prochain vote.")
+        st.session_state.pop(f"sel_corb_{cle}", None)
+        fin_de_tour(s)
+        st.rerun()
+    if st.button("Ne désigner personne", key=f"corbeau_rien_{cle}"):
+        log(s, f"Le corbeau {nom} ne désigne personne.")
+        fin_de_tour(s)
+        st.rerun()
+
+
+def _nuit_petite_fille(s, nom, cle):
+    """Elle joue après les loups : elle apprend qui ils ont désigné et reconnaît l'un d'eux, au risque d'être surprise."""
+    if s["jour"] == 0:
+        plaquette("Première nuit : les loups ne chassent pas encore, il n'y a rien à espionner.", icone="👧")
+        bouton_fin(s, cle)
+        return
+    cle_resultat = f"pf_{cle}"
+    resultat = st.session_state.get(cle_resultat)
+    if resultat is None:
+        st.markdown("**Espionner les loups ?**")
+        st.caption("Tu apprends qui ils ont désigné et tu aperçois deux silhouettes, dont un loup. Risque : une chance sur trois d'être surprise "
+                   "et dévorée à l'aube, sans que rien ne puisse te sauver.")
+        col_espionne, col_dort = st.columns(2)
+        if col_espionne.button("👁️ Espionner", type="primary", use_container_width=True, key=f"pf_espionne_{cle}"):
+            loups = [n for n in vivants(s) if camp(s, n) == "loups" and n != nom]
+            innocents = [n for n in vivants(s) if camp(s, n) != "loups" and n != nom]
+            surprise = random.random() < 1 / 3
+            silhouettes = None
+            if loups:
+                silhouettes = [random.choice(loups)] + ([random.choice(innocents)] if innocents else [])
+                random.shuffle(silhouettes)
+            resultat = {
+                "surprise": surprise,
+                "victimes": sorted(set(s.get("votes_loups", []))),
+                "silhouettes": silhouettes,
+            }
+            st.session_state[cle_resultat] = resultat
+            log(s, f"La petite fille {nom} espionne la meute" + (" et se fait surprendre." if surprise else "."))
+            if surprise:
+                s["petite_fille_surprise"] = nom
+            st.rerun()
+        if col_dort.button("Dormir", use_container_width=True, key=f"pf_dort_{cle}"):
+            fin_de_tour(s)
+            st.rerun()
+        return
+    victimes = " et ".join(resultat["victimes"]) or "personne (les loups ne s'accordent pas)"
+    texte = f"Les loups ont désigné {victimes}."
+    if resultat["silhouettes"]:
+        texte += f" Tu as aperçu deux silhouettes dont l'une est un loup : {' et '.join(resultat['silhouettes'])}."
+    plaquette(texte, icone="👁️", ton="succes")
+    if resultat["surprise"]:
+        plaquette("Mais un loup t'a vue : tu seras dévorée à l'aube.", icone="🩸", ton="danger")
+    bouton_fin(s, cle)
+
+
 def _nuit_chasseur(s, nom, cle):
     plaquette("Tu es le chasseur : si tu meurs, tu pourras tirer une dernière balle. Dors.", icone="🔫")
     bouton_fin(s, cle)
@@ -454,6 +546,11 @@ NUIT_ROLES = {
     "frere": _nuit_fratrie,
     "servante": _nuit_servante,
     "juge_begue": _nuit_juge_begue,
+    "montreur_ours": _nuit_montreur_ours,
+    "idiot": _nuit_idiot,
+    "bouc_emissaire": _nuit_bouc_emissaire,
+    "corbeau": _nuit_corbeau,
+    "petite_fille": _nuit_petite_fille,
     "chasseur": _nuit_chasseur,
     "villageois": _nuit_villageois,
 }

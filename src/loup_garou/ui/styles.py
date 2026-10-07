@@ -250,13 +250,14 @@ def css_cartes():
         .plaquette {
             display: flex;
             align-items: center;
+            justify-content: center;
+            text-align: center;
             gap: 0.8rem;
             margin: 0.7rem 0;
             padding: 0.8rem 1.1rem;
             border-radius: 8px;
             background: rgba(20,16,10,.5);
-            border: 1px solid rgba(201,164,76,.4);
-            border-left: 3px solid rgba(201,164,76,.7);
+            border: 1px solid rgba(201,164,76,.55);
         }
         .plaquette-icone { font-size: 1.4rem; flex-shrink: 0; }
         .plaquette-texte {
@@ -265,8 +266,8 @@ def css_cartes():
             font-size: 1.05rem;
             color: #ece3d2;
         }
-        .plaquette-succes { border-left-color: rgba(122,168,116,.85); }
-        .plaquette-danger { border-left-color: rgba(190,80,80,.85); }
+        .plaquette-succes { border-color: rgba(122,168,116,.85); }
+        .plaquette-danger { border-color: rgba(190,80,80,.85); }
 
         div[class*="st-key-pret_"] button {
             background-color: #3f7d4f;
@@ -593,6 +594,7 @@ def css_cartes():
         div[class*="st-key-dalles_poison_"] button::after { content: "☠️"; }
         div[class*="st-key-dalles_maire_"] button::after { content: "👑"; }
         div[class*="st-key-dalles_serv_"] button::after { content: "🧹"; }
+        div[class*="st-key-dalles_corb_"] button::after { content: "🐦"; }
         div[class*="st-key-dalles_vote_"] button {
             background: rgba(120,60,20,.35);
             border-color: rgba(210,120,50,.55);

@@ -26,8 +26,8 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from loup_garou.moteur.partie import (  # noqa: E402
-    camp, condamnes_de_la_veille, enregistrer_condamne, nouvelle_partie, resoudre_nuit, servante_prend_role, tuer,
-    vainqueur, vivants,
+    bouc_emissaire, camp, condamnes_de_la_veille, enregistrer_condamne, epargner_idiot, nouvelle_partie, ours_grogne,
+    resoudre_nuit, servante_prend_role, tuer, vainqueur, vivants,
 )
 from loup_garou.options import nuit_active, opt  # noqa: E402
 from loup_garou.roles import ROLES  # noqa: E402
@@ -43,6 +43,8 @@ class Bots:
         self.prive = {}  # nom -> joueurs que ce joueur sait innocents (fratrie)
         self.en_attente = []  # informations de la nuit, publiées le matin si leur détenteur vit encore
         self.votes = self.touches = 0
+        self.fratries = []  # groupes de sœurs ou de frères : ils se savent innocents et votent en bloc
+        self.extra = 0  # événements imprévus propres aux rôles de vote (idiot, bouc émissaire, petite fille surprise)
 
     # --- choix de cible ---------------------------------------------------------------------------
     def cible_village(self, votant, croit):
@@ -66,9 +68,27 @@ class Bots:
     def voter(self):
         s, rng = self.s, self.rng
         croit = rng.random() < self.croyance
-        urne = Counter(self.cible_village(v, croit) for v in vivants(s))
+        votants = [v for v in vivants(s) if not s["joueurs"][v].get("vote_perdu")]
+        # Une fratrie encore en vie vote en bloc : un seul choix, fait par l'un d'eux.
+        choix_fratrie = {}
+        for fratrie in self.fratries:
+            vivante = [m for m in fratrie if s["joueurs"][m]["vivant"] and m in votants]
+            if len(vivante) > 1:
+                cible = self.cible_village(vivante[0], croit)
+                for m in vivante:
+                    choix_fratrie[m] = cible if cible != m else self.cible_village(m, croit)
+        urne = Counter(choix_fratrie.get(v) or self.cible_village(v, croit) for v in votants)
+        corbeau = s.get("corbeau_cible")
+        if corbeau and s["joueurs"][corbeau]["vivant"]:
+            urne[corbeau] += 2
         maxi = max(urne.values())
-        condamne = rng.choice([n for n, c in urne.items() if c == maxi])
+        ex_aequo = [n for n, c in urne.items() if c == maxi]
+        bouc = bouc_emissaire(s)
+        if len(ex_aequo) > 1 and bouc:
+            condamne = bouc
+            self.extra += 1
+        else:
+            condamne = rng.choice(ex_aequo)
         self.votes += 1
         self.touches += camp(s, condamne) == "loups"
         return condamne
@@ -108,6 +128,8 @@ class Bots:
             fratrie = [n for n in noms if s["joueurs"][n]["role"] == cle]
             for n in fratrie:
                 self.prive[n] = set(fratrie) - {n}
+            if len(fratrie) > 1:
+                self.fratries.append(fratrie)
 
     def nuit(self):
         s, rng = self.s, self.rng
@@ -152,10 +174,36 @@ class Bots:
                 else:
                     self.en_attente.append((n, "clair", groupe))
                     s["joueurs"][n]["role"] = "villageois"
+            elif role == "petite_fille" and s["jour"] > 0:
+                if rng.random() < 1 / 3:
+                    s["petite_fille_surprise"] = n
+                    self.extra += 1
+                else:
+                    meute = [m for m in vivants(s) if m != n and camp(s, m) == "loups"]
+                    innocents = [m for m in vivants(s) if m != n and camp(s, m) != "loups"]
+                    if meute:  # deux silhouettes : un loup et un innocent
+                        self.en_attente.append((n, "groupe", [rng.choice(meute)] + ([rng.choice(innocents)] if innocents else [])))
+            elif role == "corbeau" and s["jour"] > 0:
+                pistes = [m for m in vivants(s) if m != n]
+                suspects = [m for m in pistes if m in self.loups_connus or m in self.groupe_suspect]
+                s["corbeau_cible"] = rng.choice(suspects or pistes)
         resoudre_nuit(s)
+        # L'ours du Montreur grogne en public : un voisin loup désigne ces deux voisins comme suspects.
+        grognement = ours_grogne(s)
+        for montreur in [n for n in vivants(s) if s["joueurs"][n]["role"] == "montreur_ours"]:
+            voisins = set(grognement[1]) if grognement and grognement[0] == montreur else None
+            if voisins:
+                self.groupe_suspect = voisins
+            else:
+                from loup_garou.moteur.partie import voisins_vivants
+                self.blanchis |= set(voisins_vivants(s, montreur))
 
     def publier(self):
         s = self.s
+        for fratrie in self.fratries:  # deux sœurs ou plus se vouent mutuellement : elles se blanchissent en public
+            vivantes = [m for m in fratrie if s["joueurs"][m]["vivant"]]
+            if len(vivantes) > 1:
+                self.blanchis |= set(vivantes)
         for detenteur, genre, valeur in self.en_attente:
             if not s["joueurs"][detenteur]["vivant"] and genre in ("loup", "blanc"):
                 continue
@@ -203,8 +251,11 @@ def jouer(composition, options, rng, croyance, flair):
             if rang == 2 and s.get("second_vote") != s["jour"]:
                 break
             condamne = bots.voter()
-            tuer(s, condamne, "est éliminé par le village", "village")
-            enregistrer_condamne(s, condamne)
+            if epargner_idiot(s, condamne):
+                bots.extra += 1
+            else:
+                tuer(s, condamne, "est éliminé par le village", "village")
+                enregistrer_condamne(s, condamne)
             bots.tirs()
             gagnant = vainqueur(s)
             if gagnant:
@@ -213,9 +264,10 @@ def jouer(composition, options, rng, croyance, flair):
                 s["maire"] = rng.choice(vivants(s))
         if gagnant:
             break
+        s["corbeau_cible"] = None
         s["jour"] += 1
     issue = "autre" if not gagnant else ("village" if gagnant.startswith("Le village") else "loups" if gagnant.startswith("Les loups") else "autre")
-    return issue, bots.votes, bots.touches, evenements(s, issue)
+    return issue, bots.votes, bots.touches, evenements(s, issue) + bots.extra
 
 
 # --- compositions et mesures --------------------------------------------------------------------

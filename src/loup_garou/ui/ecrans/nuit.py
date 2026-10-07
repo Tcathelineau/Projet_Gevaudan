@@ -16,6 +16,7 @@ def ecran_nuit(s):
     if not s["ordre_nuit"]:
         prendre_instantane(s, "nuit")
         s["servante_nuit"] = None
+        s["corbeau_cible"] = None  # la désignation d'hier ne vaut que pour le vote d'hier
         # Voleur puis Chien-Loup jouent en premier (cf. priorite_nuit) : leur choix de
         # rôle ou de camp doit être fait avant que les autres ne découvrent la meute.
         s["ordre_nuit"] = sorted(vivants(s), key=lambda n: ROLES[s["joueurs"][n]["role"]].priorite_nuit)

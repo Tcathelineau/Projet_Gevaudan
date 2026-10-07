@@ -155,6 +155,47 @@ def servante_prend_role(s, servante, mort):
     log(s, f"La servante dévouée {servante} prend le rôle de {mort} ({ROLES[role].nom}).")
 
 
+def voisins_vivants(s, nom):
+    """Les deux voisins vivants d'un joueur autour de la table (ordre des noms saisis à l'installation)."""
+    ordre = list(s["joueurs"])
+    i = ordre.index(nom)
+    n = len(ordre)
+    trouves = []
+    for sens in (-1, 1):
+        for k in range(1, n):
+            autre = ordre[(i + sens * k) % n]
+            if s["joueurs"][autre]["vivant"]:
+                trouves.append(autre)
+                break
+    return list(dict.fromkeys(trouves))
+
+
+def ours_grogne(s):
+    """Le Montreur d'ours vivant dont l'ours grogne (un voisin vivant est un loup) : (montreur, voisins) ou None."""
+    for nom in vivants(s):
+        if s["joueurs"][nom]["role"] == "montreur_ours":
+            voisins = voisins_vivants(s, nom)
+            if any(camp(s, v) == "loups" for v in voisins):
+                return nom, voisins
+    return None
+
+
+def epargner_idiot(s, nom):
+    """L'Idiot du village condamné par le vote révèle son rôle et survit (une fois), mais ne votera plus."""
+    d = s["joueurs"][nom]
+    if d["role"] == "idiot" and not d.get("idiot_revele"):
+        d["idiot_revele"] = True
+        d["vote_perdu"] = True
+        log(s, f"{nom} (Idiot du village) est désigné par le village : il révèle son rôle et est épargné, mais ne votera plus.")
+        return True
+    return False
+
+
+def bouc_emissaire(s):
+    """Le Bouc émissaire vivant (condamné en cas d'égalité des voix), ou None."""
+    return next((n for n in vivants(s) if s["joueurs"][n]["role"] == "bouc_emissaire"), None)
+
+
 def vainqueur(s):
     en_vie = vivants(s)
     loups = [n for n in en_vie if camp(s, n) == "loups"]
@@ -237,6 +278,9 @@ def resoudre_nuit(s):
         # Le poison échappe à la potion de soin et au salvateur.
         if s.get("cible_poison"):
             morts += tuer(s, s["cible_poison"], "est empoisonné par la sorcière", "poison")
+        # La Petite Fille surprise pendant son espionnage est dévorée : ni soin ni protection n'y changent rien.
+        if s.get("petite_fille_surprise"):
+            morts += tuer(s, s["petite_fille_surprise"], "est surprise par les loups pendant qu'elle les espionnait", "loups")
         if not morts:
             log(s, "Personne ne meurt cette nuit.")
 
@@ -248,6 +292,7 @@ def resoudre_nuit(s):
     s["protege_nuit"] = None
     s["soin_sorciere"] = False
     s["cible_poison"] = None
+    s["petite_fille_surprise"] = None
     s["ordre_nuit"] = []
     s["tour"] = 0
     s["devoile"] = False

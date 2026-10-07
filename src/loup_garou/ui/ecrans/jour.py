@@ -5,7 +5,9 @@ import html
 import streamlit as st
 
 from loup_garou.moteur.journal import log
-from loup_garou.moteur.partie import camp, enregistrer_condamne, terminer_partie, tuer, vainqueur, vivants
+from loup_garou.moteur.partie import (
+    bouc_emissaire, camp, enregistrer_condamne, epargner_idiot, ours_grogne, terminer_partie, tuer, vainqueur, vivants,
+)
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import (
     annonce,
@@ -42,6 +44,17 @@ def panneau_morts(s):
             '<div class="avis-papier avis-papier-calme"><div class="avis-nom">🕊️ Nul n\'a péri</div>'
             '<div class="avis-detail">Le village a passé une nuit paisible.</div></div>'
         )
+    grognement = ours_grogne(s)
+    if grognement:
+        papiers.append(
+            '<div class="avis-papier"><div class="avis-nom">🐻 L\'ours grogne !</div>'
+            '<div class="avis-detail">Un loup-garou se cache parmi les voisins du Montreur d\'ours.</div></div>'
+        )
+    if s.get("corbeau_cible") and s["joueurs"][s["corbeau_cible"]]["vivant"]:
+        papiers.append(
+            f'<div class="avis-papier"><div class="avis-nom">🐦 {html.escape(s["corbeau_cible"])}</div>'
+            '<div class="avis-detail">Le corbeau l\'a désigné : deux voix de plus contre lui au prochain vote.</div></div>'
+        )
     if s.get("servante_nuit"):
         servante, mort = s["servante_nuit"]["servante"], s["servante_nuit"]["mort"]
         papiers.append(
@@ -52,9 +65,14 @@ def panneau_morts(s):
     panneau_avis("Avis à la population", "Premier jour" if s["jour"] == 0 else f"Jour {s['jour']}", papiers)
 
 
-def panneau_vote(s, morts, sous=None):
+def panneau_vote(s, morts, sous=None, epargne=None):
     """Verdict du vote du village : vert si un loup tombe, rouge sinon, ambre si son camp reste secret."""
     papiers = []
+    if epargne:
+        papiers.append(
+            f'<div class="avis-papier avis-papier-calme"><div class="avis-nom">🤡 {html.escape(epargne)}</div>'
+            '<div class="avis-detail">C\'était l\'idiot du village : le village l\'épargne, mais il ne votera plus.</div></div>'
+        )
     for i, mort in enumerate(morts):
         if ROLES[s["joueurs"][mort]["role"]].camp_secret:
             classe = " avis-papier-secret"
@@ -144,12 +162,26 @@ def ecran_election_maire(s):
         st.rerun()
 
 
+def _rendre_verdict(s, condamne, cle_resultat):
+    """Le village condamne `condamne` : il meurt, sauf l'idiot du village (révélé et épargné une fois)."""
+    if epargner_idiot(s, condamne):
+        st.session_state[cle_resultat] = []
+        st.session_state[f"epargne_{cle_resultat}"] = condamne
+    else:
+        st.session_state[cle_resultat] = tuer(s, condamne, "est éliminé par le village", "village")
+        enregistrer_condamne(s, condamne)
+    st.rerun()
+
+
 def _saisie_vote(s, rang):
     """Vote du village : `rang` 1 pour le premier, 2 pour le second exigé par le juge bègue."""
     cle_sel = s["jour"] if rang == 1 else f"{s['jour']}b"
     cle_resultat = f"resultat_{s['jour']}" if rang == 1 else f"resultat2_{s['jour']}"
     if rang == 1:
         st.caption("Débattez à voix haute, puis le capitaine saisit le résultat du vote.")
+        cible_corbeau = s.get("corbeau_cible")
+        if cible_corbeau and s["joueurs"][cible_corbeau]["vivant"]:
+            annonce(f"Le corbeau a désigné {cible_corbeau} : deux voix de plus contre lui à ce vote.", "!")
     else:
         annonce("Le juge bègue exige un second vote : le village se prononce à nouveau.", "!")
     st.markdown("**Le village élimine**")
@@ -160,15 +192,17 @@ def _saisie_vote(s, rang):
         "valider_vote" if rang == 1 else "valider_vote2", disabled=condamne is None,
     ):
         st.session_state.pop(f"sel_vote_{cle_sel}", None)
-        st.session_state[cle_resultat] = tuer(s, condamne, "est éliminé par le village", "village")
-        enregistrer_condamne(s, condamne)
-        st.rerun()
+        _rendre_verdict(s, condamne, cle_resultat)
+    bouc = bouc_emissaire(s)
+    if bouc and st.button("⚖️ Égalité des voix : le bouc émissaire est condamné", key=f"bouc_{rang}"):
+        st.session_state.pop(f"sel_vote_{cle_sel}", None)
+        _rendre_verdict(s, bouc, cle_resultat)
 
 
 def ecran_conseil(s):
     resultat = None if s["jour"] == 0 else st.session_state.get(f"resultat_{s['jour']}")
     resultat2 = None if s["jour"] == 0 else st.session_state.get(f"resultat2_{s['jour']}")
-    if resultat:
+    if resultat is not None:
         scene_ciel("jour", "Le village a tranché", f"Jour {s['jour']}")
     else:
         st.title("🗳️ Conseil du village")
@@ -181,13 +215,13 @@ def ecran_conseil(s):
             st.rerun()
         return
 
-    if not resultat:
+    if resultat is None:
         _saisie_vote(s, 1)
         return
 
-    panneau_vote(s, resultat)
-    if resultat2:
-        panneau_vote(s, resultat2, "Second vote")
+    panneau_vote(s, resultat, epargne=st.session_state.get(f"epargne_resultat_{s['jour']}"))
+    if resultat2 is not None:
+        panneau_vote(s, resultat2, "Second vote", epargne=st.session_state.get(f"epargne_resultat2_{s['jour']}"))
     annonce_tirs(s)
 
     gagnant = vainqueur(s)
@@ -197,7 +231,7 @@ def ecran_conseil(s):
         if st.button("Voir le résultat", type="primary"):
             terminer_partie(s, gagnant)
             st.rerun()
-    elif s.get("second_vote") == s["jour"] and not resultat2:
+    elif s.get("second_vote") == s["jour"] and resultat2 is None:
         _saisie_vote(s, 2)
     elif st.button("La nuit tombe", type="primary"):
         s["jour"] += 1

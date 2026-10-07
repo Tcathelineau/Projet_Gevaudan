@@ -32,9 +32,9 @@ def _pourcentage(valeur):
 def _dalle(role):
     notes = ROLES_NOTES[role.key]
     classe_camp, libelle_camp = _camp(role)
-    if role.lot > 1:
-        libelle_camp += f" · {role.lot} cartes (notes par carte)"
     impact = notes["impact_pts"]
+    if role.lot > 1:
+        libelle_camp += f" · {role.lot} cartes : impact par carte, {impact * role.lot:+.0f} pts ensemble"
     if abs(impact) < .5:
         remplissage, signe = "", "0"
     else:

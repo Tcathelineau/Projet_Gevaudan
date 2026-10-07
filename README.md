@@ -50,6 +50,11 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 | 👭 | **Sœurs** (2 cartes) | Village | Elles se connaissent dès la première nuit. |
 | 👬 | **Frères** (3 cartes) | Village | Ils se connaissent dès la première nuit. |
 | 🧹 | **Servante dévouée** | Village | La nuit qui suit un vote, elle peut reprendre en secret le rôle du condamné ; le panneau d'affichage annonce le lendemain qu'elle est intervenue. |
+| 🐻 | **Montreur d'ours** | Village | Chaque matin, son ours grogne si l'un de ses deux voisins vivants (autour de la table, dans l'ordre des noms saisis) est un loup. |
+| 👧 | **Petite Fille** | Village | Elle joue après les loups : elle peut les espionner (une chance sur trois d'être dévorée) et apprend qui ils ont désigné, plus deux silhouettes dont l'une est un loup. |
+| 🐦 | **Corbeau** | Village | Chaque nuit, désigne un joueur qui recevra deux voix de plus au prochain vote (annoncé au panneau). |
+| 🤡 | **Idiot du village** | Village | Condamné par le village, il révèle son rôle et survit (une fois), mais ne vote plus. |
+| 🐐 | **Bouc émissaire** | Village | En cas d'égalité des voix, c'est lui qui est condamné (bouton « Égalité des voix » au vote). |
 | ⚖️ | **Juge bègue** | Village | Une fois par partie, exige (de nuit, en secret) un second vote du village au conseil suivant. |
 
 ## 📜 Les règles gérées par l'app

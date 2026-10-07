@@ -32,6 +32,11 @@ ICONES = {
     "frere": ("delapouite", "three-friends"),
     "servante": ("delapouite", "broom"),
     "juge_begue": ("lorc", "gavel"),
+    "montreur_ours": ("delapouite", "bear-head"),
+    "corbeau": ("lorc", "raven"),
+    "petite_fille": ("delapouite", "spy"),
+    "idiot": ("delapouite", "jester-hat"),
+    "bouc_emissaire": ("lorc", "ram"),
     "logo": ("lorc", "wolf-howl"),
 }
 

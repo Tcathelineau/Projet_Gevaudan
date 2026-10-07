@@ -56,11 +56,10 @@ def panneau_morts(s):
             '<div class="avis-detail">Le corbeau l\'a désigné : deux voix de plus contre lui au prochain vote.</div></div>'
         )
     if s.get("servante_nuit"):
-        servante, mort = s["servante_nuit"]["servante"], s["servante_nuit"]["mort"]
+        mort = s["servante_nuit"]["mort"]  # le nom de la servante reste secret
         papiers.append(
-            f'<div class="avis-papier"><div class="avis-nom">🧹 {html.escape(servante)}</div>'
-            f'<div class="avis-detail">La servante dévouée est intervenue : elle a repris cette nuit le rôle de '
-            f'{html.escape(mort)}, condamné hier.</div></div>'
+            '<div class="avis-papier"><div class="avis-nom">🧹 La servante dévouée</div>'
+            f'<div class="avis-detail">Elle a pris cette nuit le rôle de {html.escape(mort)}, condamné hier.</div></div>'
         )
     panneau_avis("Avis à la population", "Premier jour" if s["jour"] == 0 else f"Jour {s['jour']}", papiers)
 

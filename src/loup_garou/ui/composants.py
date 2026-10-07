@@ -65,7 +65,9 @@ def fenetre_couple(autres):
             'Gardez le secret, ou pas : à vous de jouer.</div></div>',
             unsafe_allow_html=True,
         )
-        st.button("Compris", type="primary", key="fermer_couple", use_container_width=True)
+        # Un bouton dans une fenêtre ne relance que la fenêtre : il faut relancer la page pour la fermer.
+        if st.button("Compris", type="primary", key="fermer_couple", use_container_width=True):
+            st.rerun()
 
     st.dialog(titre)(contenu)()
 

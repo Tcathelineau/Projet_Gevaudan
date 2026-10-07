@@ -26,7 +26,7 @@ DOSSIER = Path(__file__).resolve().parent.parent / "src" / "loup_garou" / "asset
 # fichier de sortie -> (chemin dans FreePD, titre)
 PISTES = {
     "musique_nuit": ("Horror/Creepy Hallow.mp3", "Creepy Hallow"),
-    "musique_jour": ("Upbeat/Happy Whistling Ukulele.mp3", "Happy Whistling Ukulele"),
+    "musique_jour": ("Romance/Nostalgic Piano.mp3", "Nostalgic Piano"),  # piano lent et sobre (alternatives : Pond, Parhelion)
     "musique_conseil": ("Scoring/Find Them.mp3", "Find Them"),
 }
 VOLUME_CIBLE = 0.12  # niveau efficace commun

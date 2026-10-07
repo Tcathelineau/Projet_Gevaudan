@@ -16,7 +16,7 @@ from loup_garou.ui.ecrans.nuit import ecran_nuit
 from loup_garou.ui.regles import SECTIONS, afficher_regles, afficher_roles_de_la_partie
 from loup_garou.ui.illustrations import ASSETS
 from loup_garou.ui.sons import (
-    actif, cases_a_cocher, effet_courant, jouer_effet, jouer_musique, musique_courante, vider_session,
+    actif, cases_a_cocher, effet_autorise, effet_courant, jouer_effet, marquer_cri, jouer_musique, musique_courante, vider_session,
 )
 from loup_garou.ui.styles import CSS_ACCUEIL, css_cartes, CSS_HISTORIQUE, CSS_PASSAGE, CSS_SCENES
 
@@ -116,8 +116,12 @@ def main():
         if actif("musique_on"):
             jouer_musique(musique_courante(s))
     with zone_effet:
-        effet = effet_courant(s)
-        if effet and actif("sons_on") and (effet != "hurlement" or actif("cri_on")):
+        morts_du_vote = (st.session_state.get(f"resultat_{s['jour']}") or []) + (
+            st.session_state.get(f"resultat2_{s['jour']}") or [])
+        effet = effet_courant(s, morts_du_vote)
+        if effet and effet_autorise(effet):
+            if effet == "hurlement":
+                marquer_cri(s)
             jouer_effet(effet)
 
     with st.sidebar:

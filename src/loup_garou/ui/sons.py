@@ -11,6 +11,7 @@ from functools import lru_cache
 import streamlit as st
 
 from loup_garou.config import MUSIQUE_FILE
+from loup_garou.moteur.partie import camp
 from loup_garou.roles import ROLES
 from loup_garou.ui.illustrations import ASSETS
 
@@ -21,31 +22,46 @@ def _octets(fichier):
 
 
 def musique_courante(s):
-    """Nom de la musique de l'écran affiché (nuit inquiétante, jour joyeux, conseil tendu), ou None."""
+    """Nom de la musique de l'écran affiché, ou None : nuit inquiétante, jour sobre, conseil tendu.
+    La tension du conseil commence dès le réveil quand la nuit a fait des morts."""
+    phase = s["phase"]
+    if phase == "reveil":
+        return "musique_conseil" if s.get("morts_nuit") else "musique_jour"
     return {
         "nuit": "musique_nuit",
-        "reveil": "musique_jour",
-        "election_maire": "musique_jour",
+        "election_maire": "musique_conseil",
         "conseil": "musique_conseil",
         "tir_chasseur": "musique_conseil",
-    }.get(s["phase"])
+    }.get(phase)
 
 
-def effet_courant(s):
-    """Bruitage de l'écran affiché : hurlement quand un loup découvre sa carte, cri de victoire à la fin."""
+def _un_gentil_meurt(s, morts):
+    return any(camp(s, n) != "loups" for n in morts)
+
+
+def effet_courant(s, morts_du_vote=()):
+    """Bruitage de l'écran affiché : coup de gong quand un innocent meurt (réveil ou verdict du village),
+    hurlement quand un loup découvre sa carte, cri de victoire à la fin."""
     if s["phase"] == "fin":
         message = s.get("message_fin", "")
         gagnant_village = message.startswith(("Le village a gagné", "Les amoureux"))
         return "victoire_village" if gagnant_village else "victoire_loups"
+    if s["phase"] == "reveil" and _un_gentil_meurt(s, s.get("morts_nuit", [])):
+        return "mort_gentil"
+    if s["phase"] == "conseil" and morts_du_vote and _un_gentil_meurt(s, morts_du_vote):
+        return "mort_gentil"
     if s["phase"] == "nuit" and s.get("devoile") and s["tour"] < len(s.get("ordre_nuit", [])):
         # Une seule fois par joueur : la première fois qu'il découvre qu'il est loup (la clé garde le son
         # affiché pendant tout son tour, sinon il disparaîtrait au premier clic).
         d = s["joueurs"][s["ordre_nuit"][s["tour"]]]
-        tour = f"{s['jour']}_{s['tour']}"
-        if ROLES[d["role"]].camp == "loups" and d.get("cri_loup") in (None, tour):
-            d["cri_loup"] = tour
+        if ROLES[d["role"]].camp == "loups" and d.get("cri_loup") in (None, f"{s['jour']}_{s['tour']}"):
             return "hurlement"
     return None
+
+
+def marquer_cri(s):
+    """Note que le joueur en cours a entendu son hurlement (à appeler quand il est réellement joué)."""
+    s["joueurs"][s["ordre_nuit"][s["tour"]]]["cri_loup"] = f"{s['jour']}_{s['tour']}"
 
 
 def jouer_musique(nom):
@@ -64,7 +80,7 @@ def jouer_effet(nom):
 # Réglages du son : désactivé par défaut (rien ne doit jouer à l'arrivée sur la page), activé depuis le menu Option.
 REGLAGES = {
     "musique_on": "🎵 Musique",
-    "sons_on": "🔔 Bruitages (victoire)",
+    "sons_on": "🔔 Bruitages (morts, victoire du village)",
     "cri_on": "🐺 Hurlement d'un loup à la révélation de sa carte",
 }
 
@@ -88,3 +104,12 @@ def vider_session():
     reglages = {cle: st.session_state[cle] for cle in REGLAGES if cle in st.session_state}
     st.session_state.clear()
     st.session_state.update(reglages)
+
+
+def effet_autorise(effet):
+    """Les hurlements se règlent à part (ils trahissent le camp) ; la victoire des loups sonne aussi si l'un des deux est activé."""
+    if effet == "hurlement":
+        return actif("cri_on")
+    if effet == "victoire_loups":
+        return actif("sons_on") or actif("cri_on")
+    return actif("sons_on")

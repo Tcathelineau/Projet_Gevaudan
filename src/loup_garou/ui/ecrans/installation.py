@@ -182,10 +182,15 @@ def etape_roles():
             for i in range(0, len(roles), 4):
                 cols = st.columns(4)
                 for col, role in zip(cols, roles[i:i + 4]):
+                    # Couple tiré au sort : Cupidon devient villageois, on le dit au lieu de le faire en silence.
+                    remplace = role.key == "cupidon" and bool(st.session_state.get("opt_couple_hasard"))
                     with col, st.container(key=f"info_{role.key}"):
                         composition[role.key] = role.lot * int(st.checkbox(
-                            f"{role.emoji} {role.nom}" + (f" ×{role.lot}" if role.lot > 1 else ""),
-                            value=bool(speciaux_defaut[role.key]), key=f"n_{role.key}",
+                            f"{role.emoji} {role.nom}" + (f" ×{role.lot}" if role.lot > 1 else "")
+                            + (" (devient villageois)" if remplace else ""),
+                            value=bool(speciaux_defaut[role.key]), key=f"n_{role.key}", disabled=remplace,
+                            help="Le couple est tiré au sort (option avancée) : Cupidon est remplacé par un villageois."
+                            if remplace else None,
                         ))
 
         # Rôles spéciaux en quantité libre (aucun aujourd'hui, mais le prochain

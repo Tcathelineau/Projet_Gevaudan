@@ -29,7 +29,7 @@ Il est élu au premier jour. S'il meurt, il désigne lui-même son successeur. Q
 """),
     ("🤫 Passer l'appareil sans tricher", """
 À chaque tour de nuit, deux écrans se succèdent : **« Je vais chercher X »**, puis **« Oui, je suis X »**. Ne cliquez sur le second qu'une fois l'appareil dans les bonnes mains : il dévoile la carte.
-Si les loups ne s'accordent pas sur une victime, personne n'est dévoré.
+Si les loups ne s'accordent pas sur une victime, personne n'est dévoré. Les loups peuvent aussi désigner l'un des leurs (sacrifice, bluff).
 """),
     ("🕰️ Le rythme et les esprits", """
 Le jeu se vit sur plusieurs heures ou plusieurs jours : **les joueurs décident ensemble** quand ouvrir un conseil. Les morts deviennent des **esprits frappeurs** : ils discutent et glanent des informations, mais ne votent pas et ne parlent pas au conseil. Les esprits ne vont jamais vers les vivants : ce sont les vivants qui viennent les interroger.

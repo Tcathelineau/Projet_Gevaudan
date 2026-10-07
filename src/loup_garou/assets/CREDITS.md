@@ -26,7 +26,7 @@ Les icônes des rôles viennent de [game-icons.net](https://game-icons.net), sou
 Les trois musiques viennent de [FreePD](https://freepd.com), morceaux en domaine public ([CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/), aucune attribution requise ; remerciements à leurs auteurs), récupérés via le miroir GitHub [0lhi/FreePD](https://github.com/0lhi/FreePD) :
 
 - nuit : « Creepy Hallow » (Horror)
-- jour : « Happy Whistling Ukulele » (Upbeat)
+- jour : « Nostalgic Piano » (Romance)
 - conseil : « Find Them » (Scoring)
 
 Préparées (mono, volume commun, fondus, MP3) par `outils/importer_musiques.py`.

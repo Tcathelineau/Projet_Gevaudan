@@ -64,6 +64,7 @@ La parité compte beaucoup : à 16 joueurs, la règle « un loup pour quatre » 
 ## Limites
 
 - **Joueurs automatiques, pas des humains** : aucune stratégie fine, pas de bluff, pas de rôles annoncés. Les rôles d'information sont les plus dépendants de l'hypothèse de croyance (60 %) : si le village suit mal ses informations, le Renard et la Voyante valent moins ; s'il les suit bien, davantage. Le classement des rôles est plus fiable que les valeurs absolues.
+- **Les loups simulés ne se votent jamais entre eux** (dans le jeu, la meute peut désigner l'un des siens) : un sacrifice ou un bluff de la meute n'est pas mesuré.
 - **Rôles stratégiques sous-évalués** : Salvateur, Sorcière et Juge bègue sont joués au hasard, un humain en tirerait plus.
 - **Voleur** : son effet positif vient d'un artefact de règle (deux cartes laissées au milieu, qui peuvent contenir un loup), pas de son pouvoir.
 - **Calibrage** : il pose que les compositions recommandées sont équilibrées en moyenne ; changer ce choix décale toutes les jauges.

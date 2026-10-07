@@ -23,8 +23,9 @@ def _afficher_meute(s, nom):
     badge_meute(nom, complices)
 
 
-def _cibles_loups(s):
-    return [n for n in vivants(s) if camp(s, n) != "loups"]
+def _cibles_loups(s, nom):
+    """Tous les vivants sauf soi : la meute peut aussi se voter elle-même (sacrifice, bluff)."""
+    return [n for n in vivants(s) if n != nom]
 
 
 def _vote_loups(s, nom, cle, cibles):
@@ -47,12 +48,12 @@ def _vote_loups(s, nom, cle, cibles):
 
 def _nuit_loup(s, nom, cle):
     _afficher_meute(s, nom)
-    cibles = _cibles_loups(s)
+    cibles = _cibles_loups(s, nom)
     if s["jour"] == 0:
         plaquette("Première nuit : vous vous découvrez, personne ne meurt encore.", icone="🐾")
         bouton_fin(s, cle)
     elif not cibles:
-        plaquette("Il ne reste que des loups : personne à dévorer.", icone="🐾")
+        plaquette("Plus personne à dévorer.", icone="🐾")
         bouton_fin(s, cle)
     elif _vote_loups(s, nom, cle, cibles):
         fin_de_tour(s)
@@ -67,7 +68,7 @@ def _nuit_loup_blanc(s, nom, cle):
         bouton_fin(s, cle)
         return
 
-    cibles = _cibles_loups(s)
+    cibles = _cibles_loups(s, nom)
     if cibles and s.get("vote_loup_blanc") != cle:
         if _vote_loups(s, nom, cle, cibles):
             s["vote_loup_blanc"] = cle
@@ -159,13 +160,19 @@ def _nuit_renard(s, nom, cle):
 
 
 def _nuit_voyante(s, nom, cle):
-    """La voyante a une vision toutes les N nuits (option de partie) : pas de stock à épuiser."""
+    """La voyante a une vision toutes les N nuits (option de partie) : pas de stock à épuiser.
+    Quand le couple est tiré au sort (pas de Cupidon), elle peut, une fois, apprendre qui sont les amoureux
+    au lieu de sonder un rôle."""
     deja_vu = st.session_state.get(f"vu_{cle}")
+    couple_vu = st.session_state.get(f"couple_vu_{cle}")
     peut_voir = nuit_active(s, opt(s, "cadence_voyante"))
 
     if deja_vu:
         role_vu = s["joueurs"][deja_vu]["role"]
         plaquette(f"{deja_vu} est {ROLES[role_vu].nom.upper()}.", icone="🔮", ton="succes")
+        bouton_fin(s, cle)
+    elif couple_vu:
+        plaquette(f"Les amoureux sont {' et '.join(s['amoureux'])}.", icone="💘", ton="succes")
         bouton_fin(s, cle)
     elif not peut_voir:
         plaquette(
@@ -174,6 +181,24 @@ def _nuit_voyante(s, nom, cle):
         )
         bouton_fin(s, cle)
     else:
+        peut_couple = bool(opt(s, "couple_hasard") and s["amoureux"] and not s.get("voyante_a_vu_couple"))
+        cle_mode = f"voy_mode_{cle}"
+        if peut_couple and st.session_state.get(cle_mode) is None:
+            st.markdown("**Que veux-tu voir cette nuit ?**")
+            st.caption("Le couple a été tiré au sort : tu peux apprendre qui il forme (une seule fois), ou sonder un rôle.")
+            col_role, col_couple = st.columns(2)
+            if col_role.button("🔮 Deviner un rôle", use_container_width=True, key=f"voy_role_{cle}"):
+                st.session_state[cle_mode] = "role"
+                st.rerun()
+            if col_couple.button("💘 Découvrir le couple", use_container_width=True, key=f"voy_couple_{cle}"):
+                s["voyante_a_vu_couple"] = True
+                log(s, f"La voyante {nom} découvre le couple : {' et '.join(s['amoureux'])}.")
+                st.session_state[f"couple_vu_{cle}"] = True
+                st.rerun()
+            return
+        if peut_couple and st.button("← Autre choix", key=f"voy_retour_{cle}"):
+            st.session_state.pop(cle_mode, None)
+            st.rerun()
         candidats = [n for n in vivants(s) if n != nom]
         choix = selection_dalles("voy", cle, candidats, 1)
         vu = choix[0] if choix else None
@@ -244,6 +269,8 @@ def _nuit_sorciere(s, nom, cle):
         st.session_state[f"poison_{cle}"] = True
         st.rerun()
     if fin:
+        if not utilise:
+            log(s, f"La sorcière {nom} n'utilise aucune potion.")
         fin_de_tour(s)
         st.rerun()
 

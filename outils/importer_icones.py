@@ -61,7 +61,7 @@ def main():
         "Les trois musiques viennent de [FreePD](https://freepd.com), morceaux en domaine public "
         "([CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/), aucune attribution requise ; remerciements "
         "à leurs auteurs), récupérés via le miroir GitHub [0lhi/FreePD](https://github.com/0lhi/FreePD) :\n\n"
-        "- nuit : « Creepy Hallow » (Horror)\n- jour : « Happy Whistling Ukulele » (Upbeat)\n"
+        "- nuit : « Creepy Hallow » (Horror)\n- jour : « Nostalgic Piano » (Romance)\n"
         "- conseil : « Find Them » (Scoring)\n\n"
         "Préparées (mono, volume commun, fondus, MP3) par `outils/importer_musiques.py`.\n\n"
         "## Bruitages\n\nLe hurlement et les sons de victoire sont synthétisés par `outils/generer_sons.py` "

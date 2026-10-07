@@ -117,50 +117,118 @@ def ecrire(nom, signal, crete=.6, fondu=.4):
 
 # --- bruitages -----------------------------------------------------------------------------------
 
-def hurlement_seul(duree, grave, aigu, vibrato=14):
-    t = temps(duree)
-    hauteur = np.interp(t, [0, duree * .3, duree * .55, duree], [grave, aigu, aigu * .96, grave * 1.3])
-    vib = vibrato * np.sin(2 * np.pi * 5.2 * t) * np.clip((t - duree * .25) / (duree * .2), 0, 1)
-    phase = 2 * np.pi * np.cumsum(hauteur + vib) / SR
-    voix = np.sin(phase) + .5 * np.sin(2 * phase) + .22 * np.sin(3 * phase)
-    souffle = .12 * bruit_filtre(duree, 600, 3000)
-    env = np.interp(t, [0, duree * .12, duree * .5, duree * .85, duree], [0, .8, 1, .55, 0])
-    return (voix + souffle) * env
+def voyelle(f, formants):
+    """Enveloppe spectrale d'une voyelle : somme de bosses (centre, largeur, gain) autour des formants."""
+    f = np.asarray(f, dtype=float)
+    return .02 + sum(g * np.exp(-((f - c) / w) ** 2) for c, w, g in formants)
+
+
+OU = ((430, 190, 1.0), (880, 260, .55), (2200, 600, .12))      # « ouou » du hurlement
+A = ((730, 200, 1.0), (1220, 260, .7), (2600, 500, .2))         # « a » d'une acclamation
+
+
+def bruit_lisse(n, frequence):
+    """Variation lente aléatoire (autour de 0, amplitude ~1), pour les micro-variations de hauteur."""
+    pas = max(int(SR / frequence), 1)
+    points = rng.standard_normal(n // pas + 2)
+    return np.interp(np.arange(n), np.arange(len(points)) * pas, points)
+
+
+def voix(f0, formants, harmoniques_max=28, pente=.7):
+    """Voix chantée : harmoniques de la hauteur `f0` (une valeur par échantillon) pondérées par la voyelle."""
+    phase = 2 * np.pi * np.cumsum(f0) / SR
+    signal = np.zeros_like(f0)
+    for k in range(1, harmoniques_max + 1):
+        fk = k * f0
+        poids = voyelle(fk, formants) / k ** pente * (fk < SR / 2 - 400)
+        signal += poids * np.sin(k * phase)
+    return signal
+
+
+def hurlement_seul(duree, grave, aigu, souffle=.1):
+    """Un loup qui hurle : montée lente vers la note haute, vibrato tardif, hauteur vivante, retombée plaintive."""
+    n = int(SR * duree)
+    t = np.arange(n) / SR
+    d = duree
+    contour = np.interp(t, [0, .05 * d, .3 * d, .55 * d, .75 * d, .92 * d, d],
+                        [grave * .78, grave, aigu, aigu * .98, aigu * .9, grave * 1.12, grave * .8])
+    vibrato = 1 + .018 * np.sin(2 * np.pi * 5.3 * t + rng.uniform(0, 6)) * np.clip((t - .3 * d) / (.25 * d), 0, 1)
+    hauteur = contour * vibrato * (1 + .006 * bruit_lisse(n, 9) + .01 * bruit_lisse(n, 2.5))
+    chant = voix(hauteur, OU)
+    enveloppe = np.interp(t, [0, .06 * d, .22 * d, .7 * d, .93 * d, d], [0, .45, 1, .85, .25, 0])
+    enveloppe *= 1 + .06 * bruit_lisse(n, 6)
+    air = bruit_filtre(duree, 500, 3800) * (.4 + .6 * np.clip((t - .25 * d) / (.2 * d), 0, 1)) * souffle
+    return (chant / (np.max(np.abs(chant)) or 1) + air) * enveloppe
 
 
 def hurlement():
-    return reverb(hurlement_seul(3.8, 300, 640), 1.6, .3)
+    """Révélation d'un loup : un seul hurlement, dans le lointain."""
+    d = 4.6
+    sortie = np.zeros(int(SR * d))
+    poser(sortie, hurlement_seul(4.2, 320, 620), .15)
+    return reverb(sortie, 2.2, .32)
 
 
 def victoire_loups():
-    d = 7.0
+    """Victoire des loups : la meute entière, quatre voix décalées, sous un vent froid."""
+    d = 8.0
     sortie = np.zeros(int(SR * d))
-    for debut, grave, aigu in ((0, 260, 560), (.7, 330, 700), (1.4, 220, 480)):
-        poser(sortie, hurlement_seul(5.0, grave, aigu), debut, .6)
+    for debut, grave, aigu, gain in ((0, 300, 600, 1.0), (.55, 380, 760, .8), (1.15, 250, 500, .9), (1.8, 340, 680, .7)):
+        poser(sortie, hurlement_seul(5.6, grave, aigu), debut, gain)
     t = temps(d)
-    sortie += .12 * (np.sin(2 * np.pi * 110 * t) + .8 * np.sin(2 * np.pi * 130.8 * t))
-    sortie += .08 * bruit_filtre(d, 150, 700)
-    return reverb(sortie, 2.0, .3)
+    sortie += .09 * bruit_filtre(d, 120, 900) * (.6 + .4 * np.sin(2 * np.pi * t / d * 2))
+    return reverb(sortie, 2.8, .38)
+
+
+def mort_gentil():
+    """Un innocent meurt : coup de gong grave, un second plus sourd, et un battement sourd dessous."""
+    d = 6.0
+    t = temps(d)
+    sortie = np.zeros(len(t))
+    for debut, f0, gain in ((0, 82, 1.0), (1.6, 73, .6)):
+        gong = sum(g * np.sin(2 * np.pi * f0 * r * temps(d - debut)) * np.exp(-temps(d - debut) / tau)
+                   for r, g, tau in ((1, .55, 2.6), (1.5, .5, 2.0), (2.0, 1.0, 1.9), (2.76, .9, 1.5), (5.4, .5, .9), (8.9, .22, .5)))
+        gong *= np.minimum(temps(d - debut) / .006, 1)
+        poser(sortie, gong, debut, gain)
+    for debut in (0, 1.6):
+        poser(sortie, np.sin(2 * np.pi * np.cumsum(np.interp(temps(.8), [0, .8], [75, 38])) / SR) * np.exp(-temps(.8) / .22), debut, .45)
+        poser(sortie, bruit_filtre(.25, 60, 400) * np.exp(-temps(.25) / .05), debut, .5)
+    return reverb(sortie, 2.0, .22)
+
+
+def acclamation(duree, hauteur, graine_voyelle=A):
+    """« Ouais ! » : une voix qui monte, ouverte sur un « a »."""
+    n = int(SR * duree)
+    t = np.arange(n) / SR
+    f0 = np.interp(t, [0, .25 * duree, duree], [hauteur * .85, hauteur * 1.15, hauteur * 1.05]) * (1 + .01 * bruit_lisse(n, 8))
+    v = voix(f0, graine_voyelle, 18, .8)
+    return v / (np.max(np.abs(v)) or 1) * np.minimum(t / .03, 1) * np.exp(-t / (duree * .6))
 
 
 def victoire_village():
-    d = 6.0
+    """Victoire du village : fanfare de cuivres, cloches, acclamations et applaudissements."""
+    d = 7.0
     sortie = np.zeros(int(SR * d))
-    for i, m in enumerate((67, 72, 76, 79, 84)):
-        poser(sortie, note(hz(m), 1.4, SCIE, attaque=.01, relache=.4, decroissance=.5), i * .17, .35)
-    for m in (72, 76, 79):
-        poser(sortie, note(hz(m), 3.0, SCIE, attaque=.02, relache=1.2), .9, .22)
-        poser(sortie, note(hz(m + 12), 2.4, CLOCHE, attaque=.003, relache=.8, decroissance=.9), .9, .3)
+    cuivres = tuple((k, 1 / k ** .6) for k in range(1, 10))
+    for i, m in enumerate((67, 72, 76, 79)):
+        poser(sortie, note(hz(m), .5, cuivres, attaque=.03, relache=.1), i * .22, .4)
+    for m in (72, 76, 79, 84):
+        poser(sortie, note(hz(m), 2.6, cuivres, attaque=.05, relache=1.2, desaccord=.003), 1.0, .22)
+    for i, m in enumerate((88, 91, 95, 100, 96, 103)):
+        poser(sortie, note(hz(m), 1.6, CLOCHE, attaque=.003, relache=.4, decroissance=.5), 1.0 + i * .13, .22)
+    for debut, hauteur in ((1.1, 230), (1.35, 300), (1.5, 260), (1.8, 340), (2.1, 280)):
+        poser(sortie, acclamation(.9, hauteur), debut, .22)
     applaudissements = np.zeros_like(sortie)
-    for _ in range(420):
-        debut = float(np.clip(rng.normal(3.0, 1.1), .6, 5.6))
-        poser(applaudissements, impact_bruit(.035, 1200, 7000, .01), debut, rng.uniform(.2, .7))
-    sortie += .7 * applaudissements
-    return reverb(sortie, 1.4, .2)
+    for _ in range(520):
+        debut = float(np.clip(rng.normal(3.6, 1.3), 1.2, 6.4))
+        poser(applaudissements, impact_bruit(.04, 1000, 7500, .012), debut, rng.uniform(.2, .8))
+    sortie += .65 * applaudissements
+    return reverb(sortie, 1.6, .2)
 
 
 if __name__ == "__main__":
-    ecrire("hurlement", hurlement(), crete=.7, fondu=.5)
-    ecrire("victoire_village", victoire_village(), crete=.7, fondu=.8)
-    ecrire("victoire_loups", victoire_loups(), crete=.7, fondu=1.0)
+    ecrire("hurlement", hurlement(), crete=.7, fondu=.6)
+    ecrire("victoire_loups", victoire_loups(), crete=.7, fondu=1.2)
+    ecrire("mort_gentil", mort_gentil(), crete=.75, fondu=.8)
+    ecrire("victoire_village", victoire_village(), crete=.7, fondu=1.0)
     print("sons écrits dans", DOSSIER)

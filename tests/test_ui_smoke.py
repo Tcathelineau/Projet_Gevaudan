@@ -399,3 +399,109 @@ def test_recharger_une_etape_garde_les_reglages_du_son():
     at = _app(s, options_ouvert=True, musique_on=True, sons_on=True, reload_choix="nuit_1")
     at.button(key="reload_ok").click().run()
     assert at.session_state["musique_on"] is True and at.session_state["sons_on"] is True
+
+
+def _tour_de_nuit(roles, nom, **etat):
+    """Nuit 1, au tour de `nom`, carte découverte."""
+    s = _conseil(roles)
+    s.update(phase="nuit", jour=1, ordre_nuit=[nom], tour=0, devoile=True, transfert=True, **etat)
+    return s
+
+
+def test_les_loups_peuvent_designer_l_un_des_leurs():
+    roles = {"A": "loup", "B": "loup", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "A"))
+    assert not at.exception
+    boutons = {b.key for b in at.button}
+    assert "pick_loup_1_0_B" in boutons and "pick_loup_1_0_C" in boutons
+    assert "pick_loup_1_0_A" not in boutons  # pas soi-même
+
+
+def test_les_loups_votent_contre_un_des_leurs_et_il_meurt():
+    roles = {"A": "loup", "B": "loup", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "A"))
+    at.button(key="pick_loup_1_0_B").click().run()
+    at.button(key="devorer_1_0").click().run()
+    s = at.session_state["partie"]
+    assert s["phase"] == "reveil" and s["morts_nuit"] == ["B"]
+
+
+def test_la_voyante_choisit_entre_un_role_et_le_couple_quand_il_est_tire_au_sort():
+    roles = {"A": "loup", "B": "voyante", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _tour_de_nuit(roles, "B", amoureux=["C", "D"])
+    s["options"]["couple_hasard"] = True
+    at = _app(s)
+    assert not at.exception
+    at.button(key="voy_couple_1_0").click().run()
+    partie = at.session_state["partie"]
+    assert partie["voyante_a_vu_couple"] is True
+    assert "Les amoureux sont C et D" in " ".join(m.value for m in at.markdown)
+    assert any("découvre le couple" in e["texte"] for e in partie["journal"])
+
+
+def test_la_voyante_peut_preferer_un_role():
+    roles = {"A": "loup", "B": "voyante", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _tour_de_nuit(roles, "B", amoureux=["C", "D"])
+    s["options"]["couple_hasard"] = True
+    at = _app(s)
+    at.button(key="voy_role_1_0").click().run()
+    assert any(b.key == "pick_voy_1_0_C" for b in at.button)  # les dalles de sondage apparaissent
+
+
+def test_la_voyante_n_a_que_les_roles_sans_couple_tire_au_sort():
+    roles = {"A": "loup", "B": "voyante", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B"))
+    assert not any((b.key or "").startswith("voy_couple") for b in at.button)
+    assert any(b.key == "pick_voy_1_0_C" for b in at.button)
+
+
+def test_le_couple_n_est_decouvrable_qu_une_fois():
+    roles = {"A": "loup", "B": "voyante", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _tour_de_nuit(roles, "B", amoureux=["C", "D"], voyante_a_vu_couple=True)
+    s["options"]["couple_hasard"] = True
+    at = _app(s)
+    assert not any((b.key or "").startswith("voy_couple") for b in at.button)
+
+
+def test_cupidon_est_grise_quand_le_couple_est_tire_au_sort():
+    at = _app(opt_couple_hasard=True)
+    at.button(key="accueil_btn_nouvelle").click().run()
+    case = at.checkbox(key="n_cupidon")
+    assert case.disabled and "devient villageois" in case.label
+    sans = _app()
+    sans.button(key="accueil_btn_nouvelle").click().run()
+    assert not sans.checkbox(key="n_cupidon").disabled
+
+
+def test_la_fin_de_partie_montre_les_coulisses_et_la_liste_compacte():
+    roles = {"A": "loup", "B": "sorciere", "C": "villageois", "D": "villageois"}
+    s = _fin(roles)
+    s["amoureux"] = ["B", "C"]
+    s["joueurs"]["B"]["amoureux"] = s["joueurs"]["C"]["amoureux"] = True
+    from loup_garou.moteur.journal import log
+
+    log(s, "Cupidon X lie B et C.", "nuit")
+    log(s, "La sorcière B utilise une potion de soin.", "nuit")
+    at = _app(s)
+    assert not at.exception
+    texte = " ".join(m.value for m in at.markdown)
+    assert "roles-grille" in texte and "Les amoureux" in texte and "Les potions" in texte
+    assert "Il restait" in texte and "Mise en place" in texte
+    assert "Les coulisses" in " ".join(h.value for h in at.subheader)
+
+
+def test_le_gong_sonne_au_reveil_quand_un_innocent_meurt():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    s = _conseil(roles)
+    s.update(phase="reveil", morts_nuit=["B"])
+    assert len(_app(s).get("audio")) == 0  # son désactivé par défaut
+    assert len(_app(s, sons_on=True).get("audio")) == 1  # le gong (pas de musique : réglage coupé)
+    assert len(_app(s, sons_on=True, musique_on=True).get("audio")) == 2  # gong + musique tendue du conseil
+
+
+def test_les_hurlements_accompagnent_la_victoire_des_loups_meme_sans_les_bruitages():
+    roles = {"A": "loup", "B": "loup", "C": "villageois"}
+    s = _fin(roles, "Les loups ont gagné : ils sont plus nombreux que les villageois.")
+    assert len(_app(s, cri_on=True).get("audio")) == 1
+    assert len(_app(s, sons_on=True).get("audio")) == 1
+    assert len(_app(s).get("audio")) == 0

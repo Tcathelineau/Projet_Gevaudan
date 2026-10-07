@@ -11,7 +11,7 @@ from loup_garou.roles import ROLES
 from loup_garou.ui.composants import scene_ciel, silhouettes_vent
 from loup_garou.ui.illustrations import svg_role
 from loup_garou.ui.ecrans.statistiques import afficher_statistiques
-from loup_garou.ui.ecrans.fin import afficher_historique, afficher_roles
+from loup_garou.ui.ecrans.fin import afficher_coulisses, afficher_historique, afficher_roles
 from loup_garou.ui.styles import CSS_SANS_SIDEBAR
 
 
@@ -109,5 +109,7 @@ def _liste_parties(parties):
             with st.expander("Détails"):
                 st.markdown(f"**{len(p['joueurs'])} joueurs**")
                 afficher_roles(p["joueurs"])
+                st.markdown("**🎭 Les coulisses**")
+                afficher_coulisses(p["joueurs"], p["journal"])
                 st.markdown("**📜 Journal**")
                 afficher_historique(p)

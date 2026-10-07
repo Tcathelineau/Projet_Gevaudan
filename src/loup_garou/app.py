@@ -128,8 +128,20 @@ def main():
                     st.markdown("**🔊 Son** (désactivé par défaut)")
                     cases_a_cocher()
                     panneau_rechargement(s)
-                    libelle = "🏠 Retour au menu" if s["phase"] == "fin" else "🚪 Abandonner la partie"
-                    if st.button(libelle, key="abandon"):
+                    if s["phase"] == "fin":
+                        sortir = st.button("🏠 Retour au menu", key="abandon")
+                    elif st.session_state.get("abandon_demande"):
+                        st.warning("La partie en cours sera perdue (elle ne sera pas archivée).")
+                        sortir = st.button("Oui, abandonner la partie", key="abandon")
+                        if st.button("Non, continuer", key="continuer_partie"):
+                            st.session_state.abandon_demande = False
+                            st.rerun()
+                    else:
+                        if st.button("🚪 Abandonner la partie", key="abandon_demande_bouton"):
+                            st.session_state.abandon_demande = True
+                            st.rerun()
+                        sortir = False
+                    if sortir:
                         clear_save()
                         vider_session()
                         st.rerun()

@@ -4,6 +4,7 @@ import random
 from collections import Counter
 
 from loup_garou.moteur.journal import log, prendre_instantane
+from loup_garou.moteur.migrations import VERSION
 from loup_garou.moteur.persistance import archiver_partie
 from loup_garou.options import opt, OPTIONS_DEFAUT, taille_couple
 from loup_garou.roles import ROLES, ROLES_SPECIAUX
@@ -23,6 +24,7 @@ def nouvelle_partie(noms, composition, options=None):
     cartes_milieu = roles[len(noms):]
 
     etat = {
+        "version": VERSION,
         "nb_joueurs": len(noms),
         "jour": 0,
         "phase": "nuit",

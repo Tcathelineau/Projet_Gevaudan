@@ -355,3 +355,47 @@ def test_la_page_statistiques_sans_partie():
     at.session_state["ecran"] = "historique"
     at.run()
     assert not at.exception
+
+
+def test_une_ancienne_sauvegarde_se_reprend_sans_erreur():
+    import json
+
+    from loup_garou.moteur.migrations import VERSION
+    from loup_garou.moteur.partie import nouvelle_partie
+
+    s = nouvelle_partie(list("ABCDE"), {"loup": 1, "voyante": 1, "sorciere": 1, "villageois": 2})
+    for cle in ("version", "morts", "composition", "options", "servante_nuit", "double_victime", "instantanes"):
+        s.pop(cle, None)
+    with open("save.json", "w", encoding="utf-8") as f:
+        json.dump(s, f)
+    at = _app()
+    assert not at.exception
+    assert at.session_state["partie"]["version"] == VERSION and at.session_state["partie"]["phase"] == "nuit"
+
+
+def test_une_sauvegarde_corrompue_ramene_au_menu():
+    with open("save.json", "w", encoding="utf-8") as f:
+        f.write("{ corrompue")
+    at = _app()
+    assert not at.exception and any(b.key == "accueil_btn_nouvelle" for b in at.button)
+
+
+def test_abandonner_la_partie_demande_confirmation():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    at = _app(_conseil(roles), options_ouvert=True)
+    at.button(key="abandon_demande_bouton").click().run()
+    assert "partie" in at.session_state and any(b.key == "abandon" for b in at.button)
+    at.button(key="continuer_partie").click().run()
+    assert "partie" in at.session_state and any(b.key == "abandon_demande_bouton" for b in at.button)
+    at.button(key="abandon_demande_bouton").click().run()
+    at.button(key="abandon").click().run()
+    assert "partie" not in at.session_state
+
+
+def test_recharger_une_etape_garde_les_reglages_du_son():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    s = _conseil(roles)
+    s["instantanes"] = [{"id": "nuit_1", "libelle": "Nuit 1", "etat": {k: v for k, v in s.items() if k != "instantanes"}}]
+    at = _app(s, options_ouvert=True, musique_on=True, sons_on=True, reload_choix="nuit_1")
+    at.button(key="reload_ok").click().run()
+    assert at.session_state["musique_on"] is True and at.session_state["sons_on"] is True

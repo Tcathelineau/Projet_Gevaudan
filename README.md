@@ -85,7 +85,8 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 - **Écrans de passage sécurisés** entre chaque joueur pour éviter qu'un rôle soit vu par la mauvaise personne.
 - **Chronologie et rechargement** : une frise nuit/jour dans la barre latérale montre où en est la partie, et le menu Option permet de revenir au début d'une nuit ou à l'annonce d'un jour (plantage, erreur de clic).
 - **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, affichée nuit par nuit à la fin, archivée à la fin de la partie dans `historique/partie_AAAAMMJJ_HHMMSS.json` (les parties abandonnées ne sont pas conservées) et téléchargeable en JSON.
-- **Sauvegarde automatique** (`save.json`) : la partie reprend là où elle s'est arrêtée, même après avoir fermé le serveur.
+- **Sauvegarde automatique** (`save.json`) : la partie reprend là où elle s'est arrêtée, même après avoir fermé le serveur. La sauvegarde est versionnée et mise à niveau à la lecture (une partie commencée avec une ancienne version reste jouable), écrite sans risque de fichier tronqué, et un fichier illisible est mis de côté (`save.json.corrompue`...) au lieu de faire planter l'application.
+- **Abandon confirmé** : abandonner une partie en cours demande une confirmation.
 
 <p align="center">
   <img src="docs/banniere-jour.svg" alt="Un village sous le soleil : bon jeu et que le meilleur gagne" width="100%">
@@ -211,6 +212,10 @@ uv run --python 3.12 --with numpy python outils/generer_sons.py            # bru
 uv run --python 3.12 --with numpy python outils/simuler_equilibre.py       # mesures d'équilibre (3 min)
 uv run --python 3.12 --with cairosvg python outils/generer_favicon.py      # icône d'onglet
 ```
+
+## Faire évoluer l'état de partie
+
+Toute clé obligatoire ajoutée à l'état (`nouvelle_partie`) exige une migration dans `src/loup_garou/moteur/migrations.py` : incrémenter `VERSION`, ajouter une fonction à `MIGRATIONS` qui donne une valeur par défaut aux parties déjà sauvegardées. Sans cela, la reprise d'une ancienne sauvegarde plante. Voir aussi `docs/accessibilite.md` pour l'état de l'accessibilité.
 
 ## Ajouter un rôle
 

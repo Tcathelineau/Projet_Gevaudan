@@ -181,7 +181,9 @@ def _nuit_voyante(s, nom, cle):
         )
         bouton_fin(s, cle)
     else:
-        peut_couple = bool(opt(s, "couple_hasard") and s["amoureux"] and not s.get("voyante_a_vu_couple"))
+        peut_couple = bool(
+            opt(s, "couple_hasard") and opt(s, "voyante_couple") and s["amoureux"] and not s.get("voyante_a_vu_couple")
+        )
         cle_mode = f"voy_mode_{cle}"
         if peut_couple and st.session_state.get(cle_mode) is None:
             st.markdown("**Que veux-tu voir cette nuit ?**")

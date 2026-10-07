@@ -379,6 +379,14 @@ def css_cartes():
         div[role="dialog"]:has(.dialogue-couple) button:hover { background: #cf4271; border-color: #ffb3d9; color: #fff; }
         @keyframes battement { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.16); } }
         @media (prefers-reduced-motion: reduce) { .dc-coeurs { animation: none; } }
+        /* Cartes de réglages : centrées, une par thème ; grisées quand le rôle concerné n'est pas dans la partie. */
+        div[class*="st-key-carte_opt_"] {
+            max-width: 560px; margin: .9rem auto; padding: .7rem 1rem 1rem; align-items: center; text-align: center;
+            border: 1px solid rgba(201,164,76,.45); border-radius: 12px; background: rgba(20,16,10,.45);
+        }
+        div[class*="st-key-carte_opt_"]:has(.carte-opt-inactive) { opacity: .5; }
+        .carte-opt-titre { font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.1rem; color: #f0d890; margin-bottom: .2rem; }
+        div[class*="st-key-carte_opt_"] [data-testid="stCheckbox"] { justify-content: center; }
         .titre-etape {
             text-align: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.7rem; letter-spacing: .04em;
             color: #f0d890; text-shadow: 0 2px 12px rgba(201,164,76,.35); margin: .6rem 0 .8rem;

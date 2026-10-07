@@ -1,5 +1,6 @@
 """Configuration d'une nouvelle partie en quatre étapes : table, rôles, options, joueurs."""
 
+from contextlib import contextmanager
 from types import SimpleNamespace
 
 import streamlit as st
@@ -18,12 +19,13 @@ ETAPES = (("table", "Table"), ("roles", "Rôles"), ("options", "Options"), ("nom
 CLES_ROLES = [f"n_{role.key}" for role in ROLES_SPECIAUX]
 CLES_OPTIONS = (
     "opt_potions", "opt_potions_mort", "opt_voyante", "opt_loup_blanc", "opt_couple_hasard", "opt_trouple", "opt_maire",
+    "opt_voyante_couple",
 )
 # Réglage de la composition (clé de session) <-> option de partie.
 OPTIONS_SESSION = {
     "opt_potions": "potions_sorciere", "opt_potions_mort": "potions_mort", "opt_voyante": "cadence_voyante",
     "opt_loup_blanc": "cadence_loup_blanc", "opt_couple_hasard": "couple_hasard", "opt_trouple": "trouple",
-    "opt_maire": "maire_depart",
+    "opt_maire": "maire_depart", "opt_voyante_couple": "voyante_couple",
 }
 
 
@@ -188,7 +190,7 @@ def _fixer(cle, valeur):
     st.session_state[cle] = valeur
 
 
-def choix_segmente(titre, cle, choix, defaut, aide=None):
+def choix_segmente(titre, cle, choix, defaut, aide=None, desactive=False):
     """Choix parmi quelques valeurs, en boutons côte à côte (le réglage vit sous `cle`, hors widget)."""
     actuel = st.session_state.setdefault(cle, defaut)
     st.markdown(f'<div class="segment-titre">{titre}</div>', unsafe_allow_html=True)
@@ -198,7 +200,7 @@ def choix_segmente(titre, cle, choix, defaut, aide=None):
         for valeur, libelle in choix.items():
             st.button(
                 libelle, key=f"{cle}__{valeur}", type="primary" if valeur == actuel else "secondary",
-                on_click=_fixer, args=(cle, valeur),
+                on_click=_fixer, args=(cle, valeur), disabled=desactive,
             )
     return actuel
 
@@ -207,7 +209,7 @@ def _pas(cle, sens, mini, maxi):
     st.session_state[cle] = min(max(st.session_state[cle] + sens, mini), maxi)
 
 
-def compteur(titre, cle, mini, maxi, defaut, cle_titre=None):
+def compteur(titre, cle, mini, maxi, defaut, cle_titre=None, desactive=False):
     """Compteur centré : un « − » rond, la valeur, un « + » rond. Le réglage vit sous `cle` (hors widget).
     `cle_titre` : conteneur du seul titre, pour lui donner une infobulle sans en mettre sur les boutons."""
     valeur = int(min(max(st.session_state.get(cle, defaut), mini), maxi))
@@ -215,9 +217,9 @@ def compteur(titre, cle, mini, maxi, defaut, cle_titre=None):
     with st.container(key=cle_titre or f"titre_{cle}"):
         st.markdown(f'<div class="compteur-titre">{titre}</div>', unsafe_allow_html=True)
     with st.container(key=f"compteur_{cle}", horizontal=True, horizontal_alignment="center", vertical_alignment="center"):
-        st.button("−", key=f"{cle}_moins", disabled=valeur <= mini, on_click=_pas, args=(cle, -1, mini, maxi))
+        st.button("−", key=f"{cle}_moins", disabled=desactive or valeur <= mini, on_click=_pas, args=(cle, -1, mini, maxi))
         st.markdown(f'<div class="compteur-valeur" aria-live="polite">{valeur}</div>', unsafe_allow_html=True)
-        st.button("+", key=f"{cle}_plus", disabled=valeur >= maxi, on_click=_pas, args=(cle, 1, mini, maxi))
+        st.button("+", key=f"{cle}_plus", disabled=desactive or valeur >= maxi, on_click=_pas, args=(cle, 1, mini, maxi))
     return valeur
 
 
@@ -284,40 +286,61 @@ def etape_roles(cfg):
     st.markdown('<div class="espace-barre"></div>', unsafe_allow_html=True)
 
 
+@contextmanager
+def carte_option(cle, titre, actif=True, indice=""):
+    """Carte de réglages centrée ; grisée (réglages désactivés) quand le rôle concerné n'est pas dans la partie."""
+    with st.container(key=f"carte_opt_{cle}"):
+        grisee = "" if actif else " carte-opt-inactive"
+        st.markdown(f'<div class="carte-opt-titre{grisee}">{titre}</div>', unsafe_allow_html=True)
+        if not actif and indice:
+            st.caption(indice)
+        yield not actif
+
+
 def etape_options(cfg):
-    """Réglages de règles, limités aux rôles présents dans la partie."""
+    """Réglages de règles, rangés en cartes centrées ; ceux d'un rôle absent de la partie sont grisés."""
     afficher_composition(cfg.nb, cfg.total, cfg.composition, cfg.n_villageois, cfg.options)
     st.markdown('<div class="titre-etape">Réglages de la partie</div>', unsafe_allow_html=True)
     comp = cfg.composition
-    avec_option = False
-    if comp.get("sorciere"):
-        avec_option = True
+    absent = "Ajoute ce rôle à l'étape Rôles pour régler ceci."
+
+    with carte_option("sorciere", "🧪 La sorcière", bool(comp.get("sorciere")), absent) as inactif:
         with st.container(key="compteurs_potions", horizontal=True, horizontal_alignment="center", gap="large"):
             with st.container(key="compteur_soin"):
-                compteur("🧪 Potions de soin", "opt_potions", 1, 5, OPTIONS_DEFAUT["potions_sorciere"])
+                compteur("Potions de soin", "opt_potions", 0, 5, OPTIONS_DEFAUT["potions_sorciere"], desactive=inactif)
             with st.container(key="compteur_mort"):
-                compteur("☠️ Potions de mort", "opt_potions_mort", 0, 5, OPTIONS_DEFAUT["potions_mort"])
-    if comp.get("voyante"):
-        avec_option = True
-        choix_segmente("🔮 Visions de la voyante", "opt_voyante", CADENCES, OPTIONS_DEFAUT["cadence_voyante"])
-    if comp.get("loup_blanc"):
-        avec_option = True
-        choix_segmente("🌕 Festins du Loup Blanc", "opt_loup_blanc", CADENCES, OPTIONS_DEFAUT["cadence_loup_blanc"])
-    st.checkbox(
-        "🎲 Couple tiré au sort, sans Cupidon", value=OPTIONS_DEFAUT["couple_hasard"], key="opt_couple_hasard",
-        help="Le couple est désigné au hasard dès le départ ; Cupidon est remplacé par un villageois.",
-    )
-    st.checkbox(
-        "🎉 Mode fun : un trouple au lieu d'un couple", value=OPTIONS_DEFAUT["trouple"], key="opt_trouple",
-        help="L'amour lie trois joueurs (choisis par Cupidon, ou tirés au sort). Si l'un meurt, les deux autres le suivent.",
-    )
-    st.checkbox(
-        "👑 À égalité loups / village, le maire départage", value=OPTIONS_DEFAUT["maire_depart"], key="opt_maire",
-        help="Coché : la partie continue à égalité, sauf si le maire est un loup. "
-             "Décoché : les loups gagnent dès qu'ils sont aussi nombreux que les autres.",
-    )
-    if not avec_option:
-        st.caption("Les réglages propres à un rôle (potions, cadences) apparaissent quand ce rôle est dans la partie.")
+                compteur("Potions de mort", "opt_potions_mort", 0, 5, OPTIONS_DEFAUT["potions_mort"], desactive=inactif)
+        if not inactif and not st.session_state.get("opt_potions") and not st.session_state.get("opt_potions_mort"):
+            st.caption("Sans aucune potion, la sorcière n'a plus de pouvoir.")
+
+    with carte_option("voyante", "🔮 La voyante", bool(comp.get("voyante")), absent) as inactif:
+        choix_segmente("Fréquence de ses visions", "opt_voyante", CADENCES, OPTIONS_DEFAUT["cadence_voyante"], desactive=inactif)
+
+    with carte_option("loup_blanc", "🌕 Le Loup Blanc", bool(comp.get("loup_blanc")), absent) as inactif:
+        choix_segmente("Fréquence de ses festins", "opt_loup_blanc", CADENCES, OPTIONS_DEFAUT["cadence_loup_blanc"], desactive=inactif)
+
+    with carte_option("amour", "💘 L'amour"):
+        st.checkbox(
+            "🎲 Couple tiré au sort, sans Cupidon", value=OPTIONS_DEFAUT["couple_hasard"], key="opt_couple_hasard",
+            help="Le couple est désigné au hasard dès le départ ; Cupidon est remplacé par un villageois.",
+        )
+        st.checkbox(
+            "🔮 La voyante peut découvrir le couple", value=OPTIONS_DEFAUT["voyante_couple"], key="opt_voyante_couple",
+            disabled=not st.session_state.get("opt_couple_hasard", OPTIONS_DEFAUT["couple_hasard"]),
+            help="Seulement avec le couple tiré au sort : à chaque vision, la voyante choisit entre sonder un rôle "
+                 "et apprendre qui forme le couple (une seule fois).",
+        )
+        st.checkbox(
+            "🎉 Mode fun : un trouple au lieu d'un couple", value=OPTIONS_DEFAUT["trouple"], key="opt_trouple",
+            help="L'amour lie trois joueurs (choisis par Cupidon, ou tirés au sort). Si l'un meurt, les deux autres le suivent.",
+        )
+
+    with carte_option("village", "👑 Le village"):
+        st.checkbox(
+            "À égalité loups / village, le maire départage", value=OPTIONS_DEFAUT["maire_depart"], key="opt_maire",
+            help="Coché : la partie continue à égalité, sauf si le maire est un loup. "
+                 "Décoché : les loups gagnent dès qu'ils sont aussi nombreux que les autres.",
+        )
     st.markdown('<div class="espace-barre"></div>', unsafe_allow_html=True)
 
 

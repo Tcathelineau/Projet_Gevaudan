@@ -386,12 +386,24 @@ def css_cartes():
         }
         /* Les icônes d'aide de Streamlit font 16 px : on agrandit la zone cliquable à 24 px (WCAG 2.5.8). */
         [data-testid="stTooltipIcon"] { min-width: 24px; min-height: 24px; display: inline-flex; align-items: center; justify-content: center; }
-        .apercu-centre { max-width: 340px; margin: 0 auto .5rem; }
+        .apercu-centre { max-width: 440px; margin: 0 auto .5rem; }
         .apercu-centre .panneau-dense { padding: .45rem .8rem; margin-bottom: 0; }
         .apercu-centre .panneau-titre { font-size: .85rem; padding-bottom: .2rem; margin-bottom: .2rem; text-align: center; }
         .apercu-centre .jauge { margin: .3rem 0 .1rem; }
         .apercu-centre .jauge-entete { font-size: .85rem; }
-        div[class*="st-key-setup_roles"] [data-testid="stNumberInput"] { max-width: 220px; }
+        .compteur-titre { text-align: center; font-weight: 600; margin: .6rem 0 .1rem; }
+        div[class*="st-key-compteur_"] { gap: .9rem; }
+        .compteur-valeur {
+            min-width: 3.2rem; text-align: center; font-family: 'Cinzel', serif; font-weight: 700;
+            font-size: 1.9rem; line-height: 1; color: #f0d890;
+        }
+        div[class*="st-key-compteur_"] button {
+            width: 2.7rem; height: 2.7rem; min-height: 2.7rem; padding: 0; border-radius: 50%;
+            border: 2px solid #c9a44c; background: rgba(201,164,76,.12); color: #f0d890;
+        }
+        div[class*="st-key-compteur_"] button p { font-size: 1.5rem; line-height: 1; margin: 0; }
+        div[class*="st-key-compteur_"] button:hover:not(:disabled) { background: rgba(201,164,76,.3); border-color: #f0d890; }
+        div[class*="st-key-compteur_"] button:disabled { opacity: .35; }
         .pictogramme {
             display: flex;
             flex-wrap: wrap;
@@ -468,7 +480,6 @@ def css_cartes():
             border-bottom: 1px solid rgba(201,164,76,.35);
             font-family: 'Cinzel', serif; font-weight: 600; font-size: .95rem; color: #f0d890;
         }
-        .cat-titre small { font-family: 'EB Garamond', serif; font-weight: 400; font-size: .85rem; color: #b9b09c; }
         .cat-titre b { margin-left: auto; font-size: .8rem; color: #c9a44c; }
         div[class*="st-key-setup_roles"] [data-testid="stHorizontalBlock"] { gap: 0.6rem; }
         div[class*="st-key-dalles_"] {

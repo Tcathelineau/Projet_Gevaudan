@@ -6,7 +6,6 @@ from loup_garou.moteur.partie import camp, vivants
 from loup_garou.moteur.persistance import clear_save, load_game, save_game
 from loup_garou.roles import ROLES
 from loup_garou.ui.barre_laterale import garder_sidebar_ouverte, panneau_rechargement
-from loup_garou.ui.composants import chronologie_html
 from loup_garou.ui.ecrans.accueil import ecran_accueil, ecran_historique
 from loup_garou.ui.ecrans.documentation import ecran_documentation
 from loup_garou.ui.ecrans.fin import ecran_fin
@@ -83,17 +82,9 @@ def main():
             <div class="panneau">
                 <div class="panneau-ligne"><span>👑 Maire</span><span class="maire-nom">{maire_txt}</span></div>
             </div>
-            <div class="panneau">
-                <div class="panneau-titre">🕰️ Chronologie</div>
-                {chronologie_html(s)}
-            </div>
             """,
             unsafe_allow_html=True,
         )
-        with st.expander("📖 Rappel des règles"):
-            afficher_regles(SECTIONS[1:3])
-            st.markdown("**🃏 Les rôles de la partie**")
-            afficher_roles_de_la_partie(s)
 
     # Les écrans de phase (ex. le badge "en couple avec" pendant la nuit)
     # peuvent encore ajouter du contenu à la sidebar : on les appelle avant
@@ -127,6 +118,11 @@ def main():
     with st.sidebar:
         # Le menu flotte au-dessus du bouton (position absolue) : il recouvre le reste sans le déplacer.
         with st.container(key="options"):
+            # Le rappel des règles se range juste au-dessus du bouton Option, tout en bas de la barre latérale.
+            with st.expander("📖 Rappel des règles"):
+                afficher_regles(SECTIONS[1:3])
+                st.markdown("**🃏 Les rôles de la partie**")
+                afficher_roles_de_la_partie(s)
             if st.session_state.get("options_ouvert"):
                 with st.container(key="menu_option"):
                     st.markdown("**🔊 Son** (désactivé par défaut)")

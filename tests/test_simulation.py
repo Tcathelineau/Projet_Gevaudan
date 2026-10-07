@@ -12,8 +12,8 @@ from loup_garou.roles import ROLES  # noqa: E402
 
 
 def test_les_parties_automatiques_vont_au_bout_avec_tous_les_roles():
-    cles = [c for c in ROLES if c not in ("loup", "villageois", "frere")]
-    compo = sim.composer(18, 3, {c: ROLES[c].lot for c in cles})
+    cles = [c for c in ROLES if c not in ("loup", "villageois", "frere", "soeur")]
+    compo = sim.composer(26, 3, {c: ROLES[c].lot for c in cles})
     assert compo is not None
     rng = random.Random(1)
     random.seed(1)

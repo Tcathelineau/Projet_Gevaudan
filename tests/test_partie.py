@@ -4,6 +4,7 @@ from loup_garou.config import HISTORIQUE_DIR
 from loup_garou.moteur.partie import (
     camp, composition_recommandee, condamnes_de_la_veille, enregistrer_condamne, fin_de_tour, nouvelle_partie,
     resoudre_nuit, servante_prend_role, terminer_partie, tuer, vainqueur, victimes_loups, vivants,
+    bouc_emissaire, epargner_idiot, ours_grogne, voisins_vivants,
 )
 from loup_garou.roles import ROLES_SPECIAUX
 
@@ -400,3 +401,61 @@ def test_les_condamnes_de_la_veille(faire_partie):
 def test_les_soeurs_se_reconnaissent_dans_le_journal():
     s = nouvelle_partie(list("ABCDE"), {"loup": 1, "soeur": 2, "villageois": 2})
     assert sum("se reconnaissent" in e["texte"] for e in s["journal"]) == 1
+
+
+# --- Montreur d'ours, Petite Fille, Idiot, Bouc émissaire -----------------------------------------
+
+def test_les_voisins_sautent_les_morts(faire_partie):
+    s = faire_partie({"A": "villageois", "B": "villageois", "C": "villageois", "D": "villageois", "E": "villageois"})
+    assert voisins_vivants(s, "A") == ["E", "B"]
+    s["joueurs"]["B"]["vivant"] = False
+    assert voisins_vivants(s, "A") == ["E", "C"]
+
+
+def test_l_ours_grogne_quand_un_voisin_est_un_loup(faire_partie):
+    s = faire_partie({"A": "montreur_ours", "B": "loup", "C": "villageois", "D": "villageois", "E": "villageois"})
+    assert ours_grogne(s) == ("A", ["E", "B"])
+
+
+def test_l_ours_se_tait_sans_loup_voisin(faire_partie):
+    s = faire_partie({"A": "montreur_ours", "B": "villageois", "C": "loup", "D": "villageois", "E": "villageois"})
+    assert ours_grogne(s) is None
+
+
+def test_l_ours_grogne_apres_la_mort_du_voisin_qui_cachait_un_loup(faire_partie):
+    s = faire_partie({"A": "montreur_ours", "B": "villageois", "C": "loup", "D": "villageois", "E": "villageois"})
+    tuer(s, "B")
+    assert ours_grogne(s) == ("A", ["E", "C"])
+
+
+def test_pas_d_ours_si_le_montreur_est_mort(faire_partie):
+    s = faire_partie({"A": "montreur_ours", "B": "loup", "C": "villageois", "D": "villageois"})
+    tuer(s, "A")
+    assert ours_grogne(s) is None
+
+
+def test_l_idiot_est_epargne_une_seule_fois(faire_partie):
+    s = faire_partie({"A": "idiot", "B": "loup", "C": "villageois"})
+    assert epargner_idiot(s, "A") is True
+    assert s["joueurs"]["A"]["vote_perdu"] and s["joueurs"]["A"]["vivant"]
+    assert epargner_idiot(s, "A") is False
+    assert epargner_idiot(s, "C") is False
+
+
+def test_le_bouc_emissaire_vivant(faire_partie):
+    s = faire_partie({"A": "bouc_emissaire", "B": "loup", "C": "villageois"})
+    assert bouc_emissaire(s) == "A"
+    tuer(s, "A")
+    assert bouc_emissaire(s) is None
+
+
+def test_la_petite_fille_surprise_est_devoree_malgre_les_protections(faire_partie):
+    s = faire_partie({"A": "loup", "B": "petite_fille", "C": "salvateur", "D": "villageois", "E": "villageois"})
+    s["jour"] = 1
+    s["votes_loups"] = ["D"]
+    s["petite_fille_surprise"] = "B"
+    s["protege_nuit"] = "B"
+    s["soin_sorciere"] = True
+    resoudre_nuit(s)
+    assert "B" in s["morts_nuit"]
+    assert s["petite_fille_surprise"] is None

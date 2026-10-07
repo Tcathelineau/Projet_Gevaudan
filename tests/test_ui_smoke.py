@@ -57,8 +57,8 @@ def test_accueil_et_historique_s_affichent():
 
 # Deux tables qui, à elles deux, font jouer tous les rôles (les 18 joueurs ne tiennent pas avec tout coché).
 TABLES = [
-    pytest.param(("n_frere",), 7, id="sans_freres"),
-    pytest.param(("n_soeur", "n_voleur", "n_loup_blanc", "n_chien_loup"), 11, id="avec_freres"),
+    pytest.param(("n_frere", "n_soeur"), 7, id="sans_fratries"),
+    pytest.param(("n_soeur", "n_voleur", "n_loup_blanc", "n_chien_loup", "n_bouc_emissaire", "n_idiot"), 11, id="avec_freres"),
 ]
 
 
@@ -109,8 +109,10 @@ def test_page_documentation_liste_tous_les_roles():
     at.button(key="accueil_btn_documentation").click().run()
     assert not at.exception
     texte = " ".join(m.value for m in at.markdown)
+    import html
+
     for role in ROLES.values():
-        assert role.nom in texte
+        assert html.escape(role.nom) in texte
     at.button(key="retour_menu_documentation").click().run()
     assert not at.exception
     assert any(b.key == "accueil_btn_nouvelle" for b in at.button)
@@ -580,3 +582,119 @@ def test_les_deux_compteurs_coexistent():
     at.button(key="accueil_btn_nouvelle").click().run()
     assert not at.exception
     assert at.session_state["nb_joueurs_setup"] == 7 and at.session_state["n_loup"] == 1
+
+
+def test_le_panneau_du_reveil_annonce_le_grognement_de_l_ours_et_le_corbeau():
+    roles = {"A": "montreur_ours", "B": "loup", "C": "villageois", "D": "corbeau", "E": "villageois"}
+    s = _conseil(roles)
+    s.update(phase="reveil", morts_nuit=[], corbeau_cible="C")
+    texte = " ".join(m.value for m in _app(s).markdown)
+    assert "L'ours grogne" in texte and "Le corbeau l'a désigné" in texte
+
+
+def test_le_panneau_reste_muet_sans_loup_voisin_de_l_ours():
+    roles = {"A": "montreur_ours", "B": "villageois", "C": "loup", "D": "villageois", "E": "villageois"}
+    s = _conseil(roles)
+    s.update(phase="reveil", morts_nuit=[])
+    assert "L'ours grogne" not in " ".join(m.value for m in _app(s).markdown)
+
+
+def test_le_corbeau_designe_un_joueur_pour_le_prochain_vote():
+    roles = {"A": "loup", "B": "corbeau", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B"))
+    at.button(key="pick_corb_1_0_C").click().run()
+    at.button(key="corbeau_1_0").click().run()
+    s = at.session_state["partie"]
+    assert s["corbeau_cible"] == "C" and any("deux voix de plus" in e["texte"] for e in s["journal"])
+
+
+def test_le_corbeau_peut_ne_designer_personne():
+    roles = {"A": "loup", "B": "corbeau", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B"))
+    at.button(key="corbeau_rien_1_0").click().run()
+    assert not at.session_state["partie"].get("corbeau_cible")
+
+
+def test_le_conseil_rappelle_la_designation_du_corbeau():
+    roles = {"A": "loup", "B": "corbeau", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _conseil(roles)
+    s["corbeau_cible"] = "C"
+    assert "Le corbeau a désigné C" in " ".join(m.value for m in _app(s).markdown)
+
+
+def test_la_petite_fille_espionne_sans_etre_surprise(monkeypatch):
+    import random
+
+    monkeypatch.setattr(random, "random", lambda: 0.9)
+    roles = {"A": "loup", "B": "petite_fille", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _tour_de_nuit(roles, "B", votes_loups=["C"])
+    at = _app(s)
+    at.button(key="pf_espionne_1_0").click().run()
+    at.run()
+    partie = at.session_state["partie"]
+    assert not partie["petite_fille_surprise"]
+    texte = " ".join(m.value for m in at.markdown)
+    assert "Les loups ont désigné C" in texte and "deux silhouettes" in texte and "A" in texte
+
+
+def test_la_petite_fille_surprise_sera_devoree(monkeypatch):
+    import random
+
+    monkeypatch.setattr(random, "random", lambda: 0.1)
+    roles = {"A": "loup", "B": "petite_fille", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B", votes_loups=["C"]))
+    at.button(key="pf_espionne_1_0").click().run()
+    assert at.session_state["partie"]["petite_fille_surprise"] == "B"
+
+
+def test_la_petite_fille_peut_dormir():
+    roles = {"A": "loup", "B": "petite_fille", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B"))
+    at.button(key="pf_dort_1_0").click().run()
+    assert at.session_state["partie"]["phase"] == "reveil"
+
+
+def test_l_idiot_condamne_survit_la_premiere_fois():
+    roles = {"A": "loup", "B": "idiot", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _voter(_app(_conseil(roles)), "B", 1)
+    s = at.session_state["partie"]
+    assert s["joueurs"]["B"]["vivant"] and s["joueurs"]["B"]["vote_perdu"]
+    at.run()
+    assert "idiot du village" in " ".join(m.value for m in at.markdown)
+    assert any(b.label == "La nuit tombe" for b in at.button)
+
+
+def test_l_idiot_deja_revele_meurt_au_second_vote():
+    roles = {"A": "loup", "B": "idiot", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _conseil(roles)
+    s["joueurs"]["B"].update(idiot_revele=True, vote_perdu=True)
+    at = _voter(_app(s), "B", 1)
+    assert not at.session_state["partie"]["joueurs"]["B"]["vivant"]
+
+
+def test_le_bouc_emissaire_est_condamne_en_cas_d_egalite():
+    roles = {"A": "loup", "B": "bouc_emissaire", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_conseil(roles))
+    at.button(key="bouc_1").click().run()
+    assert not at.session_state["partie"]["joueurs"]["B"]["vivant"]
+
+
+def test_pas_de_bouton_d_egalite_sans_bouc_emissaire():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    assert not any((b.key or "").startswith("bouc_") for b in _app(_conseil(roles)).button)
+
+
+def test_la_meute_s_affiche_dans_le_menu_de_gauche():
+    roles = {"A": "loup", "B": "loup", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "A"))
+    assert "La meute" in " ".join(m.value for m in at.sidebar.markdown)
+    assert "La meute" not in " ".join(m.value for m in at.main.markdown)
+
+
+def test_les_textes_d_information_ont_un_emoji_de_chaque_cote():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B"))
+    plaquettes = [m.value for m in at.main.markdown if m.value.startswith('<div class="plaquette')]
+    assert plaquettes and all(p.count('class="plaquette-icone"') == 2 for p in plaquettes)
+    icones = [p.split('plaquette-icone">')[1].split("<")[0] for p in plaquettes]
+    assert all(p.split('plaquette-icone">')[-1].split("<")[0] == i for p, i in zip(plaquettes, icones))

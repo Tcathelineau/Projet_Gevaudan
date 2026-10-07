@@ -19,6 +19,11 @@ Les icônes des rôles viennent de [game-icons.net](https://game-icons.net), sou
 - `frere` : « three-friends » par Delapouite, https://game-icons.net/1x1/delapouite/three-friends.html
 - `servante` : « broom » par Delapouite, https://game-icons.net/1x1/delapouite/broom.html
 - `juge_begue` : « gavel » par Lorc, https://game-icons.net/1x1/lorc/gavel.html
+- `montreur_ours` : « bear-head » par Delapouite, https://game-icons.net/1x1/delapouite/bear-head.html
+- `corbeau` : « raven » par Lorc, https://game-icons.net/1x1/lorc/raven.html
+- `petite_fille` : « spy » par Delapouite, https://game-icons.net/1x1/delapouite/spy.html
+- `idiot` : « jester-hat » par Delapouite, https://game-icons.net/1x1/delapouite/jester-hat.html
+- `bouc_emissaire` : « ram » par Lorc, https://game-icons.net/1x1/lorc/ram.html
 - `logo` : « wolf-howl » par Lorc, https://game-icons.net/1x1/lorc/wolf-howl.html
 
 ## Musiques

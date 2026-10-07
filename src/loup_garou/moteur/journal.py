@@ -25,13 +25,3 @@ def prendre_instantane(s, genre):
             break
     etat = copy.deepcopy({k: v for k, v in s.items() if k != "instantanes"})
     instantanes.append({"id": cle, "libelle": libelle, "etat": etat})
-
-
-def etapes_chronologie(s):
-    """Étapes à afficher : le départ (nuit 0 et jour 0 regroupés), puis chaque nuit et chaque jour."""
-    etapes = [("start", 0)]
-    for j in range(1, s["jour"] + 1):
-        etapes.append(("nuit", j))
-        if j < s["jour"] or s["phase"] != "nuit":
-            etapes.append(("jour", j))
-    return etapes

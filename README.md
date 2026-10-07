@@ -50,6 +50,11 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 | 👭 | **Sœurs** (2 cartes) | Village | Elles se connaissent dès la première nuit. |
 | 👬 | **Frères** (3 cartes) | Village | Ils se connaissent dès la première nuit. |
 | 🧹 | **Servante dévouée** | Village | La nuit qui suit un vote, elle peut reprendre en secret le rôle du condamné ; le panneau d'affichage annonce le lendemain qu'elle est intervenue. |
+| 🐻 | **Montreur d'ours** | Village | Chaque matin, son ours grogne si l'un de ses deux voisins vivants (autour de la table, dans l'ordre des noms saisis) est un loup. |
+| 👧 | **Petite Fille** | Village | Elle joue après les loups : elle peut les espionner (une chance sur trois d'être dévorée) et apprend qui ils ont désigné, plus deux silhouettes dont l'une est un loup. |
+| 🐦 | **Corbeau** | Village | Chaque nuit, désigne un joueur qui recevra deux voix de plus au prochain vote (annoncé au panneau). |
+| 🤡 | **Idiot du village** | Village | Condamné par le village, il révèle son rôle et survit (une fois), mais ne vote plus. |
+| 🐐 | **Bouc émissaire** | Village | En cas d'égalité des voix, c'est lui qui est condamné (bouton « Égalité des voix » au vote). |
 | ⚖️ | **Juge bègue** | Village | Une fois par partie, exige (de nuit, en secret) un second vote du village au conseil suivant. |
 
 ## 📜 Les règles gérées par l'app
@@ -84,7 +89,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 - **Jauges d'équilibre** : l'écran de composition affiche, centrée au-dessus des icônes de rôles, la chance de victoire du village en % (curseur loups / village), un niveau d'information et un niveau de chaos, recalculés à chaque changement de rôle ou d'option. Les coefficients sont mesurés par simulation de parties automatiques (méthode, résultats et limites dans `docs/equilibre-roles.md`).
 - **Options avancées** (menu de composition, « ⚙️ Options avancées ») : potions de soin (1 à 5) et de mort (0 à 5) de la sorcière, couple tiré au sort sans Cupidon (Cupidon est alors remplacé par un villageois), mode fun « trouple » (l'amour lie trois joueurs au lieu de deux), fréquence des visions de la voyante et des festins du Loup Blanc (chaque nuit, une nuit sur 2 ou sur 3), et égalité loups / village (le maire départage, ou les loups gagnent dès l'égalité). Les options ne s'affichent que pour les rôles présents.
 - **Écrans de passage sécurisés** entre chaque joueur pour éviter qu'un rôle soit vu par la mauvaise personne.
-- **Chronologie et rechargement** : une frise nuit/jour dans la barre latérale montre où en est la partie, et le menu Option permet de revenir au début d'une nuit ou à l'annonce d'un jour (plantage, erreur de clic).
+- **Rechargement d'étape** : le menu Option de la barre latérale permet de revenir au début d'une nuit ou à l'annonce d'un jour (plantage, erreur de clic).
 - **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, affichée nuit par nuit à la fin, archivée à la fin de la partie dans `historique/partie_AAAAMMJJ_HHMMSS.json` (les parties abandonnées ne sont pas conservées) et téléchargeable en JSON.
 - **Sauvegarde automatique** (`save.json`) : la partie reprend là où elle s'est arrêtée, même après avoir fermé le serveur. La sauvegarde est versionnée et mise à niveau à la lecture (une partie commencée avec une ancienne version reste jouable), écrite sans risque de fichier tronqué, et un fichier illisible est mis de côté (`save.json.corrompue`...) au lieu de faire planter l'application.
 - **Abandon confirmé** : abandonner une partie en cours demande une confirmation.

@@ -380,6 +380,13 @@ def css_cartes():
             box-shadow: 0 0 6px rgba(0,0,0,.6);
         }
         .jauge-extremites { display: flex; justify-content: space-between; font-size: 0.72rem; color: #b9b09c; }
+        /* Focus clavier toujours visible (WCAG 2.4.7), sur les boutons maison comme sur ceux de Streamlit. */
+        button:focus-visible, [role="checkbox"]:focus-visible, input:focus-visible, summary:focus-visible, [role="tab"]:focus-visible {
+            outline: 3px solid #f0d890 !important; outline-offset: 2px !important;
+        }
+        /* Les icônes d'aide de Streamlit font 16 px : on agrandit la zone cliquable à 24 px (WCAG 2.5.8). */
+        [data-testid="stTooltipIcon"] { min-width: 24px; min-height: 24px; display: inline-flex; align-items: center; justify-content: center; }
+        @media (max-width: 520px) { .apercu-grille { grid-template-columns: 1fr !important; } }
         .apercu-grille { display: grid; grid-template-columns: 2fr 3fr; gap: 0.6rem; align-items: stretch; }
         .apercu-grille .panneau-dense { margin-bottom: 0; }
         .pictogramme {
@@ -1013,6 +1020,10 @@ div[class*="st-key-accueil_btn_"] button {
 div[class*="st-key-accueil_btn_"] button p {
     font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 600; letter-spacing: .06em;
 }
+@media (max-width: 480px) {
+    div[class*="st-key-accueil_btn_"] button { padding: .9rem .8rem; }
+    div[class*="st-key-accueil_btn_"] button p { font-size: 1.05rem; letter-spacing: .02em; }
+}
 div[class*="st-key-accueil_btn_nouvelle"] button { background-color: #3f7d4f; border-color: #2f5f3b; color: #f2e9d8; }
 div[class*="st-key-accueil_btn_nouvelle"] button:hover { background-color: #4a9059; border-color: #3f7d4f; color: #fff; }
 div[class*="st-key-accueil_btn_historique"] button,
@@ -1081,7 +1092,7 @@ div[class*="st-key-histo_couple_"] { --c: #f06fb5; }
 .hc-tete { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin-bottom: .6rem; }
 .hc-gagnant {
     padding: .2rem .8rem; border-radius: 999px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-    font-size: .85rem; color: #10121c; background: var(--c);
+    font-size: .85rem; color: #000; background: var(--c);
 }
 .hc-date { opacity: .8; font-size: .95rem; }
 .hc-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: .3rem 0; }
@@ -1103,6 +1114,7 @@ CSS_DOCUMENTATION = """
     box-shadow: 0 0 14px color-mix(in srgb, var(--c) 22%, transparent);
 }
 .doc-loups { --c: #d64545; }
+.doc-loups .doc-camp { color: #e8706b; }  /* #d64545 ne passe pas 4,5:1 en petit texte sur fond sombre */
 .doc-solo { --c: #eceaf4; }
 .doc-choix { --c: #c9a44c; }
 .doc-tete { display: flex; align-items: center; gap: .7rem; }
@@ -1141,7 +1153,7 @@ CSS_BILAN = """
 .bil-dist { display: flex; gap: .8rem; align-items: center; padding: .55rem .9rem; margin-bottom: .45rem; border-radius: 10px;
     border-left: 4px solid #c9a44c; background: rgba(201,164,76,.08); font-family: 'EB Garamond', serif; color: #ece3d2; }
 .bil-dist-emoji { font-size: 1.6rem; }
-.stat-ligne { display: grid; grid-template-columns: 11rem 1fr 3rem; gap: .2rem .7rem; align-items: center; margin: .35rem 0;
+.stat-ligne { display: grid; grid-template-columns: minmax(6rem, 11rem) 1fr 3rem; gap: .2rem .7rem; align-items: center; margin: .35rem 0;
     font-family: 'EB Garamond', serif; color: #ece3d2; }
 .stat-ligne .stat-val { text-align: right; color: #f0d890; font-weight: 600; }
 .stat-ligne .stat-detail { grid-column: 2 / 4; font-size: .78rem; opacity: .65; margin-top: -.15rem; }

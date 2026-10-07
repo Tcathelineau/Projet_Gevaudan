@@ -5,6 +5,8 @@ import copy
 import streamlit.components.v1 as components
 import streamlit as st
 
+from loup_garou.ui.sons import vider_session
+
 
 def recharger_etape(s, cle):
     """Revient à l'étape `cle` : tout ce qui a suivi est oublié."""
@@ -13,9 +15,7 @@ def recharger_etape(s, cle):
     nouvel = copy.deepcopy(instantanes[i]["etat"])
     nouvel["instantanes"] = instantanes[: i + 1]
     # Les saisies en cours d'écran (sélections, résultats de vision...) vivent dans session_state.
-    for k in list(st.session_state.keys()):
-        if k != "musique_on":
-            del st.session_state[k]
+    vider_session()
     st.session_state.partie = nouvel
     st.rerun()
 
@@ -40,6 +40,7 @@ def garder_sidebar_ouverte():
     sur petit écran. Comme on masque son bouton de réouverture, on la rouvre par script."""
     script = """<script>
         const doc = window.parent.document;
+        doc.documentElement.lang = 'fr';  // Streamlit déclare 'en' : un lecteur d'écran lirait le français avec une voix anglaise
         setInterval(() => {
             const bouton = doc.querySelector('[data-testid="stExpandSidebarButton"] button, [data-testid="stExpandSidebarButton"]');
             if (bouton) bouton.click();

@@ -111,6 +111,8 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 ## 5. Historique, sauvegarde et rechargement
 
+- **Migrations** : l'état `s` porte une `version` ; `moteur/migrations.py` met à niveau les anciennes sauvegardes (et leurs instantanés). **Toute clé obligatoire ajoutée à l'état exige une migration** (incrémenter `VERSION`, ajouter une fonction à `MIGRATIONS`) et un test. `load_game` met de côté (`save.json.corrompue`, `.invalide`, `.plus_recente`) un fichier inutilisable au lieu de planter ; `save_game` écrit puis remplace (jamais de fichier tronqué).
+
 - `save.json` (ignoré par git) : partie en cours, reprise automatique.
 - `historique/partie_AAAAMMJJ_HHMMSS.json` : archive écrite à la fin de la partie, **versionnée dans le dépôt**. Les parties abandonnées ne sont pas conservées.
 - `log(s, texte, moment)` journalise ; `prendre_instantane(s, "nuit" | "jour")` crée un point de retour utilisé par « Recharger une étape » (menu Option).

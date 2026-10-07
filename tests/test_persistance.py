@@ -13,9 +13,10 @@ def test_load_game_sans_sauvegarde():
 
 
 def test_sauvegarde_aller_retour_avec_accents():
-    s = {"joueurs": {"Élodie": {"role": "sorciere"}}, "jour": 3}
+    s = {"joueurs": {"Élodie": {"role": "sorciere", "vivant": True}}, "phase": "nuit", "jour": 3}
     save_game(s)
-    assert load_game() == s
+    charge = load_game()
+    assert charge["joueurs"] == s["joueurs"] and charge["jour"] == 3
 
 
 def test_clear_save_supprime_le_fichier_et_tolere_son_absence():
@@ -82,3 +83,38 @@ def test_fichier_de_noms_illisible_est_ignore():
     with open("joueurs.json", "w", encoding="utf-8") as f:
         f.write("pas du json")
     assert load_joueurs() == []
+
+
+def test_la_sauvegarde_porte_sa_version_et_ne_laisse_pas_de_fichier_provisoire():
+    from loup_garou.moteur.migrations import VERSION
+
+    s = {"joueurs": {}, "phase": "nuit", "jour": 0}
+    save_game(s)
+    assert load_game()["version"] == VERSION
+    assert not os.path.exists(SAVE_FILE + ".tmp")
+
+
+def _ecrire(contenu):
+    with open(SAVE_FILE, "w", encoding="utf-8") as f:
+        f.write(contenu)
+
+
+def test_une_sauvegarde_corrompue_est_mise_de_cote_sans_planter():
+    _ecrire("{ pas du json")
+    assert load_game() is None
+    assert not os.path.exists(SAVE_FILE) and os.path.exists(SAVE_FILE + ".corrompue")
+
+
+def test_une_sauvegarde_sans_les_cles_essentielles_est_mise_de_cote():
+    _ecrire(json.dumps({"autre": 1}))
+    assert load_game() is None and os.path.exists(SAVE_FILE + ".invalide")
+
+
+def test_une_sauvegarde_d_une_version_plus_recente_est_mise_de_cote():
+    _ecrire(json.dumps({"joueurs": {}, "phase": "nuit", "jour": 0, "version": 999}))
+    assert load_game() is None and os.path.exists(SAVE_FILE + ".plus_recente")
+
+
+def test_une_sauvegarde_incoherente_est_mise_de_cote():
+    _ecrire(json.dumps({"joueurs": {"A": {"role": "role_inconnu"}}, "phase": "nuit", "jour": 0}))
+    assert load_game() is None and os.path.exists(SAVE_FILE + ".invalide")

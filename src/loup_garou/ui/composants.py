@@ -5,7 +5,6 @@ import random
 
 import streamlit as st
 
-from loup_garou.moteur.journal import etapes_chronologie
 from loup_garou.moteur.partie import fin_de_tour
 from loup_garou.roles import ROLES
 from loup_garou.ui.illustrations import svg_role
@@ -242,23 +241,3 @@ def panneau_avis(titre, sous, papiers):
         f'<div class="avis-sous">{sous}</div><div class="avis-papiers">{"".join(papiers)}</div></div></div>',
         unsafe_allow_html=True,
     )
-
-
-def chronologie_html(s):
-    etapes = etapes_chronologie(s)
-    pas = []
-    for i, (genre, jour) in enumerate(etapes):
-        actuel = " chrono-actuel" if i == len(etapes) - 1 else ""
-        if genre == "start":
-            icone, nom, etiquette, debut = "▶", "Départ", "start", " chrono-debut"
-        else:
-            icone, nom = ("🌙", "Nuit") if genre == "nuit" else ("☀️", "Jour")
-            etiquette, debut = str(jour), ""
-        titre = nom if genre == "start" else f"{nom} {jour}"
-        lien = '<div class="chrono-lien"></div>' if i < len(etapes) - 1 else ""
-        pas.append(
-            f'<div class="chrono-pas"><div class="chrono-etape{debut}" title="{titre}">'
-            f'<div class="chrono-noeud chrono-{genre}{actuel}">{icone}</div>'
-            f'<span class="chrono-label">{etiquette}</span></div>{lien}</div>'
-        )
-    return '<div class="chrono">' + "".join(pas) + "</div>"

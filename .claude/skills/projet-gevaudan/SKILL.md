@@ -32,7 +32,7 @@ src/loup_garou/
   moteur/                    règles du jeu, SANS Streamlit
     partie.py                nouvelle_partie, vivants, camp, tuer, vainqueur, fin_de_tour,
                              terminer_partie, resoudre_nuit, composition_recommandee
-    journal.py               log, prendre_instantane, etapes_chronologie
+    journal.py               log, prendre_instantane
     statistiques.py          statistiques(parties archivées) : victoires par camp, par taille de table, fiche par rôle
     bilan.py                 bilan_partie : chiffres clés, distinctions, frise (lit s["morts"])
     persistance.py           save_game/load_game/clear_save, archiver_partie, lister_historique,

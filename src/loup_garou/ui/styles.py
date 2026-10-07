@@ -253,8 +253,10 @@ def css_cartes():
             justify-content: center;
             text-align: center;
             gap: 0.8rem;
-            margin: 0.7rem 0;
-            padding: 0.8rem 1.1rem;
+            width: fit-content;
+            max-width: min(100%, 520px);
+            margin: 0.7rem auto;
+            padding: 0.7rem 1rem;
             border-radius: 8px;
             background: rgba(20,16,10,.5);
             border: 1px solid rgba(201,164,76,.55);
@@ -306,45 +308,6 @@ def css_cartes():
             color: #ece3d2;
             padding: 0.15rem 0;
         }
-        .chrono {
-            display: flex;
-            flex-wrap: wrap;
-            row-gap: 0.55rem;
-            max-height: 30vh;
-            overflow-y: auto;
-            padding: 0.25rem 0.1rem 0.1rem;
-        }
-        .chrono-pas { display: flex; align-items: flex-start; }
-        .chrono-etape { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 24px; }
-        .chrono-noeud {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.62rem;
-        }
-        .chrono-start { background: #6b5a2e; color: #f0d890; font-size: 0.55rem; }
-        .chrono-nuit { background: #44589a; }
-        .chrono-jour { background: #abc4d0; }
-        .chrono-actuel { box-shadow: 0 0 0 2px #c9a44c, 0 0 10px rgba(201,164,76,.6); }
-        .chrono-lien {
-            width: 5px;
-            height: 3px;
-            margin: 9px 1px 0;
-            border-radius: 2px;
-            background: #d9d9d9;
-        }
-        .chrono-label {
-            font-family: 'EB Garamond', serif;
-            font-size: 0.65rem;
-            line-height: 1;
-            color: #b9b09c;
-            white-space: nowrap;
-        }
-        .chrono-actuel + .chrono-label { color: #f0d890; font-weight: 600; }
-        .chrono-etape.chrono-debut { width: 30px; }
         .panneau-dense { padding: 0.6rem 0.9rem; margin-bottom: 0.6rem; }
         .panneau-dense .panneau-titre {
             font-size: 0.95rem;

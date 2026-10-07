@@ -120,17 +120,17 @@ def _pas(cle, sens, mini, maxi):
     st.session_state[cle] = min(max(st.session_state[cle] + sens, mini), maxi)
 
 
-def compteur(titre, cle, mini, maxi, defaut):
-    """Compteur centré : un « − » rond, la valeur, un « + » rond. Le réglage vit sous `cle` (hors widget)."""
+def compteur(titre, cle, mini, maxi, defaut, cle_titre=None):
+    """Compteur centré : un « − » rond, la valeur, un « + » rond. Le réglage vit sous `cle` (hors widget).
+    `cle_titre` : conteneur du seul titre, pour lui donner une infobulle sans en mettre sur les boutons."""
     valeur = int(min(max(st.session_state.get(cle, defaut), mini), maxi))
     st.session_state[cle] = valeur
-    st.markdown(f'<div class="compteur-titre">{titre}</div>', unsafe_allow_html=True)
+    with st.container(key=cle_titre or f"titre_{cle}"):
+        st.markdown(f'<div class="compteur-titre">{titre}</div>', unsafe_allow_html=True)
     with st.container(key=f"compteur_{cle}", horizontal=True, horizontal_alignment="center", vertical_alignment="center"):
-        st.button("−", key=f"{cle}_moins", disabled=valeur <= mini, on_click=_pas, args=(cle, -1, mini, maxi),
-                  help=f"Un de moins : {titre.lower()}")
+        st.button("−", key=f"{cle}_moins", disabled=valeur <= mini, on_click=_pas, args=(cle, -1, mini, maxi))
         st.markdown(f'<div class="compteur-valeur" aria-live="polite">{valeur}</div>', unsafe_allow_html=True)
-        st.button("+", key=f"{cle}_plus", disabled=valeur >= maxi, on_click=_pas, args=(cle, 1, mini, maxi),
-                  help=f"Un de plus : {titre.lower()}")
+        st.button("+", key=f"{cle}_plus", disabled=valeur >= maxi, on_click=_pas, args=(cle, 1, mini, maxi))
     return valeur
 
 
@@ -143,15 +143,16 @@ def etape_roles():
         # les rôles ci-dessous connus.
         apercu = st.empty()
 
-        nb = compteur("Nombre de joueurs", "nb_joueurs_setup", 5, 18, 7)
-
-        loups_defaut, speciaux_defaut = composition_recommandee(nb)
-
-        with st.container(key="info_loup"):
-            n_loup = compteur(
-                f"{ROLES['loup'].emoji} {ROLES['loup'].nom}", "n_loup", 1, max(1, nb - 1),
-                min(loups_defaut, max(1, nb - 1)),
-            )
+        # Les deux compteurs sur la même ligne (ils passent l'un sous l'autre sur un écran étroit).
+        with st.container(key="compteurs", horizontal=True, horizontal_alignment="center", gap="large"):
+            with st.container(key="compteur_joueurs"):
+                nb = compteur("Nombre de joueurs", "nb_joueurs_setup", 5, 18, 7)
+            loups_defaut, speciaux_defaut = composition_recommandee(nb)
+            with st.container(key="compteur_loups"):
+                n_loup = compteur(
+                    f"{ROLES['loup'].emoji} {ROLES['loup'].nom}", "n_loup", 1, max(1, nb - 1),
+                    min(loups_defaut, max(1, nb - 1)), cle_titre="info_loup",
+                )
         composition = {"loup": n_loup}
 
         # Rôles uniques (au plus un exemplaire) : une simple case à cocher, rangée par catégorie

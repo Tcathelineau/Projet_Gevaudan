@@ -391,7 +391,7 @@ def css_cartes():
         .apercu-centre .panneau-titre { font-size: .85rem; padding-bottom: .2rem; margin-bottom: .2rem; text-align: center; }
         .apercu-centre .jauge { margin: .3rem 0 .1rem; }
         .apercu-centre .jauge-entete { font-size: .85rem; }
-        .compteur-titre { text-align: center; font-weight: 600; margin: .6rem 0 .1rem; }
+        .compteur-titre { text-align: center; font-weight: 600; margin: .6rem 0 .9rem; }
         div[class*="st-key-compteur_"] { gap: .9rem; }
         .compteur-valeur {
             min-width: 3.2rem; text-align: center; font-family: 'Cinzel', serif; font-weight: 700;

@@ -5,7 +5,7 @@ import json
 import os
 from datetime import datetime
 
-from loup_garou.config import HISTORIQUE_DIR, JOUEURS_FILE, SAVE_FILE
+from loup_garou.config import HISTORIQUE_DIR, JOUEURS_FILE, PREFERENCES_FILE, SAVE_FILE
 from loup_garou.moteur.migrations import VERSION, migrer
 
 
@@ -50,6 +50,39 @@ def load_game():
 def clear_save():
     if os.path.exists(SAVE_FILE):
         os.remove(SAVE_FILE)
+
+
+def load_preferences():
+    """Préférences gardées d'une session à l'autre ({} si absentes ou illisibles)."""
+    try:
+        with open(PREFERENCES_FILE, "r", encoding="utf-8") as f:
+            prefs = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return prefs if isinstance(prefs, dict) else {}
+
+
+def maj_preferences(**sections):
+    """Met à jour une ou plusieurs sections des préférences (`son={...}`, `composition={...}`)."""
+    prefs = {**load_preferences(), **sections}
+    provisoire = PREFERENCES_FILE + ".tmp"
+    with open(provisoire, "w", encoding="utf-8") as f:
+        json.dump(prefs, f, indent=2, ensure_ascii=False)
+    os.replace(provisoire, PREFERENCES_FILE)
+
+
+def resume_sauvegarde():
+    """Résumé de la partie sauvegardée pour l'écran d'accueil, ou None : (partie, texte, date)."""
+    s = load_game()
+    if s is None:
+        return None
+    vivants = sum(d["vivant"] for d in s["joueurs"].values())
+    phases = {
+        "nuit": f"Nuit {s['jour']}", "reveil": f"Réveil, jour {s['jour']}", "election_maire": f"Élection du maire, jour {s['jour']}",
+        "conseil": f"Conseil, jour {s['jour']}", "tir_chasseur": f"Dernière balle, jour {s['jour']}", "fin": "Partie terminée",
+    }
+    date = datetime.fromtimestamp(os.path.getmtime(SAVE_FILE)).strftime("%d/%m à %H:%M")
+    return s, f"{phases.get(s['phase'], 'Partie')} · {vivants} / {len(s['joueurs'])} en vie", date
 
 
 def save_joueurs(noms):

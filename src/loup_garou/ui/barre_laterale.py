@@ -20,19 +20,27 @@ def recharger_etape(s, cle):
     st.rerun()
 
 
+def _choisir_etape(cle):
+    st.session_state.reload_choix = cle
+
+
 def panneau_rechargement(s):
     instantanes = s.get("instantanes", [])
     if not instantanes:
         return
-    libelles = {inst["id"]: inst["libelle"] for inst in instantanes}
+    ids = [inst["id"] for inst in instantanes]
+    choisi = st.session_state.get("reload_choix")
     st.markdown("**⏪ Recharger une étape**")
     st.caption("Revient au début de la nuit ou à l'annonce du jour choisi. Ce qui a suivi est oublié.")
-    cle = st.selectbox(
-        "Étape", list(reversed(libelles)), index=None, placeholder="Choisir une étape…",
-        format_func=libelles.get, label_visibility="collapsed", key="reload_choix",
-    )
-    if st.button("Recharger cette étape", disabled=cle is None, key="reload_ok"):
-        recharger_etape(s, cle)
+    with st.container(key="reload_liste"):
+        for inst in reversed(instantanes):
+            st.button(
+                inst["libelle"], key=f"reload_{inst['id']}", use_container_width=True,
+                type="primary" if inst["id"] == choisi else "secondary",
+                on_click=_choisir_etape, args=(inst["id"],),
+            )
+    if st.button("Recharger cette étape", disabled=choisi not in ids, key="reload_ok"):
+        recharger_etape(s, choisi)
 
 
 def garder_sidebar_ouverte():

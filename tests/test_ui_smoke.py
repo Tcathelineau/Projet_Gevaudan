@@ -4,6 +4,7 @@ Joue une partie complète en cliquant au hasard (graine fixe) : détecte les exc
 d'affichage et les écrans sans issue après un changement dans ui/.
 """
 
+import os
 import random
 import sys
 from pathlib import Path
@@ -27,19 +28,25 @@ def _app(partie=None, **session):
     return at.run()
 
 
+def _etape_suivante(at, fois=1):
+    for _ in range(fois):
+        at.button(key="etape_suivant").click().run()
+    return at
+
+
 def _creer_partie(nb_joueurs=18, nb_loups=2, sans=()):
     at = _app()
     assert not at.exception
     at.button(key="accueil_btn_nouvelle").click().run()
+    at.session_state["nb_joueurs_setup"] = nb_joueurs
+    at.session_state["n_loup"] = nb_loups
+    _etape_suivante(at)  # table -> rôles
     for c in at.checkbox:
         c.check()
     for c in at.checkbox:
         if c.key in sans:
             c.uncheck()
-    at.session_state["nb_joueurs_setup"] = nb_joueurs
-    at.session_state["n_loup"] = nb_loups
-    at.run()
-    [b for b in at.button if b.label.startswith("Suivant")][0].click().run()
+    _etape_suivante(at, 2)  # rôles -> options -> joueurs
     for i, t in enumerate(at.text_input):
         t.set_value(f"J{i + 1}")
     [b for b in at.button if b.label == "Distribuer les rôles"][0].click().run()
@@ -95,6 +102,7 @@ def test_partie_complete_jusqu_a_la_fin(sans, graine):
 def test_jauges_d_equilibre_dans_la_composition():
     at = _app()
     at.button(key="accueil_btn_nouvelle").click().run()
+    _etape_suivante(at)
     assert not at.exception
     texte = " ".join(m.value for m in at.markdown)
     assert "Équilibre de la partie" in texte and "jauge-repere" in texte
@@ -265,7 +273,7 @@ def test_les_noms_de_la_derniere_partie_sont_preremplis():
     save_joueurs(["Alice", "Bob", "Chloé"])
     at = _app()
     at.button(key="accueil_btn_nouvelle").click().run()
-    [b for b in at.button if b.label.startswith("Suivant")][0].click().run()
+    _etape_suivante(at, 3)
     valeurs = [at.text_input(key=f"nom_{i}").value for i in range(len(at.text_input))]
     assert valeurs[:3] == ["Alice", "Bob", "Chloé"] and set(valeurs[3:]) == {""}
 
@@ -325,6 +333,7 @@ def test_le_hurlement_accompagne_la_carte_d_un_loup_et_se_coupe():
 def test_les_roles_a_cocher_sont_ranges_par_categorie():
     at = _app()
     at.button(key="accueil_btn_nouvelle").click().run()
+    _etape_suivante(at)
     texte = " ".join(m.value for m in at.markdown)
     for titre in ("Information", "Protection et pouvoirs de mort", "Chaos", "Loups spéciaux"):
         assert titre in texte
@@ -371,6 +380,8 @@ def test_une_ancienne_sauvegarde_se_reprend_sans_erreur():
     with open("save.json", "w", encoding="utf-8") as f:
         json.dump(s, f)
     at = _app()
+    assert not at.exception and "partie" not in at.session_state  # plus de reprise automatique : on la propose
+    at.button(key="accueil_btn_reprendre").click().run()
     assert not at.exception
     assert at.session_state["partie"]["version"] == VERSION and at.session_state["partie"]["phase"] == "nuit"
 
@@ -468,10 +479,12 @@ def test_le_couple_n_est_decouvrable_qu_une_fois():
 def test_cupidon_est_grise_quand_le_couple_est_tire_au_sort():
     at = _app(opt_couple_hasard=True)
     at.button(key="accueil_btn_nouvelle").click().run()
+    _etape_suivante(at)
     case = at.checkbox(key="n_cupidon")
     assert case.disabled and "devient villageois" in case.label
     sans = _app()
     sans.button(key="accueil_btn_nouvelle").click().run()
+    _etape_suivante(sans)
     assert not sans.checkbox(key="n_cupidon").disabled
 
 
@@ -512,6 +525,7 @@ def test_les_hurlements_accompagnent_la_victoire_des_loups_meme_sans_les_bruitag
 def test_la_composition_n_a_plus_de_panneau_liste_mais_garde_l_equilibre_centre():
     at = _app()
     at.button(key="accueil_btn_nouvelle").click().run()
+    _etape_suivante(at)
     texte = " ".join(m.value for m in at.markdown)
     assert "apercu-centre" in texte and "Équilibre de la partie" in texte
     assert 'class="panneau-titre">Composition' not in texte and "apercu-grille" not in texte
@@ -565,6 +579,7 @@ def test_le_nombre_de_loups_suit_le_plafond_quand_les_joueurs_diminuent():
 def test_les_categories_n_ont_plus_de_precisions():
     at = _app()
     at.button(key="accueil_btn_nouvelle").click().run()
+    _etape_suivante(at)
     texte = " ".join(m.value for m in at.markdown)
     assert "Information" in texte and "Apprennent qui est qui" not in texte and "Changent les camps" not in texte
 
@@ -698,3 +713,152 @@ def test_les_textes_d_information_ont_un_emoji_de_chaque_cote():
     assert plaquettes and all(p.count('class="plaquette-icone"') == 2 for p in plaquettes)
     icones = [p.split('plaquette-icone">')[1].split("<")[0] for p in plaquettes]
     assert all(p.split('plaquette-icone">')[-1].split("<")[0] == i for p, i in zip(plaquettes, icones))
+
+
+def _sauvegarde_en_cours():
+    import json
+
+    from loup_garou.moteur.partie import nouvelle_partie
+
+    s = nouvelle_partie(list("ABCDE"), {"loup": 1, "voyante": 1, "villageois": 3})
+    s["jour"] = 3
+    with open("save.json", "w", encoding="utf-8") as f:
+        json.dump(s, f)
+    return s
+
+
+def test_l_accueil_propose_de_reprendre_la_partie_sauvegardee():
+    _sauvegarde_en_cours()
+    at = _app()
+    assert not at.exception and "partie" not in at.session_state
+    texte = " ".join(m.value for m in at.markdown)
+    assert "Partie en cours" in texte and "Nuit 3" in texte and "5 / 5 en vie" in texte
+    assert any(b.key == "accueil_btn_reprendre" for b in at.button)
+
+
+def test_nouvelle_partie_demande_confirmation_quand_une_sauvegarde_existe():
+    import os
+
+    _sauvegarde_en_cours()
+    at = _app()
+    at.button(key="accueil_btn_nouvelle").click().run()
+    assert any(b.key == "accueil_btn_remplacer" for b in at.button) and os.path.exists("save.json")
+    at.button(key="accueil_btn_garder").click().run()
+    assert any(b.key == "accueil_btn_reprendre" for b in at.button) and os.path.exists("save.json")
+    at.button(key="accueil_btn_nouvelle").click().run()
+    at.button(key="accueil_btn_remplacer").click().run()
+    assert not os.path.exists("save.json")
+    assert at.session_state["ecran"] == "installation"
+
+
+def test_sans_sauvegarde_l_accueil_n_a_pas_de_bouton_reprendre():
+    at = _app()
+    assert not any(b.key == "accueil_btn_reprendre" for b in at.button)
+    assert any(b.key == "accueil_btn_nouvelle" for b in at.button)
+
+
+def test_les_reglages_du_son_sont_gardes_d_une_session_a_l_autre():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    at = _app(_conseil(roles), options_ouvert=True)
+    at.checkbox(key="case_musique_on").check().run()
+    assert os.path.exists("preferences.json")
+    nouvelle_session = _app(_conseil(roles))
+    assert nouvelle_session.session_state["musique_on"] is True
+    assert len(nouvelle_session.get("audio")) == 1
+
+
+def _assistant():
+    at = _app()
+    at.button(key="accueil_btn_nouvelle").click().run()
+    return at
+
+
+def test_l_assistant_a_quatre_etapes_avec_retour():
+    at = _assistant()
+    assert at.session_state["config_etape"] == "table"
+    for attendu in ("roles", "options", "noms"):
+        _etape_suivante(at)
+        assert at.session_state["config_etape"] == attendu
+    at = _assistant()
+    _etape_suivante(at, 2)
+    at.button(key="etape_retour").click().run()
+    assert at.session_state["config_etape"] == "roles"
+
+
+def test_les_choix_survivent_aux_changements_d_etape():
+    at = _assistant()
+    _etape_suivante(at)
+    at.checkbox(key="n_renard").check().run()
+    _etape_suivante(at, 2)  # options puis joueurs : la case Renard n'est plus affichée
+    at.session_state["config_etape"] = "roles"
+    at.run()
+    assert at.checkbox(key="n_renard").value is True
+
+
+def test_le_bandeau_fixe_montre_l_equilibre_et_bloque_les_surcharges():
+    at = _assistant()
+    assert "barre-equilibre" in " ".join(m.value for m in at.markdown)
+    at.session_state["nb_joueurs_setup"] = 5
+    _etape_suivante(at)
+    for c in at.checkbox:
+        c.check()
+    at.run()
+    assert at.button(key="etape_suivant").disabled
+
+
+def test_les_options_s_adaptent_aux_roles_et_se_reglent_par_boutons():
+    at = _assistant()
+    _etape_suivante(at)
+    at.checkbox(key="n_sorciere").check()
+    at.checkbox(key="n_voyante").check().run()
+    _etape_suivante(at)
+    assert at.session_state["config_etape"] == "options"
+    assert any(b.key == "opt_potions_plus" for b in at.button)
+    at.button(key="opt_potions_plus").click().run()
+    at.button(key="opt_voyante__3").click().run()
+    at.button(key="opt_couple_hasard__True").click().run()
+    assert at.session_state["opt_potions"] == 2 and at.session_state["opt_voyante"] == 3
+    assert at.session_state["opt_couple_hasard"] is True
+    assert not at.exception
+
+
+def test_les_options_d_un_role_absent_n_apparaissent_pas():
+    at = _assistant()
+    _etape_suivante(at)
+    for cle in ("n_sorciere", "n_voyante"):
+        at.checkbox(key=cle).uncheck()
+    _etape_suivante(at)
+    assert not any(b.key == "opt_potions_plus" for b in at.button)
+    assert not any((b.key or "").startswith("opt_voyante__") for b in at.button)
+    assert any(b.key == "opt_maire__True" for b in at.button)
+
+
+def test_la_derniere_composition_est_proposee_a_la_partie_suivante():
+    import json
+
+    _creer_partie(nb_joueurs=9, nb_loups=2, sans=("n_voleur", "n_frere", "n_soeur", "n_loup_blanc", "n_chien_loup",
+                                                  "n_bouc_emissaire", "n_idiot", "n_servante", "n_juge_begue",
+                                                  "n_louveteau", "n_enfant_sauvage", "n_petite_fille", "n_corbeau"))
+    prefs = json.load(open("preferences.json", encoding="utf-8"))["composition"]
+    assert prefs["nb"] == 9 and prefs["n_loup"] == 2 and prefs["roles"]["renard"] is True
+    os.remove("save.json")  # la partie jouée serait sinon proposée à la reprise
+    at = _assistant()
+    assert at.session_state["nb_joueurs_setup"] == 9 and at.session_state["n_loup"] == 2
+    _etape_suivante(at)
+    assert at.checkbox(key="n_renard").value is True and at.checkbox(key="n_voleur").value is False
+
+
+def test_les_etapes_a_recharger_se_choisissent_dans_une_liste_de_boutons():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    s = _conseil(roles)
+    base = {k: v for k, v in s.items() if k != "instantanes"}
+    s["instantanes"] = [
+        {"id": "nuit_1", "libelle": "🌙 Nuit 1 · début de la nuit", "etat": base},
+        {"id": "jour_1", "libelle": "☀️ Jour 1 · annonce du réveil", "etat": base},
+    ]
+    at = _app(s, options_ouvert=True)
+    assert at.button(key="reload_ok").disabled
+    at.button(key="reload_nuit_1").click().run()
+    assert at.session_state["reload_choix"] == "nuit_1" and not at.button(key="reload_ok").disabled
+    at.button(key="reload_ok").click().run()
+    assert at.session_state["partie"]["phase"] == "conseil" and not at.exception

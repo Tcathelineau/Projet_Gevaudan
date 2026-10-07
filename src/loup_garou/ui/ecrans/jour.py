@@ -16,7 +16,7 @@ from loup_garou.ui.composants import (
     panneau_avis,
     plaquette,
     scene_ciel,
-    selection_dalles,
+    selection_et_validation,
 )
 
 
@@ -144,12 +144,12 @@ def ecran_election_maire(s):
         st.caption("Débattez et votez à voix haute comme d'habitude, puis saisis ici le nom élu.")
         st.markdown("**Le village élit comme maire**")
 
-    choix = selection_dalles("maire", s["jour"], vivants(s), 1)
-    elu = choix[0] if choix else None
-    if bouton_validation(
-        f"Valider : {elu} est maire" if elu else ("Valider le choix" if ancien else "Valider l'élection"),
-        "valider_maire", disabled=elu is None,
-    ):
+    choix = selection_et_validation(
+        "maire", s["jour"], vivants(s), 1, "Valider : {sel} est maire",
+        "Valider le choix" if ancien else "Valider l'élection", "valider_maire",
+    )
+    if choix:
+        elu = choix[0]
         s["maire"] = elu
         log(s, f"{ancien} désigne {elu} comme successeur." if ancien else f"{elu} est élu maire.")
         s["dernier_maire"] = None
@@ -185,14 +185,12 @@ def _saisie_vote(s, rang):
     else:
         annonce("Le juge bègue exige un second vote : le village se prononce à nouveau.", "!")
     st.markdown("**Le village élimine**")
-    choix = selection_dalles("vote", cle_sel, vivants(s), 1)
-    condamne = choix[0] if choix else None
-    if bouton_validation(
-        f"Valider : éliminer {condamne}" if condamne else "Valider le vote",
-        "valider_vote" if rang == 1 else "valider_vote2", disabled=condamne is None,
-    ):
-        st.session_state.pop(f"sel_vote_{cle_sel}", None)
-        _rendre_verdict(s, condamne, cle_resultat)
+    choix = selection_et_validation(
+        "vote", cle_sel, vivants(s), 1, "Valider : éliminer {sel}", "Valider le vote",
+        "valider_vote" if rang == 1 else "valider_vote2",
+    )
+    if choix:
+        _rendre_verdict(s, choix[0], cle_resultat)
     bouc = bouc_emissaire(s)
     if bouc and st.button("⚖️ Égalité des voix : le bouc émissaire est condamné", key=f"bouc_{rang}"):
         st.session_state.pop(f"sel_vote_{cle_sel}", None)

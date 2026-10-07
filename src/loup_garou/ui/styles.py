@@ -355,6 +355,36 @@ def css_cartes():
         .apercu-centre .panneau-titre { font-size: .85rem; padding-bottom: .2rem; margin-bottom: .2rem; text-align: center; }
         .apercu-centre .jauge { margin: .3rem 0 .1rem; }
         .apercu-centre .jauge-entete { font-size: .85rem; }
+        .etapes { display: flex; justify-content: center; flex-wrap: wrap; gap: .4rem; margin: .2rem 0 .8rem; }
+        .etape {
+            display: inline-flex; align-items: center; gap: .35rem; padding: .15rem .75rem; border-radius: 999px;
+            border: 1px solid rgba(201,164,76,.35); color: #b9b09c; font-family: 'EB Garamond', serif; font-size: .95rem;
+        }
+        .etape b { font-family: 'Cinzel', serif; font-size: .8rem; }
+        .etape-faite { color: #ece3d2; border-color: rgba(63,125,79,.9); }
+        .etape-actuelle { color: #fff4d0; background: rgba(201,164,76,.18); border-color: #c9a44c; font-weight: 600; }
+        div[class*="st-key-barre_fixe"] {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; width: 100%;
+            padding: .6rem 1rem; gap: 1rem;
+            background: rgba(14,17,23,.97); border-top: 1px solid rgba(201,164,76,.55);
+            box-shadow: 0 -6px 18px rgba(0,0,0,.5);
+        }
+        .barre-equilibre {
+            display: flex; align-items: center; gap: .6rem; flex: 1; min-width: 200px; max-width: 360px;
+            font-family: 'EB Garamond', serif; font-size: .9rem; color: #ece3d2; white-space: nowrap;
+        }
+        .barre-equilibre .jauge-piste { flex: 1; margin: 0; }
+        .espace-barre { height: 5.5rem; }
+        .segment-titre { font-weight: 600; margin: .9rem 0 .15rem; }
+        div[class*="st-key-segment_"] { gap: .5rem; }
+        div[class*="st-key-segment_"] button {
+            border-radius: 999px; padding: .25rem 1.1rem; min-height: 2.2rem;
+            border: 1.5px solid rgba(201,164,76,.6); background: rgba(201,164,76,.08); color: #ece3d2;
+        }
+        div[class*="st-key-segment_"] button:hover { border-color: #f0d890; background: rgba(201,164,76,.22); }
+        div[class*="st-key-segment_"] button[data-testid="stBaseButton-primary"] {
+            background: #3f7d4f; border-color: #2f5f3b; color: #fff;
+        }
         .compteur-titre { text-align: center; font-weight: 600; margin: .6rem 0 .9rem; }
         div[class*="st-key-compteur_"] { gap: .9rem; }
         .compteur-valeur {
@@ -423,6 +453,9 @@ def css_cartes():
             padding: 0.8rem;
             box-shadow: 0 8px 28px rgba(0,0,0,.6);
         }
+        div[class*="st-key-reload_liste"] { max-height: 9.5rem; overflow-y: auto; gap: .3rem; padding-right: .2rem; margin: .3rem 0; }
+        div[class*="st-key-reload_liste"] button { min-height: 2rem; padding: .1rem .6rem; justify-content: flex-start; text-align: left; }
+        div[class*="st-key-reload_liste"] button p { font-size: .85rem; }
         div[class*="st-key-validation_"] {
             display: flex;
             flex-direction: column;
@@ -1003,6 +1036,19 @@ div[class*="st-key-accueil_btn_"] button p {
     div[class*="st-key-accueil_btn_"] button { padding: .9rem .8rem; }
     div[class*="st-key-accueil_btn_"] button p { font-size: 1.05rem; letter-spacing: .02em; }
 }
+div[class*="st-key-accueil_btn_reprendre"] button { background-color: #3f7d4f; border-color: #2f5f3b; color: #f2e9d8; }
+div[class*="st-key-accueil_btn_reprendre"] button:hover { background-color: #4a9059; border-color: #3f7d4f; color: #fff; }
+/* Avec une partie à reprendre, « Nouvelle partie » passe au second plan. */
+div[class*="st-key-accueil_boutons"]:has([class*="st-key-accueil_btn_reprendre"]) [class*="st-key-accueil_btn_nouvelle"] button,
+div[class*="st-key-accueil_btn_remplacer"] button {
+    background-color: rgba(8,10,28,.75); border: 1.5px solid rgba(201,164,76,.85); color: #fff4d0;
+}
+.reprise {
+    width: 100%; text-align: center; padding: .6rem .8rem; border-radius: 10px; color: #fff4d0;
+    background: rgba(8,10,28,.72); border: 1.5px solid rgba(201,164,76,.85); font-family: 'EB Garamond', serif;
+}
+.reprise-titre { font-family: 'Cinzel', serif; font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: #f0d890; }
+.reprise small { opacity: .8; }
 div[class*="st-key-accueil_btn_nouvelle"] button { background-color: #3f7d4f; border-color: #2f5f3b; color: #f2e9d8; }
 div[class*="st-key-accueil_btn_nouvelle"] button:hover { background-color: #4a9059; border-color: #3f7d4f; color: #fff; }
 div[class*="st-key-accueil_btn_historique"] button,

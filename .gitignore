@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 save.json
 joueurs.json
+preferences.json

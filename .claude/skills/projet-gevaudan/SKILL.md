@@ -85,6 +85,8 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 - `grille_dalles(theme, cle, choix, selection)` et `selection_dalles(theme, cle, choix, k)` : dalles cliquables. Chaque `theme` a son style CSS via la classe `st-key-dalles_<theme>_...` (themes existants : voy, loup, cupi, salv, mentor, flair, lb, poison, vote, maire, tir). Un nouveau thème = une entrée dans `styles.py`.
 - `bouton_validation(libelle, cle, disabled=False)` valide une étape ; `bouton_fin(s, cle)` termine le tour d'un joueur de nuit ; les clés de boutons de nuit contiennent `jour` et `tour` pour rester uniques.
+- **Dalles en fragment** : `selection_et_validation(theme, cle, choix, k, libelle, libelle_vide, cle_bouton)` joue sélection et validation dans un `st.fragment` (les clics sur les dalles ne relancent pas la page) et renvoie la sélection validée, sinon None. `grille_dalles` seule sert aux clics immédiats (tir, poison, salvateur).
+- **Installation en 4 étapes** (`config_etape` : table, roles, options, noms) : tous les réglages vivent sous des clés de session hors widget ou conservées par `_conserver()` (un widget non affiché perd son état, réaffecter la clé le garde) ; `composition_courante()` les lit ; bandeau `barre_fixe` en bas. Les commandes sur mesure sont `compteur` (boutons ronds) et `choix_segmente` ; la couleur d'accent de Streamlit est fixée par `primaryColor` dans `.streamlit/config.toml`.
 - `st.container(key="x")` donne la classe CSS `st-key-x` : c'est le crochet de style privilégié.
 - Après toute mutation de `s` qui doit changer l'écran : `st.rerun()`.
 
@@ -112,6 +114,9 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 `OPTIONS_DEFAUT` (`options.py`) : `potions_sorciere`, `potions_mort`, `couple_hasard`, `trouple`, `cadence_voyante`, `cadence_loup_blanc`, `maire_depart`. Toujours lire via `opt(s, "cle")` : les anciennes sauvegardes n'ont pas de clé `options`, `opt` retombe sur le défaut. Les options ne s'affichent à l'installation (« ⚙️ Options avancées ») que pour les rôles présents. `couple_hasard` remplace Cupidon par un villageois ; `trouple` est le mode « fun » (amour à trois).
 
 ## 5. Historique, sauvegarde et rechargement
+
+- **Reprise** : l'app ne reprend plus la partie sauvegardée toute seule ; `ecran_accueil` la résume (`resume_sauvegarde`) et propose « Reprendre » (confirmation avant de la remplacer).
+- **Préférences** : `preferences.json` (`load_preferences` / `maj_preferences`) garde le son (`son`) et la dernière composition (`composition`). Le son reste désactivé tant qu'on ne l'a pas activé une fois.
 
 - **Migrations** : l'état `s` porte une `version` ; `moteur/migrations.py` met à niveau les anciennes sauvegardes (et leurs instantanés). **Toute clé obligatoire ajoutée à l'état exige une migration** (incrémenter `VERSION`, ajouter une fonction à `MIGRATIONS`) et un test. `load_game` met de côté (`save.json.corrompue`, `.invalide`, `.plus_recente`) un fichier inutilisable au lieu de planter ; `save_game` écrit puis remplace (jamais de fichier tronqué).
 

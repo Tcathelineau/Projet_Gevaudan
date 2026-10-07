@@ -386,9 +386,12 @@ def css_cartes():
         }
         /* Les icônes d'aide de Streamlit font 16 px : on agrandit la zone cliquable à 24 px (WCAG 2.5.8). */
         [data-testid="stTooltipIcon"] { min-width: 24px; min-height: 24px; display: inline-flex; align-items: center; justify-content: center; }
-        @media (max-width: 520px) { .apercu-grille { grid-template-columns: 1fr !important; } }
-        .apercu-grille { display: grid; grid-template-columns: 2fr 3fr; gap: 0.6rem; align-items: stretch; }
-        .apercu-grille .panneau-dense { margin-bottom: 0; }
+        .apercu-centre { max-width: 340px; margin: 0 auto .5rem; }
+        .apercu-centre .panneau-dense { padding: .45rem .8rem; margin-bottom: 0; }
+        .apercu-centre .panneau-titre { font-size: .85rem; padding-bottom: .2rem; margin-bottom: .2rem; text-align: center; }
+        .apercu-centre .jauge { margin: .3rem 0 .1rem; }
+        .apercu-centre .jauge-entete { font-size: .85rem; }
+        div[class*="st-key-setup_roles"] [data-testid="stNumberInput"] { max-width: 220px; }
         .pictogramme {
             display: flex;
             flex-wrap: wrap;

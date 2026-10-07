@@ -6,7 +6,9 @@ from loup_garou.moteur.journal import prendre_instantane
 from loup_garou.moteur.partie import resoudre_nuit, vivants
 from loup_garou.options import opt
 from loup_garou.roles import ROLES
-from loup_garou.ui.composants import badge_amour, bouton_fin, bouton_validation, carte_dos, carte_role, plaquette
+from loup_garou.ui.composants import (
+    badge_amour, bouton_fin, bouton_validation, carte_dos, carte_role, fenetre_couple, plaquette,
+)
 from loup_garou.ui.nuit_roles import NUIT_ROLES
 
 
@@ -75,3 +77,6 @@ def ecran_nuit(s):
         autres = [n for n in s["amoureux"] if n != nom]
         with st.sidebar:
             badge_amour(autres)
+        if not donnees.get("couple_vu"):
+            donnees["couple_vu"] = True  # marqué à l'ouverture : « Compris » (ou la croix) ferme la fenêtre pour de bon
+            fenetre_couple(autres)

@@ -51,6 +51,22 @@ def badge_amour(autres):
     )
 
 
+def fenetre_couple(autres):
+    """Fenêtre qui s'ouvre la première fois qu'un joueur découvre qu'il est amoureux."""
+    en_trouple = len(autres) > 1
+    titre = "💘 Vous êtes en trouple !" if en_trouple else "💘 Vous êtes en couple !"
+
+    def contenu():
+        st.markdown(f"### Tu es lié par l'amour à **{' et '.join(autres)}**")
+        st.write(
+            "Si l'un de vous meurt, " + ("les autres le suivent" if en_trouple else "l'autre le suit") + " dans la tombe. "
+            "Gardez le secret, ou pas : à vous de jouer."
+        )
+        st.button("Compris", type="primary", key="fermer_couple")
+
+    st.dialog(titre)(contenu)()
+
+
 def badge_meute(nom, complices):
     if complices:
         noms = " & ".join([nom] + complices)

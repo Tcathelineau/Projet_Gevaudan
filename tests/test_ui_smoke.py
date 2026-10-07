@@ -505,3 +505,27 @@ def test_les_hurlements_accompagnent_la_victoire_des_loups_meme_sans_les_bruitag
     assert len(_app(s, cri_on=True).get("audio")) == 1
     assert len(_app(s, sons_on=True).get("audio")) == 1
     assert len(_app(s).get("audio")) == 0
+
+
+def test_la_composition_n_a_plus_de_panneau_liste_mais_garde_l_equilibre_centre():
+    at = _app()
+    at.button(key="accueil_btn_nouvelle").click().run()
+    texte = " ".join(m.value for m in at.markdown)
+    assert "apercu-centre" in texte and "Équilibre de la partie" in texte
+    assert 'class="panneau-titre">Composition' not in texte and "apercu-grille" not in texte
+
+
+def test_la_fenetre_du_couple_s_ouvre_une_seule_fois_par_amoureux():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    s = _tour_de_nuit(roles, "B", amoureux=["B", "C"])
+    s["joueurs"]["B"]["amoureux"] = s["joueurs"]["C"]["amoureux"] = True
+    at = _app(s)
+    assert not at.exception
+    assert at.session_state["partie"]["joueurs"]["B"]["couple_vu"] is True
+    assert not at.session_state["partie"]["joueurs"]["C"].get("couple_vu")  # C ne l'a pas encore découvert
+
+
+def test_pas_de_fenetre_de_couple_pour_un_joueur_seul():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B"))
+    assert not at.exception and not at.session_state["partie"]["joueurs"]["B"].get("couple_vu")

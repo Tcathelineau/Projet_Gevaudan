@@ -565,3 +565,18 @@ def test_les_categories_n_ont_plus_de_precisions():
     at.button(key="accueil_btn_nouvelle").click().run()
     texte = " ".join(m.value for m in at.markdown)
     assert "Information" in texte and "Apprennent qui est qui" not in texte and "Changent les camps" not in texte
+
+
+def test_les_boutons_plus_et_moins_n_ont_pas_d_infobulle():
+    at = _app()
+    at.button(key="accueil_btn_nouvelle").click().run()
+    for cle in ("nb_joueurs_setup_moins", "nb_joueurs_setup_plus", "n_loup_moins", "n_loup_plus"):
+        assert not at.button(key=cle).help
+
+
+def test_les_deux_compteurs_coexistent():
+    # L'agencement en une rangée se vérifie dans le navigateur ; ici, que les deux compteurs répondent.
+    at = _app()
+    at.button(key="accueil_btn_nouvelle").click().run()
+    assert not at.exception
+    assert at.session_state["nb_joueurs_setup"] == 7 and at.session_state["n_loup"] == 1

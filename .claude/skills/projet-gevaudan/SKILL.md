@@ -111,7 +111,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 ## 4. Système d'options
 
-`OPTIONS_DEFAUT` (`options.py`) : `potions_sorciere`, `potions_mort`, `couple_hasard`, `trouple`, `cadence_voyante`, `cadence_loup_blanc`, `maire_depart`. Toujours lire via `opt(s, "cle")` : les anciennes sauvegardes n'ont pas de clé `options`, `opt` retombe sur le défaut. Les options ne s'affichent à l'installation (« ⚙️ Options avancées ») que pour les rôles présents. `couple_hasard` remplace Cupidon par un villageois ; `trouple` est le mode « fun » (amour à trois).
+`OPTIONS_DEFAUT` (`options.py`) : `potions_sorciere`, `potions_mort`, `couple_hasard`, `trouple`, `cadence_voyante`, `cadence_loup_blanc`, `maire_depart`, `voyante_couple`. Toujours lire via `opt(s, "cle")` : les anciennes sauvegardes n'ont pas de clé `options`, `opt` retombe sur le défaut. À l'installation (étape Options, cartes centrées `carte_option`), les réglages d'un rôle absent restent visibles mais grisés. Ajouter une option : `OPTIONS_DEFAUT`, `OPTIONS_SESSION` et `CLES_OPTIONS` dans `installation.py`, une commande dans `etape_options`, et `opt(s, ...)` dans les règles (les anciennes sauvegardes retombent sur le défaut). `couple_hasard` remplace Cupidon par un villageois ; `trouple` est le mode « fun » (amour à trois).
 
 ## 5. Historique, sauvegarde et rechargement
 

@@ -9,6 +9,7 @@ OPTIONS_DEFAUT = {
     "cadence_voyante": 2,      # la voyante sonde une nuit sur N (à partir de la nuit 1)
     "cadence_loup_blanc": 2,   # le Loup Blanc festoie une nuit sur N (à partir de la nuit 1)
     "maire_depart": True,      # à égalité loups/village, la partie continue sauf si le maire est un loup
+    "voyante_couple": True,    # couple tiré au sort : la voyante peut, une fois, découvrir le couple au lieu d'un rôle
 }
 
 

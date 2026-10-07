@@ -823,16 +823,70 @@ def test_les_options_s_adaptent_aux_roles_et_se_reglent_par_boutons():
     assert not at.exception
 
 
-def test_les_options_d_un_role_absent_n_apparaissent_pas():
+def test_les_options_d_un_role_absent_sont_visibles_mais_grisees():
     at = _assistant()
     _etape_suivante(at)
     for cle in ("n_sorciere", "n_voyante"):
         at.checkbox(key=cle).uncheck()
     _etape_suivante(at)
-    assert not any(b.key == "opt_potions_plus" for b in at.button)
-    assert not any((b.key or "").startswith("opt_voyante__") for b in at.button)
-    assert at.checkbox(key="opt_maire").value is True  # coché par défaut
+    assert at.button(key="opt_potions_plus").disabled and at.button(key="opt_potions_moins").disabled
+    assert all(b.disabled for b in at.button if (b.key or "").startswith("opt_voyante__"))
+    assert at.checkbox(key="opt_maire").value is True and not at.checkbox(key="opt_maire").disabled  # coché par défaut
 
+
+def test_les_reglages_sont_rangés_en_cartes():
+    at = _assistant()
+    _etape_suivante(at, 2)
+    texte = " ".join(m.value for m in at.markdown)
+    for titre in ("🧪 La sorcière", "🔮 La voyante", "🌕 Le Loup Blanc", "💘 L'amour", "👑 Le village"):
+        assert titre in texte
+
+
+def test_les_potions_de_la_sorciere_se_reglent_de_0_a_5():
+    at = _assistant()
+    _etape_suivante(at, 2)
+    assert not at.button(key="opt_potions_plus").disabled
+    for _ in range(6):
+        at.button(key="opt_potions_plus").click().run() if not at.button(key="opt_potions_plus").disabled else None
+    assert at.session_state["opt_potions"] == 5 and at.button(key="opt_potions_plus").disabled
+    at.button(key="opt_potions_mort_plus").click().run()
+    assert at.session_state["opt_potions_mort"] == 1
+    at.session_state["opt_potions"] = 0
+    at.run()
+    assert at.button(key="opt_potions_moins").disabled
+
+
+def test_la_voyante_peut_decouvrir_le_couple_est_une_option_liee_au_couple_tire_au_sort():
+    at = _assistant()
+    _etape_suivante(at, 2)
+    assert at.checkbox(key="opt_voyante_couple").disabled  # pas de couple tiré au sort : sans objet
+    at.checkbox(key="opt_couple_hasard").check().run()
+    assert not at.checkbox(key="opt_voyante_couple").disabled and at.checkbox(key="opt_voyante_couple").value is True
+    at.checkbox(key="opt_voyante_couple").uncheck().run()
+    assert at.session_state["opt_voyante_couple"] is False
+
+
+def test_sans_l_option_la_voyante_ne_decouvre_pas_le_couple():
+    roles = {"A": "loup", "B": "voyante", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _tour_de_nuit(roles, "B", amoureux=["C", "D"])
+    s["options"].update(couple_hasard=True, voyante_couple=False)
+    at = _app(s)
+    assert not any((b.key or "").startswith("voy_couple") for b in at.button)
+    assert any(b.key == "pick_voy_1_0_C" for b in at.button)
+
+
+def test_l_option_est_prise_en_compte_dans_la_partie_creee():
+    at = _assistant()
+    _etape_suivante(at, 2)
+    at.checkbox(key="opt_couple_hasard").check().run()
+    at.checkbox(key="opt_voyante_couple").uncheck().run()
+    at.button(key="opt_potions_mort_plus").click().run()
+    _etape_suivante(at)
+    for i, champ in enumerate(at.text_input):
+        champ.set_value(f"J{i}")
+    [b for b in at.button if b.label == "Distribuer les rôles"][0].click().run()
+    options = at.session_state["partie"]["options"]
+    assert options["voyante_couple"] is False and options["couple_hasard"] is True and options["potions_mort"] == 1
 
 def test_la_derniere_composition_est_proposee_a_la_partie_suivante():
     import json

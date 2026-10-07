@@ -355,6 +355,38 @@ def css_cartes():
         .apercu-centre .panneau-titre { font-size: .85rem; padding-bottom: .2rem; margin-bottom: .2rem; text-align: center; }
         .apercu-centre .jauge { margin: .3rem 0 .1rem; }
         .apercu-centre .jauge-entete { font-size: .85rem; }
+        /* Fenêtre « Vous êtes en couple » : tout en rose. */
+        div[role="dialog"]:has(.dialogue-couple) {
+            background: radial-gradient(circle at 50% 0%, #6b2148, #260b19 80%) !important;
+            border: 2px solid #f06fb5; border-radius: 18px;
+            box-shadow: 0 0 44px rgba(240,111,181,.5), 0 0 0 4px rgba(240,111,181,.12);
+        }
+        div[role="dialog"]:has(.dialogue-couple) h2 {
+            color: #ffd0e6; font-family: 'Cinzel', serif; text-align: center; width: 100%;
+            text-shadow: 0 0 14px rgba(240,111,181,.7);
+        }
+        .dialogue-couple { text-align: center; padding: .2rem 0 .6rem; font-family: 'EB Garamond', serif; color: #ffe3f0; }
+        .dc-coeurs { font-size: 2.3rem; letter-spacing: .3rem; animation: battement 1.5s ease-in-out infinite; }
+        .dc-lien { font-size: 1.05rem; opacity: .9; margin-top: .4rem; }
+        .dc-noms {
+            font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; color: #ff9ccf; margin: .15rem 0 .7rem;
+            text-shadow: 0 0 18px rgba(240,111,181,.55);
+        }
+        .dc-texte { font-size: 1.1rem; line-height: 1.4; }
+        div[role="dialog"]:has(.dialogue-couple) button {
+            background: #b3335a; border-color: #f06fb5; color: #fff; font-weight: 600;
+        }
+        div[role="dialog"]:has(.dialogue-couple) button:hover { background: #cf4271; border-color: #ffb3d9; color: #fff; }
+        @keyframes battement { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.16); } }
+        @media (prefers-reduced-motion: reduce) { .dc-coeurs { animation: none; } }
+        .titre-etape {
+            text-align: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.7rem; letter-spacing: .04em;
+            color: #f0d890; text-shadow: 0 2px 12px rgba(201,164,76,.35); margin: .6rem 0 .8rem;
+        }
+        /* Pendant une relance, Streamlit garde l'ancien écran affiché : on masque aussitôt ce qui trahit un rôle. */
+        [data-testid="stElementContainer"][data-stale="true"] :is(.carte-scene, .carte, .plaquette, .badge-meute, .badge-amour, .potion-bandeau) {
+            visibility: hidden !important;
+        }
         .etapes { display: flex; justify-content: center; flex-wrap: wrap; gap: .4rem; margin: .2rem 0 .8rem; }
         .etape {
             display: inline-flex; align-items: center; gap: .35rem; padding: .15rem .75rem; border-radius: 999px;

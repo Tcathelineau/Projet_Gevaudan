@@ -146,14 +146,19 @@ def afficher_composition(nb, total, composition, n_villageois, options):
 
     st.markdown(f'<div class="apercu-centre">{jauges_html(bilan(composition, nb, options)).strip()}</div>', unsafe_allow_html=True)
 
+    st.markdown(bulles_html(composition), unsafe_allow_html=True)
+    if total > nb:
+        st.caption(f"{total - nb} cartes restent au milieu de la table ({nb} joueurs, {total} cartes).")
+
+
+def bulles_html(composition):
+    """Une bulle par carte du paquet (loups, rôles, villageois)."""
     icones = "".join(
         f'<div class="icone-role" style="background: {ROLES[cle].degrade};" title="{ROLES[cle].nom}">{svg_role(cle, "icone-art", ROLES[cle].emoji)}</div>'
         for cle, n in composition.items()
         for _ in range(n)
     )
-    st.markdown(f'<div class="pictogramme">{icones}</div>', unsafe_allow_html=True)
-    if total > nb:
-        st.caption(f"{total - nb} cartes restent au milieu de la table ({nb} joueurs, {total} cartes).")
+    return f'<div class="pictogramme">{icones}</div>'
 
 
 def jauges_html(b):
@@ -217,7 +222,7 @@ def compteur(titre, cle, mini, maxi, defaut, cle_titre=None):
 
 
 def etape_table(cfg):
-    st.markdown("##### Combien êtes-vous ?")
+    st.markdown('<div class="titre-etape">Combien êtes-vous ?</div>', unsafe_allow_html=True)
     with st.container(key="compteurs", horizontal=True, horizontal_alignment="center", gap="large"):
         with st.container(key="compteur_joueurs"):
             compteur("Nombre de joueurs", "nb_joueurs_setup", 5, 18, 7)
@@ -227,10 +232,7 @@ def etape_table(cfg):
                 f"{ROLES['loup'].emoji} {ROLES['loup'].nom}", "n_loup", 1, max(1, cfg.nb - 1),
                 min(loups_defaut, max(1, cfg.nb - 1)), cle_titre="info_loup",
             )
-    st.caption(
-        f"{cfg.nb} joueurs, {cfg.composition['loup']} loup{'s' if cfg.composition['loup'] > 1 else ''} : "
-        "l'étape suivante répartit les autres rôles."
-    )
+    st.markdown(bulles_html(cfg.composition), unsafe_allow_html=True)
     st.markdown(css_infobulles(), unsafe_allow_html=True)
     st.markdown('<div class="espace-barre"></div>', unsafe_allow_html=True)
 
@@ -283,7 +285,7 @@ def etape_roles(cfg):
 def etape_options(cfg):
     """Réglages de règles, limités aux rôles présents dans la partie."""
     afficher_composition(cfg.nb, cfg.total, cfg.composition, cfg.n_villageois, cfg.options)
-    st.markdown("##### Réglages de la partie")
+    st.markdown('<div class="titre-etape">Réglages de la partie</div>', unsafe_allow_html=True)
     comp = cfg.composition
     avec_option = False
     if comp.get("sorciere"):
@@ -299,19 +301,18 @@ def etape_options(cfg):
     if comp.get("loup_blanc"):
         avec_option = True
         choix_segmente("🌕 Festins du Loup Blanc", "opt_loup_blanc", CADENCES, OPTIONS_DEFAUT["cadence_loup_blanc"])
-    oui_non = {False: "Non", True: "Oui"}
-    choix_segmente(
-        "🎲 Couple tiré au sort, sans Cupidon", "opt_couple_hasard", oui_non, False,
-        "Le couple est désigné au hasard dès le départ ; Cupidon est remplacé par un villageois.",
+    st.checkbox(
+        "🎲 Couple tiré au sort, sans Cupidon", value=OPTIONS_DEFAUT["couple_hasard"], key="opt_couple_hasard",
+        help="Le couple est désigné au hasard dès le départ ; Cupidon est remplacé par un villageois.",
     )
-    choix_segmente(
-        "🎉 Mode fun : un trouple au lieu d'un couple", "opt_trouple", oui_non, False,
-        "L'amour lie trois joueurs (choisis par Cupidon, ou tirés au sort). Si l'un meurt, les deux autres le suivent.",
+    st.checkbox(
+        "🎉 Mode fun : un trouple au lieu d'un couple", value=OPTIONS_DEFAUT["trouple"], key="opt_trouple",
+        help="L'amour lie trois joueurs (choisis par Cupidon, ou tirés au sort). Si l'un meurt, les deux autres le suivent.",
     )
-    choix_segmente(
-        "👑 À égalité loups / village, le maire départage", "opt_maire", oui_non, True,
-        "Oui : la partie continue à égalité, sauf si le maire est un loup. "
-        "Non : les loups gagnent dès qu'ils sont aussi nombreux que les autres.",
+    st.checkbox(
+        "👑 À égalité loups / village, le maire départage", value=OPTIONS_DEFAUT["maire_depart"], key="opt_maire",
+        help="Coché : la partie continue à égalité, sauf si le maire est un loup. "
+             "Décoché : les loups gagnent dès qu'ils sont aussi nombreux que les autres.",
     )
     if not avec_option:
         st.caption("Les réglages propres à un rôle (potions, cadences) apparaissent quand ce rôle est dans la partie.")

@@ -56,12 +56,16 @@ def fenetre_couple(autres):
     titre = "💘 Vous êtes en trouple !" if en_trouple else "💘 Vous êtes en couple !"
 
     def contenu():
-        st.markdown(f"### Tu es lié par l'amour à **{' et '.join(autres)}**")
-        st.write(
-            "Si l'un de vous meurt, " + ("les autres le suivent" if en_trouple else "l'autre le suit") + " dans la tombe. "
-            "Gardez le secret, ou pas : à vous de jouer."
+        suite = "les autres le suivent" if en_trouple else "l'autre le suit"
+        st.markdown(
+            '<div class="dialogue-couple"><div class="dc-coeurs">💗 💘 💗</div>'
+            "<div class=\"dc-lien\">Tu es lié par l'amour à</div>"
+            f'<div class="dc-noms">{html.escape(" et ".join(autres))}</div>'
+            f'<div class="dc-texte">Si l\'un de vous meurt, {suite} dans la tombe.<br>'
+            'Gardez le secret, ou pas : à vous de jouer.</div></div>',
+            unsafe_allow_html=True,
         )
-        st.button("Compris", type="primary", key="fermer_couple")
+        st.button("Compris", type="primary", key="fermer_couple", use_container_width=True)
 
     st.dialog(titre)(contenu)()
 

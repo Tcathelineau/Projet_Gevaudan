@@ -69,7 +69,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 - **Les solitaires** (Loup Blanc) ne gagnent qu'en éliminant tout le monde : tant qu'ils vivent, ni le village ni la meute ne peut conclure.
 - **Camp secret** : à la mort du Chien-Loup, son camp n'est pas dévoilé avant la fin de la partie.
 - **Louveteau** : sa mort double les victimes des loups la nuit suivante. La meute désigne alors deux joueurs ; en cas d'égalité à la limite des deux, seuls les joueurs strictement plus désignés meurent. La potion de la sorcière ne sauve que la victime la plus désignée.
-- **Servante dévouée** : la nuit qui suit un vote, elle choisit (ou non) de reprendre le rôle d'un joueur condamné la veille ; elle découvre sa nouvelle carte tout de suite et la joue dès la nuit suivante. Le panneau du lendemain annonce qu'elle est intervenue (son nom et le condamné dont elle a pris le rôle), sans dire quel rôle elle a pris. Le camp du condamné a été révélé normalement au vote.
+- **Servante dévouée** : la nuit qui suit un vote, elle choisit (ou non) de reprendre le rôle d'un joueur condamné la veille ; elle découvre sa nouvelle carte tout de suite et la joue dès la nuit suivante. Le panneau du lendemain annonce que la servante a pris le rôle du condamné, sans donner son nom ni dire quel rôle elle a pris. Le camp du condamné a été révélé normalement au vote.
 - **Juge bègue** : adaptation à l'app, il active son pouvoir pendant son tour de nuit (le second vote suit immédiatement le premier au conseil du lendemain, sauf si la partie est déjà finie ou s'il reste un tir de chasseur à résoudre).
 - **Ordre de nuit** : le Voleur agit avant tout le monde, puis le Chien-Loup, puis les autres rôles.
 

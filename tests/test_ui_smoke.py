@@ -175,7 +175,8 @@ def test_la_servante_reprend_le_role_du_condamne_de_nuit():
     assert s["phase"] == "reveil"
     at.run()
     texte = " ".join(m.value for m in at.markdown)
-    assert "La servante dévouée est intervenue" in texte and "C</div>" in texte
+    assert "La servante dévouée" in texte and "a pris cette nuit le rôle de B" in texte
+    assert ">🧹 C<" not in texte and "C est" not in texte  # son nom ne figure pas sur le panneau
 
 
 def test_la_servante_peut_ne_rien_faire():
@@ -185,7 +186,7 @@ def test_la_servante_peut_ne_rien_faire():
     s = at.session_state["partie"]
     assert s["joueurs"]["C"]["role"] == "servante" and s["phase"] == "reveil"
     at.run()
-    assert "La servante dévouée est intervenue" not in " ".join(m.value for m in at.markdown)
+    assert "a pris cette nuit le rôle" not in " ".join(m.value for m in at.markdown)
 
 
 def test_la_servante_n_a_rien_a_reprendre_sans_condamne_la_veille():
@@ -896,3 +897,27 @@ def test_les_elements_qui_trahissent_un_role_se_masquent_pendant_la_relance():
 
     css = open(styles.__file__, encoding="utf-8").read()
     assert '[data-stale="true"] :is(.carte-scene' in css
+
+
+def test_l_etape_table_n_a_que_des_loups_et_des_villageois_dans_les_bulles():
+    at = _assistant()
+    bulles = [m.value for m in at.markdown if 'class="pictogramme"' in m.value][0]
+    assert bulles.count('class="icone-role"') == 7
+    assert 'title="Loup-Garou"' in bulles and 'title="Villageois"' in bulles
+    for autre in ("Voyante", "Sorcière", "Chasseur", "Cupidon"):
+        assert f'title="{autre}"' not in bulles
+    _etape_suivante(at)
+    roles = [m.value for m in at.markdown if 'class="pictogramme"' in m.value][0]
+    assert 'title="Voyante"' in roles  # les autres rôles apparaissent à l'étape suivante
+
+
+def test_compris_ferme_la_fenetre_du_couple():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    s = _tour_de_nuit(roles, "B", amoureux=["B", "C"])
+    s["joueurs"]["B"]["amoureux"] = s["joueurs"]["C"]["amoureux"] = True
+    at = _app(s)
+    boutons = [b for b in at.button if b.key == "fermer_couple"]
+    assert boutons, "la fenêtre du couple doit proposer « Compris »"
+    boutons[0].click().run()
+    assert not at.exception
+    assert not any(b.key == "fermer_couple" for b in at.button)  # fenêtre refermée : elle ne se rouvre pas

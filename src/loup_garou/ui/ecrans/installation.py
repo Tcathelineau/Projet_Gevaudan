@@ -232,7 +232,9 @@ def etape_table(cfg):
                 f"{ROLES['loup'].emoji} {ROLES['loup'].nom}", "n_loup", 1, max(1, cfg.nb - 1),
                 min(loups_defaut, max(1, cfg.nb - 1)), cle_titre="info_loup",
             )
-    st.markdown(bulles_html(cfg.composition), unsafe_allow_html=True)
+    # À ce stade, seuls les loups et les villageois : les autres rôles sont distribués à l'étape suivante.
+    simple = {"loup": cfg.composition["loup"], "villageois": cfg.nb - cfg.composition["loup"]}
+    st.markdown(bulles_html(simple), unsafe_allow_html=True)
     st.markdown(css_infobulles(), unsafe_allow_html=True)
     st.markdown('<div class="espace-barre"></div>', unsafe_allow_html=True)
 

@@ -189,9 +189,10 @@ def plaquette(texte, icone="🌙", ton="neutre"):
     )
 
 
-def grille_dalles(theme, cle, choix, selection=()):
+def grille_dalles(theme, cle, choix, selection=(), rappel=None):
     """Dalles cliquables (style selon `theme`, cf. CSS). Renvoie le nom cliqué ou None.
-    Les noms de `selection` sont affichés en surbrillance."""
+    Les noms de `selection` sont affichés en surbrillance. Avec `rappel(nom)`, le clic est traité par ce rappel
+    (avant la relance du script), ce qui permet de ne relancer qu'un fragment."""
     # Plus il y a de choix, plus on élargit la grille : elle reste sur 3 lignes (7 colonnes au plus).
     n_col = 2 if len(choix) <= 4 else min(7, max(3, -(-len(choix) // 3)))
     clic = None
@@ -204,21 +205,40 @@ def grille_dalles(theme, cle, choix, selection=()):
                 if st.button(
                     nom, key=f"pick_{theme}_{cle}_{nom}", use_container_width=True,
                     type="primary" if choisi else "secondary",
+                    on_click=rappel, args=(nom,) if rappel else None,
                 ):
                     clic = nom
     return clic
 
 
-def selection_dalles(theme, cle, choix, k):
-    """Dalles où l'on en sélectionne `k` (re-cliquer désélectionne). Renvoie la sélection courante."""
+def _basculer(cle_sel, choix, k, nom):
+    sel = [n for n in st.session_state.get(cle_sel, []) if n in choix]
+    st.session_state[cle_sel] = [n for n in sel if n != nom] if nom in sel else (sel + [nom])[-k:]
+
+
+@st.fragment
+def _zone_selection(theme, cle, choix, k, libelle, libelle_vide, cle_bouton):
     cle_sel = f"sel_{theme}_{cle}"
     sel = [n for n in st.session_state.get(cle_sel, []) if n in choix]
-    clic = grille_dalles(theme, cle, choix, selection=sel)
-    if clic:
-        sel = [n for n in sel if n != clic] if clic in sel else (sel + [clic])[-k:]
-        st.session_state[cle_sel] = sel
-        st.rerun()
-    return sel
+    grille_dalles(theme, cle, choix, selection=sel, rappel=lambda nom: _basculer(cle_sel, choix, k, nom))
+    if bouton_validation(
+        libelle.format(sel=" et ".join(sel)) if sel else libelle_vide, cle_bouton, disabled=len(sel) != k,
+    ):
+        st.session_state.pop(cle_sel, None)
+        st.session_state[f"valide_{cle_bouton}"] = sel
+        st.rerun()  # relance toute la page, pour passer à la suite
+
+
+def selection_et_validation(theme, cle, choix, k, libelle, libelle_vide, cle_bouton):
+    """Dalles où l'on en sélectionne `k` (re-cliquer désélectionne), puis un bouton de validation.
+
+    Renvoie la sélection validée, ou None. Les clics sur les dalles ne relancent que ce fragment : la page
+    ne clignote pas. `libelle` peut contenir `{sel}` (les noms choisis), `libelle_vide` sert tant que rien n'est choisi."""
+    valide = st.session_state.pop(f"valide_{cle_bouton}", None)
+    if valide is not None:
+        return valide
+    _zone_selection(theme, cle, choix, k, libelle, libelle_vide, cle_bouton)
+    return None
 
 
 def bouton_validation(libelle, cle, disabled=False):

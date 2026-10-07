@@ -12,6 +12,7 @@ import streamlit as st
 
 from loup_garou.config import MUSIQUE_FILE
 from loup_garou.moteur.partie import camp
+from loup_garou.moteur.persistance import load_preferences, maj_preferences
 from loup_garou.roles import ROLES
 from loup_garou.ui.illustrations import ASSETS
 
@@ -91,6 +92,17 @@ def actif(cle):
 
 def _memoriser(cle):
     st.session_state[cle] = st.session_state[f"case_{cle}"]
+    maj_preferences(son={c: actif(c) for c in REGLAGES})
+
+
+def charger_preferences_son():
+    """Reprend les réglages du son de la dernière session (désactivés tant qu'on ne les a pas activés une fois)."""
+    if "prefs_son_chargees" in st.session_state:
+        return
+    st.session_state["prefs_son_chargees"] = True
+    for cle, valeur in load_preferences().get("son", {}).items():
+        if cle in REGLAGES and cle not in st.session_state:
+            st.session_state[cle] = bool(valeur)
 
 
 def cases_a_cocher():
@@ -101,7 +113,7 @@ def cases_a_cocher():
 
 def vider_session():
     """Efface la partie de la session en gardant les réglages du son."""
-    reglages = {cle: st.session_state[cle] for cle in REGLAGES if cle in st.session_state}
+    reglages = {cle: st.session_state[cle] for cle in (*REGLAGES, "prefs_son_chargees") if cle in st.session_state}
     st.session_state.clear()
     st.session_state.update(reglages)
 

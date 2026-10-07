@@ -11,10 +11,9 @@ from loup_garou.roles import ROLES
 from loup_garou.ui.composants import (
     badge_meute,
     bouton_fin,
-    bouton_validation,
     grille_dalles,
     plaquette,
-    selection_dalles,
+    selection_et_validation,
 )
 
 
@@ -38,10 +37,8 @@ def _vote_loups(s, nom, cle, cibles):
         st.markdown("**Qui dévorez-vous ?**")
     else:
         st.markdown(f"**Qui dévorez-vous ? Le Louveteau est mort : désignez {k} victimes.**")
-    choix = selection_dalles("loup", cle, cibles, k)
-    if bouton_validation(
-        "🐺 Dévorer " + " et ".join(choix) if choix else "🐺 Dévorer", f"devorer_{cle}", disabled=len(choix) != k,
-    ):
+    choix = selection_et_validation("loup", cle, cibles, k, "🐺 Dévorer {sel}", "🐺 Dévorer", f"devorer_{cle}")
+    if choix:
         s["votes_loups"] += choix
         log(s, f"{nom} ({ROLES[s['joueurs'][nom]['role']].nom}) désigne {' et '.join(choix)}.")
         st.session_state.pop(f"sel_loup_{cle}", None)
@@ -153,8 +150,8 @@ def _nuit_renard(s, nom, cle):
     candidats = [n for n in vivants(s) if n != nom]
     k = min(3, len(candidats))
     st.markdown(f"**Flaire {k} personnes**")
-    groupe = selection_dalles("flair", cle, candidats, k)
-    if bouton_validation("Flairer", f"flairer_{cle}", disabled=len(groupe) != k):
+    groupe = selection_et_validation("flair", cle, candidats, k, "Flairer", "Flairer", f"flairer_{cle}")
+    if groupe:
         loup = any(camp(s, n) == "loups" for n in groupe)
         log(s, f"Le renard {nom} flaire {', '.join(groupe)} : "
                + ("un loup-garou s'y trouve." if loup else "aucun loup-garou, il perd son flair."))
@@ -203,11 +200,9 @@ def _nuit_voyante(s, nom, cle):
             st.session_state.pop(cle_mode, None)
             st.rerun()
         candidats = [n for n in vivants(s) if n != nom]
-        choix = selection_dalles("voy", cle, candidats, 1)
-        vu = choix[0] if choix else None
-        if bouton_validation(
-            f"🔮 Sonder {vu}" if vu else "🔮 Sonder", f"sonder_{cle}", disabled=vu is None,
-        ):
+        choix = selection_et_validation("voy", cle, candidats, 1, "🔮 Sonder {sel}", "🔮 Sonder", f"sonder_{cle}")
+        if choix:
+            vu = choix[0]
             log(s, f"La voyante {nom} sonde {vu} : {ROLES[s['joueurs'][vu]['role']].nom}.")
             st.session_state[f"vu_{cle}"] = vu
             st.rerun()
@@ -286,8 +281,10 @@ def _nuit_cupidon(s, nom, cle):
         st.markdown("**Qui lies-tu par l'amour ?**")
         k = taille_couple(s)
         st.caption(f"Choisis {'trois' if k == 3 else 'deux'} joueurs (toi compris).")
-        couple = selection_dalles("cupi", cle, list(s["joueurs"].keys()), k)
-        if bouton_validation("Décocher la flèche", f"ok_cup_{cle}", disabled=len(couple) != k):
+        couple = selection_et_validation(
+            "cupi", cle, list(s["joueurs"].keys()), k, "Décocher la flèche", "Décocher la flèche", f"ok_cup_{cle}",
+        )
+        if couple:
             s["amoureux"] = couple
             log(s, f"Cupidon {nom} lie {', '.join(couple[:-1])} et {couple[-1]}.")
             for n in couple:
@@ -460,9 +457,11 @@ def _nuit_corbeau(s, nom, cle):
         return
     st.markdown("**Qui le corbeau désigne-t-il ?**")
     st.caption("Il recevra deux voix de plus au prochain vote du village. Le village saura qui est désigné, pas qui l'a fait.")
-    choix = selection_dalles("corb", cle, [n for n in vivants(s) if n != nom], 1)
-    cible = choix[0] if choix else None
-    if bouton_validation(f"🐦 Désigner {cible}" if cible else "🐦 Désigner", f"corbeau_{cle}", disabled=cible is None):
+    choix = selection_et_validation(
+        "corb", cle, [n for n in vivants(s) if n != nom], 1, "🐦 Désigner {sel}", "🐦 Désigner", f"corbeau_{cle}",
+    )
+    if choix:
+        cible = choix[0]
         s["corbeau_cible"] = cible
         log(s, f"Le corbeau {nom} désigne {cible} : deux voix de plus contre lui au prochain vote.")
         st.session_state.pop(f"sel_corb_{cle}", None)

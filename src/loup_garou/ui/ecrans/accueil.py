@@ -6,7 +6,7 @@ from collections import Counter
 
 import streamlit as st
 
-from loup_garou.moteur.persistance import date_partie, gagnant_partie, lister_historique
+from loup_garou.moteur.persistance import clear_save, date_partie, gagnant_partie, lister_historique, resume_sauvegarde
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import scene_ciel, silhouettes_vent
 from loup_garou.ui.illustrations import svg_role
@@ -51,13 +51,43 @@ def ecran_accueil():
             '<div class="acc-titre">Projet Gévaudan</div></div>',
             unsafe_allow_html=True,
         )
+        sauvegarde = resume_sauvegarde()
         with st.container(key="accueil_boutons"):
-            if st.button("🐺 Nouvelle partie", key="accueil_btn_nouvelle", type="primary"):
+            if sauvegarde:
+                _bloc_reprise(sauvegarde)
+            elif st.button("🐺 Nouvelle partie", key="accueil_btn_nouvelle", type="primary"):
                 aller_a("installation")
             if st.button("📜 Historique", key="accueil_btn_historique"):
                 aller_a("historique")
             if st.button("📖 Documentation", key="accueil_btn_documentation"):
                 aller_a("documentation")
+
+
+def _reprendre(partie):
+    st.session_state.partie = partie
+
+
+def _bloc_reprise(sauvegarde):
+    """Une partie est sauvegardée : on la propose, et on demande confirmation avant de la remplacer."""
+    partie, texte, date = sauvegarde
+    st.markdown(
+        f'<div class="reprise"><div class="reprise-titre">Partie en cours</div><div>{html.escape(texte)}</div>'
+        f'<small>Sauvegardée le {date}</small></div>',
+        unsafe_allow_html=True,
+    )
+    st.button("▶ Reprendre la partie", key="accueil_btn_reprendre", type="primary", on_click=_reprendre, args=(partie,))
+    if st.session_state.get("remplacer_demande"):
+        st.warning("La partie sauvegardée sera perdue.")
+        if st.button("Oui, nouvelle partie", key="accueil_btn_remplacer"):
+            clear_save()
+            st.session_state.remplacer_demande = False
+            aller_a("installation")
+        if st.button("Non, la garder", key="accueil_btn_garder"):
+            st.session_state.remplacer_demande = False
+            st.rerun()
+    elif st.button("🐺 Nouvelle partie", key="accueil_btn_nouvelle"):
+        st.session_state.remplacer_demande = True
+        st.rerun()
 
 
 def _carte_partie(p):

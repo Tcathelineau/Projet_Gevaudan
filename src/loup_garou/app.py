@@ -3,7 +3,7 @@
 import streamlit as st
 
 from loup_garou.moteur.partie import camp, vivants
-from loup_garou.moteur.persistance import clear_save, load_game, save_game
+from loup_garou.moteur.persistance import clear_save, save_game
 from loup_garou.roles import ROLES
 from loup_garou.ui.barre_laterale import garder_sidebar_ouverte, panneau_rechargement
 from loup_garou.ui.ecrans.accueil import ecran_accueil, ecran_historique
@@ -15,7 +15,7 @@ from loup_garou.ui.ecrans.nuit import ecran_nuit
 from loup_garou.ui.regles import SECTIONS, afficher_regles, afficher_roles_de_la_partie
 from loup_garou.ui.illustrations import ASSETS
 from loup_garou.ui.sons import (
-    actif, cases_a_cocher, effet_autorise, effet_courant, jouer_effet, marquer_cri, jouer_musique, musique_courante, vider_session,
+    actif, cases_a_cocher, charger_preferences_son, effet_autorise, effet_courant, jouer_effet, marquer_cri, jouer_musique, musique_courante, vider_session,
 )
 from loup_garou.ui.styles import CSS_ACCUEIL, css_cartes, CSS_HISTORIQUE, CSS_PASSAGE, CSS_SCENES
 
@@ -31,21 +31,19 @@ def main():
     st.markdown(CSS_ACCUEIL + CSS_HISTORIQUE, unsafe_allow_html=True)
     garder_sidebar_ouverte()
 
+    charger_preferences_son()
+
     if "partie" not in st.session_state:
-        sauvegarde = load_game()
-        if sauvegarde:
-            st.session_state.partie = sauvegarde
+        ecran = st.session_state.get("ecran", "accueil")
+        if ecran == "installation":
+            ecran_installation()
+        elif ecran == "historique":
+            ecran_historique()
+        elif ecran == "documentation":
+            ecran_documentation()
         else:
-            ecran = st.session_state.get("ecran", "accueil")
-            if ecran == "installation":
-                ecran_installation()
-            elif ecran == "historique":
-                ecran_historique()
-            elif ecran == "documentation":
-                ecran_documentation()
-            else:
-                ecran_accueil()
-            return
+            ecran_accueil()  # propose de reprendre la partie sauvegardée, s'il y en a une
+        return
 
     s = st.session_state.partie
 

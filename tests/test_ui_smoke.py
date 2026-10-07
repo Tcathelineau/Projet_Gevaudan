@@ -816,7 +816,7 @@ def test_les_options_s_adaptent_aux_roles_et_se_reglent_par_boutons():
     assert any(b.key == "opt_potions_plus" for b in at.button)
     at.button(key="opt_potions_plus").click().run()
     at.button(key="opt_voyante__3").click().run()
-    at.button(key="opt_couple_hasard__True").click().run()
+    at.checkbox(key="opt_couple_hasard").check().run()
     assert at.session_state["opt_potions"] == 2 and at.session_state["opt_voyante"] == 3
     assert at.session_state["opt_couple_hasard"] is True
     assert not at.exception
@@ -830,7 +830,7 @@ def test_les_options_d_un_role_absent_n_apparaissent_pas():
     _etape_suivante(at)
     assert not any(b.key == "opt_potions_plus" for b in at.button)
     assert not any((b.key or "").startswith("opt_voyante__") for b in at.button)
-    assert any(b.key == "opt_maire__True" for b in at.button)
+    assert at.checkbox(key="opt_maire").value is True  # coché par défaut
 
 
 def test_la_derniere_composition_est_proposee_a_la_partie_suivante():
@@ -862,3 +862,37 @@ def test_les_etapes_a_recharger_se_choisissent_dans_une_liste_de_boutons():
     assert at.session_state["reload_choix"] == "nuit_1" and not at.button(key="reload_ok").disabled
     at.button(key="reload_ok").click().run()
     assert at.session_state["partie"]["phase"] == "conseil" and not at.exception
+
+
+def test_l_etape_table_montre_les_bulles_sans_phrase_et_un_titre_centre():
+    at = _assistant()
+    texte = " ".join(m.value for m in at.markdown)
+    assert "Combien êtes-vous ?" in texte and 'class="titre-etape"' in texte
+    assert "pictogramme" in texte and "icone-role" in texte
+    assert "répartit les autres rôles" not in texte
+
+
+def test_les_reglages_de_partie_sont_des_cases_a_cocher():
+    at = _assistant()
+    _etape_suivante(at, 2)
+    for cle in ("opt_couple_hasard", "opt_trouple", "opt_maire"):
+        assert at.checkbox(key=cle)
+    assert not any((b.key or "").endswith(("__True", "__False")) for b in at.button)
+    at.checkbox(key="opt_trouple").check().run()
+    assert at.session_state["opt_trouple"] is True
+
+
+def test_la_fenetre_du_couple_est_stylisee():
+    from loup_garou.ui import composants, styles
+
+    source = open(composants.__file__, encoding="utf-8").read()
+    assert "dialogue-couple" in source and "dc-noms" in source
+    css = open(styles.__file__, encoding="utf-8").read()
+    assert 'div[role="dialog"]:has(.dialogue-couple)' in css and "#f06fb5" in css
+
+
+def test_les_elements_qui_trahissent_un_role_se_masquent_pendant_la_relance():
+    from loup_garou.ui import styles
+
+    css = open(styles.__file__, encoding="utf-8").read()
+    assert '[data-stale="true"] :is(.carte-scene' in css

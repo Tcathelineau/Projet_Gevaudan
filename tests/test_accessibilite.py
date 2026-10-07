@@ -30,6 +30,7 @@ TEXTES = [
     ("#f0d890", FOND_PAGE), ("#ece3d2", FOND_PAGE), ("#f2e9d8", FOND_PAGE), ("#fff4d0", FOND_PAGE),
     ("#c9a44c", FOND_PAGE), ("#b9b09c", FOND_PAGE), ("#b9b09c", FOND_BARRE), ("#e3b8c4", FOND_PAGE),
     ("#d98080", FOND_MENU), ("#e8706b", FOND_PAGE), ("#4caf6a", FOND_PAGE), ("#eceaf4", FOND_PAGE),
+    ("#ffffff", "#b3335a"), ("#ffd0e6", "#260b19"), ("#ff9ccf", "#260b19"), ("#ffe3f0", "#260b19"),
     ("#000000", "#d64545"), ("#000000", "#4caf6a"), ("#000000", "#f06fb5"), ("#000000", "#8a8a9a"),
 ]
 

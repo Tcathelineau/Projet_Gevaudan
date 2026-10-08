@@ -1,5 +1,6 @@
 """Tour de nuit de chaque rôle : ce que voit et choisit le joueur appelé."""
 
+import html
 import random
 
 import streamlit as st
@@ -214,6 +215,10 @@ def _nuit_sorciere(s, nom, cle):
     def reste_a_faire():
         return (s["potions_sorciere"] > 0 and not s["soin_sorciere"]) or (
             s.get("potions_mort_sorciere", 0) > 0 and not s.get("cible_poison"))
+
+    sauve = s.get("sauve_par_sorciere")
+    if sauve and opt(s, "sorciere_sait_sauve"):
+        plaquette(f"La nuit dernière, ta potion a sauvé {html.escape(sauve)}.", icone="🧪")
 
     if s["jour"] == 0 or not reste_a_faire():
         plaquette("Rien à faire cette nuit.", icone="🌙")

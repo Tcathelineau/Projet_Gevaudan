@@ -13,6 +13,7 @@ import streamlit as st
 from loup_garou.config import MUSIQUE_FILE
 from loup_garou.moteur.partie import camp
 from loup_garou.moteur.persistance import load_preferences, maj_preferences
+from loup_garou.options import opt
 from loup_garou.roles import ROLES
 from loup_garou.ui.illustrations import ASSETS
 
@@ -47,9 +48,11 @@ def effet_courant(s, morts_du_vote=()):
         message = s.get("message_fin", "")
         gagnant_village = message.startswith(("Le village a gagné", "Les amoureux"))
         return "victoire_village" if gagnant_village else "victoire_loups"
-    if s["phase"] == "reveil" and _un_gentil_meurt(s, s.get("morts_nuit", [])):
+    # Quand une mort ne révèle rien, le gong ne doit pas trahir le camp du mort.
+    discret = opt(s, "revelation_mort") == "rien"
+    if s["phase"] == "reveil" and not discret and _un_gentil_meurt(s, s.get("morts_nuit", [])):
         return "mort_gentil"
-    if s["phase"] == "conseil" and morts_du_vote and _un_gentil_meurt(s, morts_du_vote):
+    if s["phase"] == "conseil" and not discret and morts_du_vote and _un_gentil_meurt(s, morts_du_vote):
         return "mort_gentil"
     if s["phase"] == "nuit" and s.get("devoile") and s["tour"] < len(s.get("ordre_nuit", [])):
         # Une seule fois par joueur : la première fois qu'il découvre qu'il est loup (la clé garde le son

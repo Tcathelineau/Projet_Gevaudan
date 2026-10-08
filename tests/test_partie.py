@@ -1,9 +1,11 @@
 import os
 
+from datetime import datetime
+
 from loup_garou.config import HISTORIQUE_DIR
 from loup_garou.moteur.partie import (
     camp, composition_recommandee, condamnes_de_la_veille, enregistrer_condamne, fin_de_tour, nouvelle_partie,
-    resoudre_nuit, servante_prend_role, terminer_partie, tuer, vainqueur, victimes_loups, vivants,
+    resoudre_nuit, servante_prend_role, terminer_partie, tirer_echeance, tuer, vainqueur, victimes_loups, vivants,
     bouc_emissaire, epargner_idiot, ours_grogne, voisins_vivants,
 )
 from loup_garou.roles import ROLES_SPECIAUX
@@ -255,6 +257,53 @@ def test_potion_de_soin_sauve_la_victime(faire_partie):
     resoudre_nuit(s)
     assert s["morts_nuit"] == []
     assert s["soin_sorciere"] is False
+
+
+def test_la_sorcière_garde_en_memoire_la_personne_sauvee(faire_partie):
+    s = nuit(faire_partie)
+    s["soin_sorciere"] = True
+    resoudre_nuit(s)
+    assert s["sauve_par_sorciere"] == "B"
+    s["jour"] = 2
+    s["votes_loups"] = ["C"]
+    resoudre_nuit(s)  # nuit suivante sans soin : la mémoire est remise à zéro
+    assert s["sauve_par_sorciere"] is None and s["morts_nuit"] == ["C"]
+
+
+def test_le_salvateur_seul_ne_compte_pas_comme_un_sauvetage_de_la_sorciere(faire_partie):
+    s = nuit(faire_partie, roles={"A": "loup", "B": "villageois", "C": "salvateur", "D": "villageois"})
+    s["protege_nuit"] = "B"
+    resoudre_nuit(s)
+    assert s["sauve_par_sorciere"] is None
+
+
+def test_echeance_tiree_entre_les_deux_bornes(faire_partie):
+    s = faire_partie({"A": "loup", "B": "villageois", "C": "villageois"}, echeance_active=True, echeance_min=15, echeance_max=60)
+    s["jour"] = 1
+    debut = datetime(2026, 1, 1, 12, 0)
+    for _ in range(30):
+        tirer_echeance(s, debut)
+        assert 15 <= s["echeance"]["minutes"] <= 60
+        assert (datetime.fromisoformat(s["echeance"]["fin"]) - debut).seconds // 60 == s["echeance"]["minutes"]
+        assert s["echeance"]["jour"] == 1
+
+
+def test_pas_d_echeance_si_l_option_est_coupee_ou_au_premier_jour(faire_partie):
+    s = faire_partie({"A": "loup", "B": "villageois", "C": "villageois"})
+    s["jour"] = 1
+    tirer_echeance(s)
+    assert s["echeance"] is None
+    s = faire_partie({"A": "loup", "B": "villageois", "C": "villageois"}, echeance_active=True)
+    tirer_echeance(s)  # jour 0
+    assert s["echeance"] is None
+
+
+def test_la_resolution_de_la_nuit_tire_l_echeance(faire_partie):
+    s = faire_partie({"A": "loup", "B": "villageois", "C": "villageois"}, echeance_active=True, echeance_min=30, echeance_max=30)
+    s["jour"] = 1
+    s["votes_loups"] = ["B"]
+    resoudre_nuit(s)
+    assert s["echeance"]["minutes"] == 30
 
 
 def test_salvateur_protege_la_victime(faire_partie):

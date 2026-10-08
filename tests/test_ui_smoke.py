@@ -823,20 +823,110 @@ def test_les_options_s_adaptent_aux_roles_et_se_reglent_par_boutons():
     assert not at.exception
 
 
-def test_les_options_d_un_role_absent_sont_visibles_mais_grisees():
+def test_les_reglages_d_un_role_absent_ne_sont_pas_affiches():
     at = _assistant()
     _etape_suivante(at)
     for cle in ("n_sorciere", "n_voyante"):
         at.checkbox(key=cle).uncheck()
     _etape_suivante(at)
-    assert at.button(key="opt_potions_plus").disabled and at.button(key="opt_potions_moins").disabled
-    assert all(b.disabled for b in at.button if (b.key or "").startswith("opt_voyante__"))
+    cles = {b.key for b in at.button}
+    assert "opt_potions_plus" not in cles and not any((c or "").startswith("opt_voyante__") for c in cles)
+    assert "🧪 La sorcière" not in " ".join(m.value for m in at.markdown)
     assert at.checkbox(key="opt_maire").value is True and not at.checkbox(key="opt_maire").disabled  # coché par défaut
+
+
+def test_les_reglages_dependants_ne_sont_proposes_que_s_ils_ont_un_sens():
+    at = _assistant()
+    _etape_suivante(at)
+    at.checkbox(key="n_cupidon").uncheck()
+    at.checkbox(key="n_voyante").check()
+    _etape_suivante(at)
+    cles = {c.key for c in at.checkbox}
+    assert "opt_voyante_couple" not in cles and "opt_trouple" not in cles  # ni couple tiré au sort, ni Cupidon
+    at.checkbox(key="opt_couple_hasard").check().run()
+    cles = {c.key for c in at.checkbox}
+    assert "opt_voyante_couple" in cles and "opt_trouple" in cles
+
+
+def test_les_nouvelles_options_se_reglent_a_l_installation():
+    at = _assistant()
+    _etape_suivante(at)
+    at.checkbox(key="n_sorciere").check()
+    _etape_suivante(at)
+    at.checkbox(key="opt_sorciere_sait").check().run()
+    at.checkbox(key="opt_secrete").check().run()
+    at.button(key="opt_revelation__role").click().run()
+    assert "opt_echeance_plage" not in {s.key for s in at.get("select_slider")}  # tant que l'échéance est coupée
+    at.checkbox(key="opt_echeance").check().run()
+    at.get("select_slider")[0].set_range(30, 240).run()
+    _etape_suivante(at)
+    for i, champ in enumerate(at.text_input):
+        champ.set_value(f"J{i + 1}")
+    [b for b in at.button if b.label == "Distribuer les rôles"][0].click().run()
+    options = at.session_state["partie"]["options"]
+    assert options["sorciere_sait_sauve"] is True and options["composition_secrete"] is True
+    assert options["revelation_mort"] == "role" and options["echeance_active"] is True
+    assert (options["echeance_min"], options["echeance_max"]) == (30, 240)
+
+
+def test_la_sorciere_apprend_qui_elle_a_sauve_la_nuit_suivante():
+    roles = {"A": "loup", "B": "sorciere", "C": "villageois", "D": "villageois"}
+    s = _tour_de_nuit(roles, "B", options={"sorciere_sait_sauve": True}, sauve_par_sorciere="C")
+    assert "ta potion a sauvé C" in " ".join(m.value for m in _app(s).markdown)
+    s = _tour_de_nuit(roles, "B", sauve_par_sorciere="C")  # option désactivée
+    assert "ta potion a sauvé" not in " ".join(m.value for m in _app(s).markdown)
+
+
+def test_la_revelation_a_la_mort_suit_l_option():
+    roles = {"A": "loup", "B": "villageois", "C": "chasseur", "D": "villageois"}
+    attendu = {"camp": "n'était pas loup-garou", "role": "avait pour rôle : ", "rien": "emporte son secret"}
+    for mode, texte in attendu.items():
+        s = _conseil(roles, options={"revelation_mort": mode})
+        s.update(phase="reveil", morts_nuit=["B"])
+        at = _app(s)
+        assert not at.exception
+        page = " ".join(m.value for m in at.markdown)
+        assert texte in page
+        if mode == "rien":
+            assert 'avis-papier-loup"' not in page and "n'était pas loup-garou" not in page
+            assert "🐺 Loups" not in " ".join(m.value for m in at.sidebar.markdown)  # effectifs par camp masqués
+        else:
+            assert "🐺 Loups" in " ".join(m.value for m in at.sidebar.markdown)
+
+
+def test_pas_de_gong_quand_une_mort_ne_revele_rien():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    s = _conseil(roles, options={"revelation_mort": "rien"})
+    s.update(phase="reveil", morts_nuit=["B"])
+    assert len(_app(s, sons_on=True).get("audio")) == 0
+
+
+def test_la_composition_secrete_masque_les_roles_du_paquet():
+    roles = {"A": "loup", "B": "villageois", "C": "voyante", "D": "villageois"}
+    at = _app(_conseil(roles, options={"composition_secrete": True}))
+    assert not at.exception
+    assert "Voyante" not in " ".join(m.value for m in at.sidebar.markdown)
+    assert any(e.label == "📖 Rappel des règles" for e in at.sidebar.expander)
+
+
+def test_l_echeance_du_conseil_s_affiche_puis_signale_son_depassement():
+    from datetime import datetime, timedelta
+
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    fin = datetime.now() + timedelta(hours=2)
+    s = _conseil(roles, echeance={"jour": 1, "fin": fin.isoformat(timespec="seconds"), "minutes": 120})
+    page = " ".join(m.value for m in _app(s).markdown)
+    assert f"avant {fin:%H:%M}" in page and "encore 1 h" in page
+    s["echeance"]["fin"] = (datetime.now() - timedelta(minutes=5)).isoformat(timespec="seconds")
+    assert "Échéance dépassée" in " ".join(m.value for m in _app(s).markdown)
 
 
 def test_les_reglages_sont_rangés_en_cartes():
     at = _assistant()
-    _etape_suivante(at, 2)
+    _etape_suivante(at)
+    for cle in ("n_sorciere", "n_voyante", "n_loup_blanc"):
+        at.checkbox(key=cle).check()
+    _etape_suivante(at)
     texte = " ".join(m.value for m in at.markdown)
     for titre in ("🧪 La sorcière", "🔮 La voyante", "🌕 Le Loup Blanc", "💘 L'amour", "👑 Le village"):
         assert titre in texte
@@ -858,10 +948,12 @@ def test_les_potions_de_la_sorciere_se_reglent_de_0_a_5():
 
 def test_la_voyante_peut_decouvrir_le_couple_est_une_option_liee_au_couple_tire_au_sort():
     at = _assistant()
-    _etape_suivante(at, 2)
-    assert at.checkbox(key="opt_voyante_couple").disabled  # pas de couple tiré au sort : sans objet
+    _etape_suivante(at)
+    at.checkbox(key="n_voyante").check()
+    _etape_suivante(at)
+    assert "opt_voyante_couple" not in {c.key for c in at.checkbox}  # pas de couple tiré au sort : sans objet
     at.checkbox(key="opt_couple_hasard").check().run()
-    assert not at.checkbox(key="opt_voyante_couple").disabled and at.checkbox(key="opt_voyante_couple").value is True
+    assert at.checkbox(key="opt_voyante_couple").value is True
     at.checkbox(key="opt_voyante_couple").uncheck().run()
     assert at.session_state["opt_voyante_couple"] is False
 

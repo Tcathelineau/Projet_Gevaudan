@@ -12,6 +12,7 @@ from loup_garou.roles import ROLES
 from loup_garou.ui.composants import (
     badge_meute,
     bouton_fin,
+    fenetre_meute,
     grille_dalles,
     plaquette,
     selection_et_validation,
@@ -24,6 +25,12 @@ def _afficher_meute(s, nom):
     complices = [l for l in s["loups"] if l != nom and s["joueurs"][l]["vivant"]]
     with st.sidebar:  # comme le badge des amoureux : le rappel de la meute reste dans le menu de gauche
         badge_meute(nom, complices)
+    donnees = s["joueurs"][nom]
+    # Une seule fenêtre à la fois : si celle du couple doit s'ouvrir à ce tour, la meute attend la nuit suivante.
+    couple_attendu = donnees.get("amoureux") and s["jour"] > 0 and not donnees.get("couple_vu")
+    if not donnees.get("meute_vue") and not couple_attendu:
+        donnees["meute_vue"] = True  # marqué à l'ouverture, comme pour le couple
+        fenetre_meute(complices)
 
 
 def _cibles_loups(s, nom):

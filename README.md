@@ -65,6 +65,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 - **Loups en désaccord** : si les loups ne se mettent pas d'accord sur une victime, personne n'est dévoré cette nuit-là. Les loups peuvent désigner n'importe quel autre joueur vivant, y compris l'un des leurs.
 - **Couple tiré au sort** : Cupidon est remplacé par un villageois (la case est grisée et le dit) ; la Voyante peut alors, une fois, découvrir le couple au lieu de sonder un rôle.
 - **Les amoureux** (Cupidon, ou tirés au sort si l'option est activée) apprennent leur amour par une fenêtre « Vous êtes en couple » la première fois qu'ils se réveillent, puis meurent ensemble et gagnent s'ils sont les derniers survivants (deux, ou trois en mode trouple). Si le couple mêle un loup et un villageois, il forme un camp à part : tant qu'il vit, ni le village ni la meute ne peuvent gagner, et le couple doit éliminer tous les autres.
+- **La meute** : chaque loup découvre ses complices dans une fenêtre « Vous êtes la meute » (ou « Tu es le dernier loup ») la première fois qu'il joue ; si la fenêtre du couple doit s'ouvrir à ce tour, celle de la meute attend la nuit suivante.
 - **Le chasseur** peut emporter quelqu'un avec lui en mourant, ou renoncer à tirer.
 - **Les solitaires** (Loup Blanc) ne gagnent qu'en éliminant tout le monde : tant qu'ils vivent, ni le village ni la meute ne peut conclure.
 - **Camp secret** : à la mort du Chien-Loup, son camp n'est pas dévoilé avant la fin de la partie.

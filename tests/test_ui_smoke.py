@@ -1067,3 +1067,32 @@ def test_compris_ferme_la_fenetre_du_couple():
     boutons[0].click().run()
     assert not at.exception
     assert not any(b.key == "fermer_couple" for b in at.button)  # fenêtre refermée : elle ne se rouvre pas
+
+
+def test_la_meute_decouvre_ses_complices_dans_une_fenetre_une_seule_fois():
+    roles = {"A": "loup", "B": "loup", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _tour_de_nuit(roles, "A")
+    s["jour"] = 0
+    at = _app(s)
+    assert not at.exception
+    page = " ".join(m.value for m in at.markdown)
+    assert 'class="dialogue-meute"' in page and "B" in page
+    assert s["joueurs"]["A"]["meute_vue"] is True
+    assert 'class="dialogue-meute"' not in " ".join(m.value for m in _app(s).markdown)  # déjà vue : pas de seconde fenêtre
+
+
+def test_le_loup_solitaire_a_sa_propre_fenetre():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    s = _tour_de_nuit(roles, "A")
+    s["jour"] = 0
+    page = " ".join(m.value for m in _app(s).markdown)
+    assert 'class="dialogue-meute"' in page and "Tu chasses seul" in page
+
+
+def test_la_fenetre_de_la_meute_laisse_la_place_a_celle_du_couple():
+    roles = {"A": "loup", "B": "loup", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _tour_de_nuit(roles, "A", amoureux=["A", "C"])
+    s["joueurs"]["A"]["amoureux"] = s["joueurs"]["C"]["amoureux"] = True
+    page = " ".join(m.value for m in _app(s).markdown)
+    assert 'class="dialogue-meute"' not in page and 'class="dialogue-couple"' in page
+    assert not s["joueurs"]["A"].get("meute_vue")  # la meute attendra la nuit suivante

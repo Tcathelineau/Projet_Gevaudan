@@ -379,6 +379,28 @@ def css_cartes():
         div[role="dialog"]:has(.dialogue-couple) button:hover { background: #cf4271; border-color: #ffb3d9; color: #fff; }
         @keyframes battement { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.16); } }
         @media (prefers-reduced-motion: reduce) { .dc-coeurs { animation: none; } }
+        /* Fenêtre de découverte de la meute : même gabarit que celle du couple, en rouge sombre. */
+        div[role="dialog"]:has(.dialogue-meute) {
+            background: radial-gradient(circle at 50% 0%, #5a1519, #1d0709 80%) !important;
+            border: 2px solid #c8454b; border-radius: 18px;
+            box-shadow: 0 0 44px rgba(200,69,75,.45), 0 0 0 4px rgba(200,69,75,.12);
+        }
+        div[role="dialog"]:has(.dialogue-meute) h2 {
+            color: #ffd2d2; font-family: 'Cinzel', serif; text-align: center; width: 100%;
+            text-shadow: 0 0 14px rgba(200,69,75,.7);
+        }
+        .dialogue-meute { text-align: center; padding: .2rem 0 .6rem; font-family: 'EB Garamond', serif; color: #ffe6e6; }
+        .dm-loup { font-size: 2.3rem; letter-spacing: .3rem; }
+        .dm-lien { font-size: 1.05rem; opacity: .9; margin-top: .4rem; }
+        .dm-noms {
+            font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; color: #ff9a9a; margin: .15rem 0 .7rem;
+            text-shadow: 0 0 18px rgba(200,69,75,.55);
+        }
+        .dm-texte { font-size: 1.1rem; line-height: 1.4; }
+        div[role="dialog"]:has(.dialogue-meute) button {
+            background: #9c2d33; border-color: #e0777c; color: #fff; font-weight: 600;
+        }
+        div[role="dialog"]:has(.dialogue-meute) button:hover { background: #b8383f; border-color: #ffb3b6; color: #fff; }
         /* Cartes de réglages : centrées, une par thème ; grisées quand le rôle concerné n'est pas dans la partie. */
         div[class*="st-key-carte_opt_"] {
             max-width: 560px; margin: .9rem auto; padding: .7rem 1rem 1rem; align-items: center; text-align: center;

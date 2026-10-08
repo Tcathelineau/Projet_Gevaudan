@@ -4,6 +4,7 @@ import streamlit as st
 
 from loup_garou.moteur.partie import camp, vivants
 from loup_garou.moteur.persistance import clear_save, save_game
+from loup_garou.options import opt
 from loup_garou.roles import ROLES
 from loup_garou.ui.barre_laterale import garder_sidebar_ouverte, panneau_rechargement
 from loup_garou.ui.ecrans.accueil import ecran_accueil, ecran_historique
@@ -68,14 +69,16 @@ def main():
         else:
             titre_phase = f"☀️ Jour {s['jour']}"
 
+        # Quand une mort ne révèle rien, les effectifs par camp trahiraient le camp du mort : on les retire.
+        lignes_camps = "" if opt(s, "revelation_mort") == "rien" else f"""
+                <div class="panneau-ligne"><span>🐺 Loups</span><span>{loups_vivants}</span></div>
+                <div class="panneau-ligne"><span>🧑‍🌾 Village</span><span>{village_vivants}</span></div>
+                {ligne_secret}"""
         st.markdown(
             f"""
             <div class="panneau">
                 <div class="panneau-titre">{titre_phase}</div>
-                <div class="panneau-ligne"><span>👥 Vivants</span><span>{len(vivants(s))} / {s['nb_joueurs']}</span></div>
-                <div class="panneau-ligne"><span>🐺 Loups</span><span>{loups_vivants}</span></div>
-                <div class="panneau-ligne"><span>🧑‍🌾 Village</span><span>{village_vivants}</span></div>
-                {ligne_secret}
+                <div class="panneau-ligne"><span>👥 Vivants</span><span>{len(vivants(s))} / {s['nb_joueurs']}</span></div>{lignes_camps}
             </div>
             <div class="panneau">
                 <div class="panneau-ligne"><span>👑 Maire</span><span class="maire-nom">{maire_txt}</span></div>
@@ -119,8 +122,9 @@ def main():
             # Le rappel des règles se range juste au-dessus du bouton Option, tout en bas de la barre latérale.
             with st.expander("📖 Rappel des règles"):
                 afficher_regles(SECTIONS[1:3])
-                st.markdown("**🃏 Les rôles de la partie**")
-                afficher_roles_de_la_partie(s)
+                if not opt(s, "composition_secrete"):
+                    st.markdown("**🃏 Les rôles de la partie**")
+                    afficher_roles_de_la_partie(s)
             if st.session_state.get("options_ouvert"):
                 with st.container(key="menu_option"):
                     st.markdown("**🔊 Son** (désactivé par défaut)")

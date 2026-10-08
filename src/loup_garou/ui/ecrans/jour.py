@@ -1,6 +1,7 @@
 """Écrans du jour : réveil, élection du maire, conseil du village, tir du chasseur."""
 
 import html
+from datetime import datetime
 
 import streamlit as st
 
@@ -8,6 +9,7 @@ from loup_garou.moteur.journal import log
 from loup_garou.moteur.partie import (
     bouc_emissaire, camp, enregistrer_condamne, epargner_idiot, ours_grogne, terminer_partie, tuer, vainqueur, vivants,
 )
+from loup_garou.options import duree_txt, opt
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import (
     annonce,
@@ -21,10 +23,34 @@ from loup_garou.ui.composants import (
 
 
 def _camp_txt(s, nom):
+    """Ce que le village apprend de la mort de `nom`, selon l'option « révélation à la mort »."""
     role = ROLES[s["joueurs"][nom]["role"]]
+    mode = opt(s, "revelation_mort")
+    if mode == "rien":
+        return "emporte son secret dans la tombe"
+    if mode == "role":
+        return f"avait pour rôle : {role.emoji} {role.nom}"
     if role.camp_secret:
         return f"était le {role.nom.upper()} : son camp reste secret jusqu'à la fin"
     return "était LOUP-GAROU" if camp(s, nom) == "loups" else "n'était pas loup-garou"
+
+
+@st.fragment(run_every="30s")
+def _bandeau_echeance(echeance):
+    """Compte à rebours de l'échéance du conseil, rafraîchi seul toutes les 30 secondes."""
+    fin = datetime.fromisoformat(echeance["fin"])
+    reste = int((fin - datetime.now()).total_seconds() // 60)
+    if reste < 0:
+        annonce("Échéance dépassée : le village doit trancher maintenant.", "!", "danger")
+    else:
+        plaquette(f"Le conseil doit se clore avant {fin:%H:%M} (encore {duree_txt(max(reste, 1))}).", icone="⏰")
+
+
+def afficher_echeance(s):
+    """Option « échéance aléatoire » : rappelle l'heure limite du conseil du jour."""
+    echeance = s.get("echeance")
+    if echeance and echeance.get("jour") == s["jour"] and s["jour"] > 0:
+        _bandeau_echeance(echeance)
 
 
 def panneau_morts(s):
@@ -73,7 +99,9 @@ def panneau_vote(s, morts, sous=None, epargne=None):
             '<div class="avis-detail">C\'était l\'idiot du village : le village l\'épargne, mais il ne votera plus.</div></div>'
         )
     for i, mort in enumerate(morts):
-        if ROLES[s["joueurs"][mort]["role"]].camp_secret:
+        if opt(s, "revelation_mort") == "rien":
+            classe = ""  # la couleur du papier ne doit rien révéler
+        elif ROLES[s["joueurs"][mort]["role"]].camp_secret:
             classe = " avis-papier-secret"
         elif camp(s, mort) == "loups":
             classe = " avis-papier-loup"
@@ -109,6 +137,7 @@ def ecran_reveil(s):
     scene_ciel("jour", "Le village se réveille", "Premier jour" if s["jour"] == 0 else f"Jour {s['jour']}")
     panneau_morts(s)
     annonce_tirs(s)
+    afficher_echeance(s)
 
     if s.get("tirs_en_attente"):
         bouton_tir(s, "reveil")
@@ -213,6 +242,7 @@ def ecran_conseil(s):
         return
 
     if resultat is None:
+        afficher_echeance(s)
         _saisie_vote(s, 1)
         return
 

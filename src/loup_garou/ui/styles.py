@@ -384,7 +384,6 @@ def css_cartes():
             max-width: 560px; margin: .9rem auto; padding: .7rem 1rem 1rem; align-items: center; text-align: center;
             border: 1px solid rgba(201,164,76,.45); border-radius: 12px; background: rgba(20,16,10,.45);
         }
-        div[class*="st-key-carte_opt_"]:has(.carte-opt-inactive) { opacity: .5; }
         .carte-opt-titre { font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.1rem; color: #f0d890; margin-bottom: .2rem; }
         div[class*="st-key-carte_opt_"] [data-testid="stCheckbox"] { justify-content: center; }
         .titre-etape {

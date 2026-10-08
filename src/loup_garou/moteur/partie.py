@@ -2,6 +2,7 @@
 
 import random
 from collections import Counter
+from datetime import datetime, timedelta
 
 from loup_garou.moteur.journal import log, prendre_instantane
 from loup_garou.moteur.migrations import VERSION
@@ -255,6 +256,7 @@ def resoudre_nuit(s):
     # Lu avant tout : une mort de cette nuit (Louveteau) prépare la nuit suivante, pas celle-ci.
     attendues = 2 if s.get("double_victime") else 1
     s["double_victime"] = False
+    s["sauve_par_sorciere"] = None  # la sorcière l'apprend (si l'option est active) à sa prochaine nuit
     if s["jour"] > 0:
         victimes = victimes_loups(s["votes_loups"], attendues)
         if not victimes:
@@ -266,6 +268,7 @@ def resoudre_nuit(s):
             sauveurs = []
             if i == 0 and s["soin_sorciere"]:
                 sauveurs.append("la potion de la sorcière")
+                s["sauve_par_sorciere"] = victime
             if victime == s.get("protege_nuit"):
                 sauveurs.append("le salvateur")
             if sauveurs:
@@ -297,7 +300,21 @@ def resoudre_nuit(s):
     s["tour"] = 0
     s["devoile"] = False
     s["phase"] = "reveil"
+    tirer_echeance(s)
     prendre_instantane(s, "jour")
+
+
+def tirer_echeance(s, maintenant=None):
+    """Option « échéance aléatoire » : fixe l'heure limite du conseil du jour, tirée au hasard entre les deux bornes.
+    Pas d'échéance le premier jour (sans vote) ni quand l'option est désactivée."""
+    s["echeance"] = None
+    if s["jour"] == 0 or not opt(s, "echeance_active"):
+        return
+    mini, maxi = sorted((opt(s, "echeance_min"), opt(s, "echeance_max")))
+    minutes = random.randint(mini, maxi)
+    fin = (maintenant or datetime.now()) + timedelta(minutes=minutes)
+    s["echeance"] = {"jour": s["jour"], "fin": fin.isoformat(timespec="seconds"), "minutes": minutes}
+    log(s, f"Échéance du conseil tirée au sort : {minutes} min.")
 
 
 def composition_recommandee(nb):

@@ -72,6 +72,30 @@ def fenetre_couple(autres):
     st.dialog(titre)(contenu)()
 
 
+def fenetre_meute(complices):
+    """Fenêtre qui s'ouvre la première fois qu'un joueur découvre qu'il est loup."""
+    seul = not complices
+
+    def contenu():
+        if seul:
+            lien, noms, texte = "Aucun autre loup en vie", "Tu chasses seul", "Chaque nuit, tu désignes seul la victime.<br>Garde ton secret."
+        else:
+            lien, noms = "Tu chasses avec", " et ".join(complices)
+            texte = "Chaque nuit, vous désignez ensemble une victime.<br>Gardez le secret : le village ne doit rien savoir."
+        st.markdown(
+            '<div class="dialogue-meute"><div class="dm-loup">🐺 🌕 🐺</div>'
+            f'<div class="dm-lien">{lien}</div>'
+            f'<div class="dm-noms">{html.escape(noms)}</div>'
+            f'<div class="dm-texte">{texte}</div></div>',
+            unsafe_allow_html=True,
+        )
+        # Un bouton dans une fenêtre ne relance que la fenêtre : il faut relancer la page pour la fermer.
+        if st.button("Compris", type="primary", key="fermer_meute", use_container_width=True):
+            st.rerun()
+
+    st.dialog("🐺 Tu es le dernier loup !" if seul else "🐺 Vous êtes la meute !")(contenu)()
+
+
 def badge_meute(nom, complices):
     if complices:
         noms = " & ".join([nom] + complices)

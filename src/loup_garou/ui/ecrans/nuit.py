@@ -4,7 +4,6 @@ import streamlit as st
 
 from loup_garou.moteur.journal import prendre_instantane
 from loup_garou.moteur.partie import resoudre_nuit, vivants
-from loup_garou.options import opt
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import (
     badge_amour, bouton_fin, bouton_validation, carte_dos, carte_role, fenetre_couple, plaquette,
@@ -74,7 +73,7 @@ def ecran_nuit(s):
             gerer_nuit = NUIT_ROLES.get(role, NUIT_ROLES["villageois"])
             gerer_nuit(s, nom, cle)
 
-    if donnees["amoureux"] and (s["jour"] > 0 or opt(s, "couple_hasard")):
+    if donnees["amoureux"] and s["jour"] > 0:  # le couple ne se découvre qu'à la nuit 1, jamais à la nuit 0
         autres = [n for n in s["amoureux"] if n != nom]
         with st.sidebar:
             badge_amour(autres)

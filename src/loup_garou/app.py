@@ -13,7 +13,7 @@ from loup_garou.ui.ecrans.fin import ecran_fin
 from loup_garou.ui.ecrans.installation import ecran_installation
 from loup_garou.ui.ecrans.jour import ecran_conseil, ecran_election_maire, ecran_reveil, ecran_tir_chasseur
 from loup_garou.ui.ecrans.nuit import ecran_nuit
-from loup_garou.ui.regles import SECTIONS, afficher_regles, afficher_roles_de_la_partie
+from loup_garou.ui.regles import SECTIONS_RAPPEL, afficher_regles, afficher_roles_de_la_partie
 from loup_garou.ui.illustrations import ASSETS
 from loup_garou.ui.sons import (
     actif, cases_a_cocher, charger_preferences_son, effet_autorise, effet_courant, jouer_effet, marquer_cri, jouer_musique, musique_courante, vider_session,
@@ -121,7 +121,7 @@ def main():
         with st.container(key="options"):
             # Le rappel des règles se range juste au-dessus du bouton Option, tout en bas de la barre latérale.
             with st.expander("📖 Rappel des règles"):
-                afficher_regles(SECTIONS[1:3])
+                afficher_regles(SECTIONS_RAPPEL)
                 if not opt(s, "composition_secrete"):
                     st.markdown("**🃏 Les rôles de la partie**")
                     afficher_roles_de_la_partie(s)

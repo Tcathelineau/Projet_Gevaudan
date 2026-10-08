@@ -9,7 +9,7 @@ from loup_garou.roles import ROLES
 from loup_garou.ui.composants import scene_ciel
 from loup_garou.ui.ecrans.accueil import aller_a
 from loup_garou.ui.illustrations import ASSETS, svg_role
-from loup_garou.ui.regles import afficher_regles
+from loup_garou.ui.regles import afficher_options, afficher_regles
 from loup_garou.ui.styles import CSS_DOCUMENTATION, CSS_SANS_SIDEBAR
 
 IMPACT_MAX = 40  # impact absolu qui remplit la demi-barre (le Louveteau, le plus extrême, vaut -38)
@@ -66,9 +66,12 @@ def ecran_documentation():
     if st.button("← Menu", key="retour_menu_documentation"):
         aller_a("accueil")
     scene_ciel("jour", "Documentation", "Comment jouer, et les rôles du village avec leur poids dans l'équilibre")
-    onglet_roles, onglet_regles = st.tabs(["🃏 Les rôles", "📖 Comment jouer"])
+    onglet_roles, onglet_regles, onglet_options = st.tabs(["🃏 Les rôles", "📖 Comment jouer", "⚙️ Les options"])
     with onglet_regles:
         afficher_regles()
+    with onglet_options:
+        st.caption("Réglages proposés à l'étape « Options » de la composition. Un réglage sans objet dans la partie n'est pas affiché.")
+        afficher_options()
     with onglet_roles:
         st.caption(
             "Impact : points de chance de victoire du village que le rôle ajoute (+) ou retire (-) à une table équilibrée. "

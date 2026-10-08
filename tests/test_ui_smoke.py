@@ -257,7 +257,7 @@ def test_retour_au_menu_apres_la_partie():
 def test_documentation_a_un_onglet_regles_et_un_onglet_roles():
     at = _app()
     at.button(key="accueil_btn_documentation").click().run()
-    assert [t.label for t in at.tabs] == ["🃏 Les rôles", "📖 Comment jouer"]
+    assert [t.label for t in at.tabs] == ["🃏 Les rôles", "📖 Comment jouer", "⚙️ Les options"]
     assert "Comment gagner" in " ".join(m.value for m in at.markdown)
 
 
@@ -842,10 +842,9 @@ def test_les_reglages_dependants_ne_sont_proposes_que_s_ils_ont_un_sens():
     at.checkbox(key="n_voyante").check()
     _etape_suivante(at)
     cles = {c.key for c in at.checkbox}
-    assert "opt_voyante_couple" not in cles and "opt_trouple" not in cles  # ni couple tiré au sort, ni Cupidon
+    assert "opt_voyante_couple" not in cles  # sans couple tiré au sort, la voyante n'a pas de couple à découvrir
     at.checkbox(key="opt_couple_hasard").check().run()
-    cles = {c.key for c in at.checkbox}
-    assert "opt_voyante_couple" in cles and "opt_trouple" in cles
+    assert "opt_voyante_couple" in {c.key for c in at.checkbox}
 
 
 def test_les_nouvelles_options_se_reglent_a_l_installation():
@@ -1069,30 +1068,50 @@ def test_compris_ferme_la_fenetre_du_couple():
     assert not any(b.key == "fermer_couple" for b in at.button)  # fenêtre refermée : elle ne se rouvre pas
 
 
-def test_la_meute_decouvre_ses_complices_dans_une_fenetre_une_seule_fois():
-    roles = {"A": "loup", "B": "loup", "C": "villageois", "D": "villageois", "E": "villageois"}
-    s = _tour_de_nuit(roles, "A")
+def test_la_documentation_decrit_toutes_les_options():
+    from loup_garou.options import OPTIONS_DEFAUT
+    from loup_garou.ui.regles import OPTIONS_DOC
+
+    documentees = {cle for _, reglages in OPTIONS_DOC for cles, _, _ in reglages for cle in cles}
+    assert documentees == set(OPTIONS_DEFAUT)
+    at = _app()
+    at.button(key="accueil_btn_documentation").click().run()
+    assert not at.exception
+    texte = " ".join(m.value for m in at.markdown)
+    for _, reglages in OPTIONS_DOC:
+        for _, nom, _ in reglages:
+            assert nom in texte
+
+
+def test_le_rappel_des_regles_ne_contient_plus_le_deroulement():
+    roles = {"A": "loup", "B": "villageois", "C": "voyante", "D": "villageois"}
+    at = _app(_conseil(roles))
+    texte = " ".join(m.value for m in at.sidebar.markdown)
+    assert "Comment gagner" in texte and "Le déroulement" not in texte
+
+
+def test_le_trouple_est_propose_sans_couple_tire_au_sort_et_le_bonus_de_la_voyante_suit_le_couple():
+    at = _assistant()
+    _etape_suivante(at)
+    at.checkbox(key="n_cupidon").uncheck()
+    at.checkbox(key="n_voyante").check()
+    _etape_suivante(at)
+    assert "opt_trouple" in {c.key for c in at.checkbox}  # même sans couple tiré au sort ni Cupidon
+    assert "opt_voyante_couple" not in {c.key for c in at.checkbox}
+    at.checkbox(key="opt_couple_hasard").check().run()
+    bonus = at.checkbox(key="opt_voyante_couple")
+    assert bonus.label.startswith("🎁 BONUS")
+    ordre = [c.key for c in at.checkbox if c.key in ("opt_couple_hasard", "opt_voyante_couple", "opt_trouple")]
+    assert ordre == ["opt_couple_hasard", "opt_voyante_couple", "opt_trouple"]
+
+
+def test_le_couple_tire_au_sort_ne_se_decouvre_qu_a_la_nuit_1():
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    s = _tour_de_nuit(roles, "B", options={"couple_hasard": True}, amoureux=["B", "C"])
+    s["joueurs"]["B"]["amoureux"] = s["joueurs"]["C"]["amoureux"] = True
     s["jour"] = 0
     at = _app(s)
-    assert not at.exception
-    page = " ".join(m.value for m in at.markdown)
-    assert 'class="dialogue-meute"' in page and "B" in page
-    assert s["joueurs"]["A"]["meute_vue"] is True
-    assert 'class="dialogue-meute"' not in " ".join(m.value for m in _app(s).markdown)  # déjà vue : pas de seconde fenêtre
-
-
-def test_le_loup_solitaire_a_sa_propre_fenetre():
-    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
-    s = _tour_de_nuit(roles, "A")
-    s["jour"] = 0
-    page = " ".join(m.value for m in _app(s).markdown)
-    assert 'class="dialogue-meute"' in page and "Tu chasses seul" in page
-
-
-def test_la_fenetre_de_la_meute_laisse_la_place_a_celle_du_couple():
-    roles = {"A": "loup", "B": "loup", "C": "villageois", "D": "villageois", "E": "villageois"}
-    s = _tour_de_nuit(roles, "A", amoureux=["A", "C"])
-    s["joueurs"]["A"]["amoureux"] = s["joueurs"]["C"]["amoureux"] = True
-    page = " ".join(m.value for m in _app(s).markdown)
-    assert 'class="dialogue-meute"' not in page and 'class="dialogue-couple"' in page
-    assert not s["joueurs"]["A"].get("meute_vue")  # la meute attendra la nuit suivante
+    assert not at.exception and not s["joueurs"]["B"].get("couple_vu")  # rien à la nuit 0
+    s["jour"] = 1
+    _app(s)
+    assert s["joueurs"]["B"].get("couple_vu")  # annoncé à la nuit 1

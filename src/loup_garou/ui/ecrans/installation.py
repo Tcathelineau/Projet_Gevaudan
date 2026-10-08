@@ -180,7 +180,7 @@ def jauges_html(b):
     return f"""
         <div class="panneau panneau-dense">
             <div class="panneau-titre">Équilibre de la partie</div>
-            <div class="jauge">
+            <div class="jauge jauge-equilibre">
                 <div class="jauge-piste"><div class="jauge-repere" style="left: {position_equilibre(b):.1f}%;"></div></div>
                 <div class="jauge-extremites"><span>🐺 Loups {100 - round(position_equilibre(b))} %</span><span>Village {round(position_equilibre(b))} % 🏡</span></div></div>
             {barre("🔮 Information", niveau_info(b), remplissage(b.info, b.joueurs, MAX_INFO))}
@@ -334,16 +334,17 @@ def etape_options(cfg):
             help="Le couple est désigné au hasard dès le départ ; Cupidon est remplacé par un villageois.",
         )
         if hasard and comp.get("voyante"):
-            st.checkbox(
-                "🔮 La voyante peut découvrir le couple", value=OPTIONS_DEFAUT["voyante_couple"], key="opt_voyante_couple",
-                help="À chaque vision, la voyante choisit entre sonder un rôle et apprendre qui forme le couple "
-                     "(une seule fois).",
-            )
-        if hasard or comp.get("cupidon"):
-            st.checkbox(
-                "🎉 Mode fun : un trouple au lieu d'un couple", value=OPTIONS_DEFAUT["trouple"], key="opt_trouple",
-                help="L'amour lie trois joueurs (choisis par Cupidon, ou tirés au sort). Si l'un meurt, les deux autres le suivent.",
-            )
+            with st.container(key="bonus_voyante_couple"):
+                st.checkbox(
+                    "🎁 BONUS : la voyante peut découvrir le couple", value=OPTIONS_DEFAUT["voyante_couple"],
+                    key="opt_voyante_couple",
+                    help="À chaque vision, la voyante choisit entre sonder un rôle et apprendre qui forme le couple "
+                         "(une seule fois).",
+                )
+        st.checkbox(
+            "🎉 Mode fun : un trouple au lieu d'un couple", value=OPTIONS_DEFAUT["trouple"], key="opt_trouple",
+            help="L'amour lie trois joueurs (choisis par Cupidon, ou tirés au sort). Si l'un meurt, les deux autres le suivent.",
+        )
 
     with carte_option("village", "👑 Le village"):
         st.checkbox(

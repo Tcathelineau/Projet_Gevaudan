@@ -344,6 +344,10 @@ def css_cartes():
             box-shadow: 0 0 6px rgba(0,0,0,.6);
         }
         .jauge-extremites { display: flex; justify-content: space-between; font-size: 0.72rem; color: #b9b09c; }
+        /* Le curseur loups / village est la lecture principale : piste, repère et pourcentages plus gros. */
+        .jauge-equilibre .jauge-piste { height: 16px; border-radius: 8px; margin: .5rem 0 .3rem; }
+        .jauge-equilibre .jauge-repere { top: -6px; width: 6px; height: 28px; margin-left: -3px; border-radius: 3px; }
+        .jauge-equilibre .jauge-extremites { font-size: 1.2rem; font-weight: 700; color: #f2e9d8; }
         /* Focus clavier toujours visible (WCAG 2.4.7), sur les boutons maison comme sur ceux de Streamlit. */
         button:focus-visible, [role="checkbox"]:focus-visible, input:focus-visible, summary:focus-visible, [role="tab"]:focus-visible {
             outline: 3px solid #f0d890 !important; outline-offset: 2px !important;
@@ -408,6 +412,8 @@ def css_cartes():
         }
         .carte-opt-titre { font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.1rem; color: #f0d890; margin-bottom: .2rem; }
         div[class*="st-key-carte_opt_"] [data-testid="stCheckbox"] { justify-content: center; }
+        /* Sous-réglage « BONUS » : rattaché au réglage qui le précède par un filet doré. */
+        div[class*="st-key-bonus_"] { margin-left: 2.2rem; padding-left: .8rem; border-left: 2px solid rgba(201,164,76,.6); }
         .titre-etape {
             text-align: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.7rem; letter-spacing: .04em;
             color: #f0d890; text-shadow: 0 2px 12px rgba(201,164,76,.35); margin: .6rem 0 .8rem;

@@ -16,7 +16,7 @@ L'application joue le **meneur du jeu** : elle distribue les rôles en secret, m
 3. **Le conseil** : on débat à voix haute, puis le village élimine un joueur. L'app révèle si c'était un loup.
 4. Retour à la nuit, jusqu'à la victoire d'un camp.
 
-La **première nuit** n'a pas de mort : les loups se découvrent, Cupidon lie un couple. Il n'y a pas de vote le premier jour.
+La **première nuit** n'a pas de mort : les loups se découvrent, Cupidon lie un couple, qui ne l'apprend qu'à la nuit suivante. Il n'y a pas de vote le premier jour.
 """),
     ("🏆 Comment gagner", """
 - **Le village** gagne quand tous les loups sont morts.
@@ -38,6 +38,61 @@ Le jeu se vit sur plusieurs heures ou plusieurs jours : **les joueurs décident 
 Le menu **Option** de la barre latérale permet de **revenir au début d'une nuit ou à l'annonce d'un jour** (clic malheureux, plantage). La partie est sauvegardée à chaque étape : fermer le navigateur n'efface rien.
 """),
 ]
+
+
+# En cours de partie, le rappel se limite aux règles de victoire (le déroulement se lit dans la documentation).
+SECTIONS_RAPPEL = [section for section in SECTIONS if section[0] == "🏆 Comment gagner"]
+
+# Réglages de l'étape « Options » : (thème, [(clés de OPTIONS_DEFAUT, intitulé, explication)]).
+# Un test vérifie que chaque option y figure.
+OPTIONS_DOC = [
+    ("🧪 La sorcière", [
+        (("potions_sorciere", "potions_mort"), "Potions de soin et de mort",
+         "Nombre de potions de chaque sorte, de 0 à 5 (1 potion de soin et aucune de mort par défaut). "
+         "Une potion de soin sauve la victime des loups, une potion de mort élimine un joueur (le poison échappe au soin et à la protection)."),
+        (("sorciere_sait_sauve",), "Elle apprend qui elle a sauvé",
+         "Désactivé par défaut. La nuit suivant l'usage de sa potion de soin, la sorcière découvre l'identité de la personne sauvée."),
+    ]),
+    ("🔮 La voyante et 🌕 le Loup Blanc", [
+        (("cadence_voyante",), "Fréquence des visions",
+         "La voyante sonde chaque nuit, une nuit sur 2 (défaut) ou une nuit sur 3, à partir de la nuit 1."),
+        (("cadence_loup_blanc",), "Fréquence des festins",
+         "Le Loup Blanc dévore l'un de ses frères loups chaque nuit, une nuit sur 2 (défaut) ou une nuit sur 3, à partir de la nuit 1."),
+    ]),
+    ("💘 L'amour", [
+        (("couple_hasard",), "Couple tiré au sort, sans Cupidon",
+         "Désactivé par défaut. Le couple est désigné au hasard dès le départ et Cupidon est remplacé par un villageois. "
+         "Les amoureux l'apprennent à la nuit 1."),
+        (("voyante_couple",), "BONUS : la voyante peut découvrir le couple",
+         "Activé par défaut, seulement avec un couple tiré au sort. À chaque vision, la voyante choisit entre sonder un rôle "
+         "et apprendre qui forme le couple (une seule fois)."),
+        (("trouple",), "Mode fun : un trouple",
+         "Désactivé par défaut. L'amour lie trois joueurs au lieu de deux (choisis par Cupidon ou tirés au sort) : si l'un meurt, les deux autres le suivent."),
+    ]),
+    ("👑 Le village", [
+        (("maire_depart",), "Le maire départage les égalités",
+         "Activé par défaut : à égalité loups / village, la partie continue sauf si le maire est un loup. "
+         "Désactivé : les loups gagnent dès qu'ils sont aussi nombreux que les autres."),
+        (("revelation_mort",), "Ce que révèle une mort",
+         "Le camp (défaut : « était loup-garou » ou non), le rôle complet, ou rien. Avec « Rien », le menu de gauche ne donne plus les effectifs par camp, "
+         "et le gong grave, la couleur des avis du village ne trahissent plus le camp du mort."),
+        (("composition_secrete",), "Composition secrète",
+         "Désactivé par défaut. Le rappel des règles ne liste plus les rôles du paquet ; les effectifs par camp restent visibles à gauche."),
+    ]),
+    ("⏰ Le temps", [
+        (("echeance_active", "echeance_min", "echeance_max"), "Échéance aléatoire du conseil",
+         "Désactivé par défaut. Chaque jour, au réveil, une durée est tirée au hasard entre deux bornes (de 15 min à 24 h) : "
+         "un bandeau affiche l'heure limite et le temps restant. Elle est indicative, rien ne force le vote. Pas d'échéance le premier jour."),
+    ]),
+]
+
+
+def afficher_options():
+    """Description de tous les réglages de la partie, thème par thème."""
+    for theme, reglages in OPTIONS_DOC:
+        st.markdown(f"**{theme}**")
+        for _, nom, texte in reglages:
+            st.markdown(f"- **{nom}** : {texte}")
 
 
 def afficher_regles(sections=None):

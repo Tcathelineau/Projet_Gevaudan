@@ -27,7 +27,8 @@ src/loup_garou_app.py        point d'entrée (importe loup_garou.app.main)
 src/loup_garou/
   assets/                    roles/<clé>.svg (icônes CC BY 3.0, cf. CREDITS.md), sons/ (musiques MP3 CC0 FreePD, bruitages WAV synthétisés), favicon.png
   config.py                  SAVE_FILE, HISTORIQUE_DIR, MUSIQUE_FILE (chemins relatifs au dossier courant)
-  options.py                 OPTIONS_DEFAUT, opt(), taille_couple(), nuit_active(), prochaine_nuit(), CADENCES
+  options.py                 OPTIONS_DEFAUT, opt(), taille_couple(), nuit_active(), prochaine_nuit(), CADENCES, REVELATIONS, DUREES_ECHEANCE, duree_txt()
+  equilibre.py               jauges d'équilibre (bilan, niveaux) ; lit assets/equilibre.json (mesures par simulation)
   roles.py                   dataclass Role, registre ROLES, ROLES_SPECIAUX (données seulement)
   moteur/                    règles du jeu, SANS Streamlit
     partie.py                nouvelle_partie, vivants, camp, tuer, vainqueur, fin_de_tour,
@@ -36,7 +37,8 @@ src/loup_garou/
     statistiques.py          statistiques(parties archivées) : victoires par camp, par taille de table, fiche par rôle
     bilan.py                 bilan_partie : chiffres clés, distinctions, frise (lit s["morts"])
     persistance.py           save_game/load_game/clear_save, archiver_partie, lister_historique,
-                             date_partie, gagnant_partie
+                             date_partie, gagnant_partie, load/maj_preferences, load/save_joueurs
+    migrations.py            VERSION et MIGRATIONS : mise à niveau des anciennes sauvegardes
   ui/                        interface Streamlit
     styles.py                CSS (cartes, scènes, passage, accueil, historique) et décors SVG
     composants.py            carte_role, carte_dos, badges, scene_ciel/victoire, annonce, plaquette,
@@ -45,7 +47,8 @@ src/loup_garou/
     sons.py                  musique_courante(s), effet_courant(s) ; jouer_musique / jouer_effet insèrent les lecteurs invisibles
     nuit_roles.py            une fonction de tour de nuit par rôle + NUIT_ROLES (clé de rôle -> fonction)
     barre_laterale.py        recharger_etape, panneau_rechargement, garder_sidebar_ouverte
-    ecrans/                  accueil, installation, nuit, jour (réveil, maire, conseil, tir), fin
+    regles.py                SECTIONS (règles), SECTIONS_RAPPEL (rappel en partie), OPTIONS_DOC (description des options), afficher_*
+    ecrans/                  accueil, installation, nuit, jour (réveil, maire, conseil, tir), fin, documentation (3 onglets : rôles, comment jouer, options), statistiques
   app.py                     main() : CSS, barre latérale, aiguillage sur s["phase"], musique, menu Option
 ```
 
@@ -59,12 +62,13 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 | Clé | Rôle |
 |---|---|
-| `joueurs` | `{nom: {"role", "vivant", "amoureux", ...}}` ; extras éventuels : `camp_choisi` (Chien-Loup), `enfant_sauvage` |
+| `joueurs` | `{nom: {"role", "vivant", "amoureux", ...}}` ; extras éventuels : `camp_choisi` (Chien-Loup), `enfant_sauvage`, `couple_vu` et `meute_vue` (fenêtres déjà ouvertes), `cri_loup` |
 | `phase` | `nuit`, `reveil`, `election_maire`, `conseil`, `tir_chasseur`, `fin` |
 | `jour` | 0 = première nuit (Cupidon seulement, pas de mort) ; 1, 2... ensuite |
 | `ordre_nuit`, `tour`, `devoile`, `transfert` | déroulé du passage de l'appareil en nuit |
 | `votes_loups`, `morts_nuit`, `morts_tir`, `tirs_en_attente`, `retour_tir` | résolution de nuit et tirs du chasseur |
 | `amoureux`, `maire`, `dernier_maire`, `loups`, `cartes_milieu` | état social |
+| `sauve_par_sorciere`, `echeance` | option sorcière informée (remis à `None` à chaque résolution de nuit) ; échéance du conseil du jour `{jour, fin, minutes}` posée par `tirer_echeance` |
 | `options` | options de partie (voir §4) |
 | clés propres aux rôles | viennent de `Role.etat_initial` (ex. `potions_sorciere`, `protege_nuit`, `mentor_enfant`, `cible_loup_blanc`) |
 | `morts`, `composition` | `morts` : une entrée par mort (nom, role, camp, genre, jour, moment) alimentée par `tuer(..., genre)` ; `composition` : le paquet, pour « Rejouer » et le rappel des règles |
@@ -78,8 +82,8 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 1. déclarer l'entrée dans `ROLES` (`roles.py`), avec ses clés d'état dans `etat_initial` ;
 2. écrire `_nuit_<role>(s, nom, cle)` dans `ui/nuit_roles.py` et l'ajouter à `NUIT_ROLES` (un rôle absent dort comme un villageois) ;
 3. si le rôle change les morts ou la victoire : `moteur/partie.py` (`tuer`, `resoudre_nuit`, `vainqueur`) ;
-4. si le rôle a des réglages : `OPTIONS_DEFAUT` et `saisir_options` (écran d'installation) ;
-5. mettre à jour le tableau des rôles et les règles du README.
+4. si le rôle a des réglages : voir §4 (`OPTIONS_DEFAUT`, `OPTIONS_DOC`, `etape_options`) ;
+5. mettre à jour le tableau des rôles et les règles du README, et ajouter l'entrée de `CHANGELOG.md` (§6).
 
 ### Briques d'interface
 
@@ -95,8 +99,10 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 - **Première nuit (`jour` 0)** : seul Cupidon agit ; les loups se découvrent mais personne n'est dévoré ; pas de vote le premier jour. Le Renard ne flaire pas la nuit 0.
 - **Ordre de nuit** par `priorite_nuit` : Voleur (0), Chien-Loup (1), puis les autres (2) dans l'ordre des joueurs.
 - **Loups en désaccord** (égalité des votes) : personne n'est dévoré. Les loups peuvent désigner n'importe quel autre vivant, y compris l'un des leurs.
-- **Couple tiré au sort** (`couple_hasard`) : Cupidon est remplacé par un villageois (case grisée à la composition) ; la voyante peut, une fois (`voyante_a_vu_couple`), découvrir le couple au lieu de sonder un rôle.
-- **Sorcière à l'aveugle** : elle ne sait pas qui est la victime. Potion de soin sauve du festin des loups ; le poison et le festin du Loup Blanc échappent au soin et au Salvateur.
+- **Couple tiré au sort** (`couple_hasard`) : Cupidon est remplacé par un villageois (case grisée à l'étape Rôles) ; avec l'option `voyante_couple` (activée par défaut), la voyante peut, une fois (`voyante_a_vu_couple`), découvrir le couple au lieu de sonder un rôle.
+- **Le couple l'apprend à la nuit 1, jamais à la nuit 0** (`jour > 0` dans `ecrans/nuit.py`), avec Cupidon comme avec un couple tiré au sort. Fenêtre `fenetre_couple`, drapeau `couple_vu`.
+- **Fenêtre de la meute** (`fenetre_meute`, drapeau `meute_vue`) : la première fois qu'un loup joue ; Streamlit n'ouvre qu'une fenêtre à la fois, donc elle cède la place à celle du couple si les deux tombent au même tour. Tout bouton de fenêtre appelle `st.rerun()` pour la fermer.
+- **Sorcière à l'aveugle** : elle ne sait pas qui est la victime (idée de lui montrer la victime écartée : dépend de l'ordre de passage et donne trop d'information ; l'option `sorciere_sait_sauve` lui apprend seulement, la nuit suivante, qui elle a sauvé). Potion de soin sauve du festin des loups ; le poison et le festin du Loup Blanc échappent au soin et au Salvateur.
 - **Maire** : élu au premier jour ; s'il meurt, il désigne lui-même son successeur.
 - **Égalité loups / village** : la partie continue tant que le maire n'est pas un loup ; option `maire_depart` désactivée = les loups gagnent dès l'égalité.
 - **Amoureux** : meurent ensemble. Couple mixte loup + villageois = camp à part : ni village ni meute ne peut gagner tant qu'il vit ; il gagne s'il est le dernier groupe vivant (2 joueurs, 3 en trouple).
@@ -111,7 +117,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 ## 4. Système d'options
 
-`OPTIONS_DEFAUT` (`options.py`) : `potions_sorciere`, `potions_mort`, `couple_hasard`, `trouple`, `cadence_voyante`, `cadence_loup_blanc`, `maire_depart`, `voyante_couple`, `sorciere_sait_sauve` (mémoire `s["sauve_par_sorciere"]` posée par `resoudre_nuit`), `revelation_mort` (`camp`/`role`/`rien`, lue dans `_camp_txt` ; `rien` masque aussi le gong, les couleurs des avis et les effectifs par camp), `echeance_active`/`echeance_min`/`echeance_max` (minutes ; `tirer_echeance` écrit `s["echeance"]`, bandeau `afficher_echeance`), `composition_secrete`. Toujours lire via `opt(s, "cle")` : les anciennes sauvegardes n'ont pas de clé `options`, `opt` retombe sur le défaut. À l'installation (étape Options, cartes centrées `carte_option`), un réglage sans objet dans la partie (rôle absent, couple non tiré au sort) n'est pas affiché, jamais grisé. Ajouter une option : `OPTIONS_DEFAUT`, son entrée dans `OPTIONS_DOC` (`ui/regles.py`, onglet « Les options » de la documentation ; un test exige que chaque option y figure), `OPTIONS_SESSION` et `CLES_OPTIONS` dans `installation.py`, une commande dans `etape_options`, et `opt(s, ...)` dans les règles (les anciennes sauvegardes retombent sur le défaut). `couple_hasard` remplace Cupidon par un villageois ; `trouple` est le mode « fun » (amour à trois).
+`OPTIONS_DEFAUT` (`options.py`) : `potions_sorciere`, `potions_mort`, `couple_hasard`, `trouple`, `cadence_voyante`, `cadence_loup_blanc`, `maire_depart`, `voyante_couple`, `sorciere_sait_sauve` (mémoire `s["sauve_par_sorciere"]` posée par `resoudre_nuit`), `revelation_mort` (`camp`/`role`/`rien`, lue dans `_camp_txt` ; `rien` masque aussi le gong, les couleurs des avis et les effectifs par camp), `echeance_active`/`echeance_min`/`echeance_max` (minutes ; `tirer_echeance` écrit `s["echeance"]`, bandeau `afficher_echeance`), `composition_secrete` (masque la liste du paquet dans le rappel des règles, pas les effectifs par camp). L'échéance est affichée et indicative (rien ne force le vote), pas d'échéance le premier jour. Toujours lire via `opt(s, "cle")` : les anciennes sauvegardes n'ont pas de clé `options`, `opt` retombe sur le défaut. À l'installation (étape Options, cartes centrées `carte_option`), un réglage sans objet dans la partie (rôle absent, couple non tiré au sort) n'est pas affiché, jamais grisé. Ajouter une option : `OPTIONS_DEFAUT`, son entrée dans `OPTIONS_DOC` (`ui/regles.py`, onglet « Les options » de la documentation ; un test exige que chaque option y figure), `OPTIONS_SESSION` et `CLES_OPTIONS` dans `installation.py`, une commande dans `etape_options`, et `opt(s, ...)` dans les règles (les anciennes sauvegardes retombent sur le défaut). `couple_hasard` remplace Cupidon par un villageois ; `trouple` est le mode « fun » (amour à trois).
 
 ## 5. Historique, sauvegarde et rechargement
 
@@ -130,7 +136,8 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 - Ne pousser que le compte **Tcathelineau**.
 - **Ne jamais ajouter au commit** `.DS_Store` ni les fichiers `historique/partie_*.json` laissés par les parties de test de l'utilisateur ; ajouter les fichiers par nom, pas `git add -A`.
 - Réponses à l'utilisateur en **français**, concises ; prose sans tiret cadratin ni flèche.
-- Commits : trailer `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>`.
+- **Mémoire du projet** : chaque PR ajoute une entrée à `CHANGELOG.md` et met à jour README et ce skill si une règle, une option, un rôle ou l'architecture change (règle dans `CLAUDE.md`, case dans `.github/pull_request_template.md`, contrôle CI `outils/verifier_changelog.py`, label `sans-changelog` pour l'exception).
+- Commits : trailer `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` ; corps de PR terminé par la ligne « Generated with Claude Code » ; sections « Résumé », « À savoir », « À tester ». Un push volumineux qui échoue (HTTP 400) : `git -c http.postBuffer=524288000 push`.
 - **Son pendant les tests** : le laisser désactivé (c'est le défaut) ; l'utilisateur travaille en open space.
 - Tests : l'utilisateur teste lui-même l'interface dans son navigateur ; ne pas lancer de test navigateur pour chaque PR (coût en tokens). Vérifier par `pyflakes`, import des modules et, pour le moteur, des tests unitaires ; une partie complète peut se jouer sans navigateur avec `streamlit.testing.v1.AppTest` (limites : `st.rerun` après un formulaire laisse l'arbre périmé, `selectbox(index=None)` ne se pilote pas : injecter la valeur dans `session_state`).
 - Pièges déjà rencontrés : `sed -i` se comporte autrement sur macOS (préférer un remplacement Python) ; un script d'édition doit échouer bruyamment si une ancre est introuvable ; `location.reload()` en JS demande un `setTimeout` ; l'aperçu du navigateur peut avoir un viewport 0x0 ; après un test, tuer le serveur (`pkill -f "streamlit run"`) et supprimer le `save.json` généré.
@@ -142,5 +149,18 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 ## 7. Chantiers connus
 
 - **Parties célèbres (presets)** : proposer à l'installation des compositions inspirées de parties médiatisées, avec un court résumé du contexte. Retenus : Classique Thiercelieux, Canal+ saison 1 (2024, 13 joueurs, 3 loups), Canal+ saison 2 (2025, 3 loups, Cupidon, Montreur d'ours, Capitaine), Squeezie Minecraft (2020, plugin LoupGarou). Écartés : Wankil, film Netflix. À reprendre une fois les rôles manquants importés.
-- **Rôles à importer** : Petite Fille, Montreur d'ours, Corbeau, Détective, Ange, Assassin, Pyromane. Autres idées étudiées (barème dans `docs/equilibre-roles.md`) : Idiot du village, Bouc émissaire, Ancien, Grand méchant loup, Infect père des loups, Chevalier à l'épée rouillée, Joueur de flûte, Comédien.
+- **Rôles à importer** : Détective, Ange, Assassin, Pyromane. Autres idées étudiées (barème dans `docs/equilibre-roles.md`) : Ancien, Grand méchant loup, Infect père des loups, Chevalier à l'épée rouillée, Joueur de flûte, Comédien. (Petite Fille, Montreur d'ours, Corbeau, Idiot du village et Bouc émissaire sont faits.)
+- **Options non mesurées** : révélation à la mort, composition secrète, échéance aléatoire et sorcière informée ne sont pas dans la simulation d'équilibre ; les jauges n'en tiennent pas compte.
 - Vérifier toute affirmation sur ces parties médiatisées (compositions, dates, règles) à la source avant de l'écrire dans le jeu ou le README.
+
+## 8. Feuille de route vers une app « pro » (proposée le 2026-10-12, à arbitrer)
+
+Constat tiré du code : tout l'état tient dans un `save.json` unique et global à la racine (avec `preferences.json`, `joueurs.json` et les archives `historique/` versionnées dans git). Sur un serveur partagé, deux groupes se marcheraient dessus ; sur un hébergement à disque éphémère, tout disparaîtrait.
+
+1. **Stockage** : mettre `moteur/persistance.py` derrière une interface, avec un backend SQLite puis Postgres ; une clé de partie (identifiant ou code court) au lieu du fichier unique ; archives et statistiques en base plutôt qu'en commits ; préférences par navigateur plutôt que fichier global.
+2. **Hébergement** : `Dockerfile`, HTTPS, secrets, domaine, sauvegardes ; Streamlit Community Cloud est le plus simple mais son disque est, à vérifier, non persistant (donc dépend du point 1) ; sinon conteneur sur Fly.io, Render ou Cloud Run (prix et limites à vérifier à la source avant de choisir).
+3. **Packaging et qualité** : `pyproject.toml` et `uv.lock` (la CI a déjà buté sur l'absence de fichier de dépendances), lint (ruff) et typage léger en CI, pre-commit, test de bout en bout navigateur (Playwright) sur les parcours clés.
+4. **Données personnelles** : les archives contiennent des pseudos ; prévoir mention, durée de conservation, suppression. L'état complet (rôles en clair) ne doit jamais partir vers un autre appareil en mode multi-appareils.
+5. **Mode multi-appareils** (le plus gros saut) : chacun sur son téléphone, état partagé côté serveur, notifications de conseil. Contredit l'ADN hotseat : à ne lancer que si voulu ; Streamlit (un état par onglet, relances) y est mal adapté, un backend dédié est probable.
+6. **Accessibilité et mobile** : audit réel (axe-core, lecteur d'écran), écrans de nuit et de conseil à contrôler sur mobile, PWA et maintien de l'écran allumé pour les longues parties (voir `docs/accessibilite.md`).
+7. **Produit** : parties célèbres (presets), tutoriel interactif, anglais, partage du bilan, statistiques sur la durée.

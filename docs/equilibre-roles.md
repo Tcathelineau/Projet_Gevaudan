@@ -83,6 +83,7 @@ La parité compte beaucoup (comme l'observe eblong) : les tables paires sont plu
 - **Les loups simulés ne se votent jamais entre eux** (dans le jeu, la meute peut désigner l'un des siens) : un sacrifice ou un bluff de la meute n'est pas mesuré.
 - **Rôles stratégiques sous-évalués** : Salvateur, Sorcière et Juge bègue sont joués au hasard, un humain en tirerait plus.
 - **Voleur** : son effet positif vient d'un artefact de règle (deux cartes laissées au milieu, qui peuvent contenir un loup), pas de son pouvoir.
+- **Options non mesurées** : la révélation à la mort, la composition secrète, l'échéance aléatoire et la sorcière informée ne sont pas simulées ; les jauges n'en tiennent pas compte.
 - **Calibrage** : il pose que les compositions recommandées sont équilibrées en moyenne ; changer ce choix décale toutes les jauges.
 - **Incertitude** : l'écart-type d'une mesure de marge est d'environ 0,8 point (6000 parties). Les écarts de 1 à 2 points entre rôles ne sont pas significatifs.
 

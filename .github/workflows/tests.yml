@@ -15,3 +15,13 @@ jobs:
           python-version: "3.12"
       - run: pip install pytest streamlit
       - run: python -m pytest -v
+
+  journal:
+    # Mémoire du projet : une PR qui touche au code doit ajouter une entrée à CHANGELOG.md.
+    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'sans-changelog')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: python outils/verifier_changelog.py "origin/${{ github.base_ref }}"

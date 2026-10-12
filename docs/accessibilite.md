@@ -10,11 +10,13 @@ Objectif de conception : WCAG 2.2 niveau AA. L'application n'est **pas** audité
 - **Images** : les illustrations de rôles sont décoratives (`aria-hidden`), le nom du rôle figure toujours en texte.
 - **Couleur seule** : aucune information n'est portée par la couleur seule (jauges et barres ont une valeur en texte, les camps ont un libellé).
 - **Animations** : réduites ou coupées si le système demande de réduire les animations (scènes, retournement de carte).
+- **Fenêtres** (couple, meute) : couleurs de texte et de bouton testées à 4,5:1 (`tests/test_accessibilite.py`) ; boutons « Compris » de vrais boutons.
 - **Petits écrans** : pas de défilement horizontal à 375 px ; panneaux de composition empilés sous 520 px ; boutons d'accueil qui ne coupent plus les mots.
 
 ## Ce qui n'a pas été vérifié
 - Aucun test avec un lecteur d'écran (VoiceOver, NVDA).
 - Pas d'analyse automatique (axe-core) ni de test à 200 % d'agrandissement ou à 320 px.
 - Les écrans de nuit et de conseil n'ont pas été contrôlés en mode mobile ; seuls l'accueil et la composition l'ont été.
+- Les fenêtres (`st.dialog`) : piège du focus et retour du focus à la fermeture non vérifiés ; le compte à rebours de l'échéance du conseil (rafraîchi toutes les 30 s) n'est pas annoncé aux lecteurs d'écran.
 - Les composants de Streamlit eux-mêmes (listes déroulantes, onglets) ne sont pas maîtrisés par ce dépôt.
 - Le jeu en hotseat repose sur le secret visuel : un joueur aveugle ne peut pas profiter des écrans de passage.

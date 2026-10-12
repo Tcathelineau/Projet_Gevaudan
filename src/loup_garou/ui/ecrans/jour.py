@@ -5,6 +5,7 @@ from datetime import datetime
 
 import streamlit as st
 
+from loup_garou.config import maintenant as maintenant_fuseau
 from loup_garou.moteur.journal import log
 from loup_garou.moteur.partie import (
     bouc_emissaire, camp, enregistrer_condamne, epargner_idiot, ours_grogne, terminer_partie, tuer, vainqueur, vivants,
@@ -38,8 +39,11 @@ def _camp_txt(s, nom):
 @st.fragment(run_every="30s")
 def _bandeau_echeance(echeance):
     """Compte à rebours de l'échéance du conseil, rafraîchi seul toutes les 30 secondes."""
+    maintenant = maintenant_fuseau()
     fin = datetime.fromisoformat(echeance["fin"])
-    reste = int((fin - datetime.now()).total_seconds() // 60)
+    if fin.tzinfo is None:  # sauvegarde d'avant les fuseaux : heure du serveur
+        fin = fin.replace(tzinfo=maintenant.tzinfo)
+    reste = int((fin - maintenant).total_seconds() // 60)
     if reste < 0:
         annonce("Échéance dépassée : le village doit trancher maintenant.", "!", "danger")
     else:

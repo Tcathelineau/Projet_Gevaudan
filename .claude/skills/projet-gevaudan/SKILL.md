@@ -39,6 +39,8 @@ src/loup_garou/
     persistance.py           save_game/load_game/clear_save, archiver_partie, lister_historique,
                              date_partie, gagnant_partie, load/maj_preferences, load/save_joueurs
     migrations.py            VERSION et MIGRATIONS : mise à niveau des anciennes sauvegardes
+    codes.py                 nouveau_code, normaliser_code, afficher_code (code de partie de 8 caractères)
+    stockage.py              StockageFichiers (local, une partie) et StockageSQL (SQLAlchemy, plusieurs parties) ; stockage() choisit selon DATABASE_URL
   ui/                        interface Streamlit
     styles.py                CSS (cartes, scènes, passage, accueil, historique) et décors SVG
     composants.py            carte_role, carte_dos, badges, scene_ciel/victoire, annonce, plaquette,
@@ -64,6 +66,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 |---|---|
 | `joueurs` | `{nom: {"role", "vivant", "amoureux", ...}}` ; extras éventuels : `camp_choisi` (Chien-Loup), `enfant_sauvage`, `couple_vu` et `meute_vue` (fenêtres déjà ouvertes), `cri_loup` |
 | `phase` | `nuit`, `reveil`, `election_maire`, `conseil`, `tir_chasseur`, `fin` |
+| `code` | code de partie (migration v2) : clé de la ligne en base, `?partie=CODE` dans l'adresse ; les instantanés le gardent |
 | `jour` | 0 = première nuit (Cupidon seulement, pas de mort) ; 1, 2... ensuite |
 | `ordre_nuit`, `tour`, `devoile`, `transfert` | déroulé du passage de l'appareil en nuit |
 | `votes_loups`, `morts_nuit`, `morts_tir`, `tirs_en_attente`, `retour_tir` | résolution de nuit et tirs du chasseur |
@@ -121,6 +124,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 ## 5. Historique, sauvegarde et rechargement
 
+- **Stockage** : `persistance.py` valide, migre, archive ; `stockage.py` range (fichiers ou base). Sans `DATABASE_URL` : `save.json` unique, code ignoré. Avec : une ligne `parties` par code, archives lisibles seulement avec le code, préférences et derniers noms non gardés (ils seraient communs à tous les groupes), ménage à la création d'une partie (30 jours, archives 1 an). Toute fonction de `persistance` qui touche une partie reçoit son `code` (`s.get("code")`) : ne jamais garder la partie courante dans une variable de module (Streamlit partage les modules entre sessions). Heures : `config.maintenant()` (fuseau `FUSEAU`), jamais `datetime.now()` nu.
 - **Reprise** : l'app ne reprend plus la partie sauvegardée toute seule ; `ecran_accueil` la résume (`resume_sauvegarde`) et propose « Reprendre » (confirmation avant de la remplacer).
 - **Préférences** : `preferences.json` (`load_preferences` / `maj_preferences`) garde le son (`son`) et la dernière composition (`composition`). Le son reste désactivé tant qu'on ne l'a pas activé une fois.
 
@@ -158,7 +162,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 
 Constat tiré du code : tout l'état tient dans un `save.json` unique et global à la racine (avec `preferences.json`, `joueurs.json` et les archives `historique/` versionnées dans git). Sur un serveur partagé, deux groupes se marcheraient dessus ; sur un hébergement à disque éphémère, tout disparaîtrait.
 
-1. **Stockage** : mettre `moteur/persistance.py` derrière une interface, avec un backend SQLite puis Postgres ; une clé de partie (identifiant ou code court) au lieu du fichier unique ; archives et statistiques en base plutôt qu'en commits ; préférences par navigateur plutôt que fichier global.
+1. **Stockage** : FAIT le 2026-10-12 (interface `stockage.py`, SQLite et Postgres via `DATABASE_URL`, code de partie, archives par code, ménage). Reste : préférences par navigateur (localStorage via un composant), gestion de schéma par migrations (Alembic) quand les tables évolueront, archives historiques de `historique/` à importer si on veut les garder.
 2. **Hébergement** : `Dockerfile`, HTTPS, secrets, domaine, sauvegardes ; Streamlit Community Cloud est le plus simple mais son disque est, à vérifier, non persistant (donc dépend du point 1) ; sinon conteneur sur Fly.io, Render ou Cloud Run (prix et limites à vérifier à la source avant de choisir).
 3. **Packaging et qualité** : FAIT le 2026-10-12 (`pyproject.toml`, `uv.lock`, ruff en CI, pre-commit ; pas de typage statique, jugé peu rentable ici). Reste : test de bout en bout navigateur (Playwright) sur les parcours clés.
 4. **Données personnelles** : les archives contiennent des pseudos ; prévoir mention, durée de conservation, suppression. L'état complet (rôles en clair) ne doit jamais partir vers un autre appareil en mode multi-appareils.

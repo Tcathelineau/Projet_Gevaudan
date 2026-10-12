@@ -2,8 +2,10 @@
 
 import random
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import timedelta
 
+from loup_garou.config import maintenant as maintenant_fuseau
+from loup_garou.moteur.codes import nouveau_code
 from loup_garou.moteur.journal import log, prendre_instantane
 from loup_garou.moteur.migrations import VERSION
 from loup_garou.moteur.persistance import archiver_partie
@@ -26,6 +28,7 @@ def nouvelle_partie(noms, composition, options=None):
 
     etat = {
         "version": VERSION,
+        "code": nouveau_code(),
         "nb_joueurs": len(noms),
         "jour": 0,
         "phase": "nuit",
@@ -312,7 +315,7 @@ def tirer_echeance(s, maintenant=None):
         return
     mini, maxi = sorted((opt(s, "echeance_min"), opt(s, "echeance_max")))
     minutes = random.randint(mini, maxi)
-    fin = (maintenant or datetime.now()) + timedelta(minutes=minutes)
+    fin = (maintenant or maintenant_fuseau()) + timedelta(minutes=minutes)
     s["echeance"] = {"jour": s["jour"], "fin": fin.isoformat(timespec="seconds"), "minutes": minutes}
     log(s, f"Échéance du conseil tirée au sort : {minutes} min.")
 

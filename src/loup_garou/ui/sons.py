@@ -119,6 +119,7 @@ def vider_session():
     reglages = {cle: st.session_state[cle] for cle in (*REGLAGES, "prefs_son_chargees") if cle in st.session_state}
     st.session_state.clear()
     st.session_state.update(reglages)
+    st.query_params.pop("partie", None)  # la partie quittée ne doit plus se reprendre depuis l'adresse
 
 
 def effet_autorise(effet):

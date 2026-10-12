@@ -1,63 +1,68 @@
-"""Sauvegarde disque de la partie en cours et archives des parties terminées."""
+"""Sauvegarde de la partie en cours, préférences et archives des parties terminées.
 
-import glob
+Ce module valide, migre et met en forme ; où les données vivent (fichiers ou base) se décide dans `stockage.py`.
+Une partie se repère par son `code` : le stockage en fichiers l'ignore (une seule partie), la base s'en sert.
+"""
+
 import json
-import os
 from datetime import datetime
 
-from loup_garou.config import HISTORIQUE_DIR, JOUEURS_FILE, PREFERENCES_FILE, SAVE_FILE
+from loup_garou.config import fuseau, maintenant
 from loup_garou.moteur.migrations import VERSION, migrer
+from loup_garou.moteur.stockage import stockage
+
+
+def multi_parties():
+    """Vrai quand plusieurs parties cohabitent (base de données) : chacune se reprend alors par son code."""
+    return stockage().multi_parties
 
 
 def save_game(s):
-    """Écrit la sauvegarde sans jamais laisser un fichier à moitié écrit (écriture puis remplacement)."""
+    """Écrit la sauvegarde (jamais de fichier à moitié écrit : voir `stockage.py`)."""
     s["version"] = VERSION
-    provisoire = SAVE_FILE + ".tmp"
-    with open(provisoire, "w", encoding="utf-8") as f:
-        json.dump(s, f, indent=2, ensure_ascii=False)
-    os.replace(provisoire, SAVE_FILE)
+    stockage().ecrire_partie(s.get("code"), s)
 
 
-def _mettre_de_cote(raison):
-    """Garde un fichier de sauvegarde inutilisable à côté (pour ne rien perdre) et repart d'une page blanche."""
-    os.replace(SAVE_FILE, f"{SAVE_FILE}.{raison}")
+def load_game(code=None):
+    """Partie sauvegardée, mise à niveau ; None s'il n'y en a pas ou si le contenu est inutilisable
+    (il est alors mis de côté, `save.json.<raison>` en fichiers, au lieu de faire planter l'application).
+    Avec une base, `code` est obligatoire ; avec des fichiers il filtre seulement une sauvegarde d'une autre partie."""
+    base = stockage()
 
-
-def load_game():
-    """Partie sauvegardée, mise à niveau ; None s'il n'y en a pas ou si le fichier est inutilisable
-    (il est alors renommé `save.json.<raison>` au lieu de faire planter l'application)."""
-    if not os.path.exists(SAVE_FILE):
+    def inutilisable(raison):
+        base.mettre_de_cote(code, raison)
         return None
+
     try:
-        with open(SAVE_FILE, "r", encoding="utf-8") as f:
-            s = json.load(f)
+        texte = base.lire_partie(code)
+        if texte is None:
+            return None
+        s = json.loads(texte)
     except (OSError, ValueError):
-        _mettre_de_cote("corrompue")
-        return None
+        return inutilisable("corrompue")
     if not isinstance(s, dict) or not {"joueurs", "phase", "jour"} <= s.keys():
-        _mettre_de_cote("invalide")
-        return None
+        return inutilisable("invalide")
     if s.get("version", 0) > VERSION:
-        _mettre_de_cote("plus_recente")
-        return None
+        return inutilisable("plus_recente")
     try:
-        return migrer(s)
+        s = migrer(s)
     except (KeyError, TypeError, AttributeError):
-        _mettre_de_cote("invalide")
+        return inutilisable("invalide")
+    if code and s.get("code") != code:
         return None
+    return s
 
 
-def clear_save():
-    if os.path.exists(SAVE_FILE):
-        os.remove(SAVE_FILE)
+def clear_save(code=None):
+    stockage().supprimer_partie(code)
 
 
 def load_preferences():
-    """Préférences gardées d'une session à l'autre ({} si absentes ou illisibles)."""
+    """Préférences gardées d'une session à l'autre ({} si absentes, illisibles, ou si le stockage n'en garde pas)."""
+    texte = stockage().lire_reglage("preferences")
     try:
-        with open(PREFERENCES_FILE, "r", encoding="utf-8") as f:
-            prefs = json.load(f)
-    except (OSError, ValueError):
+        prefs = json.loads(texte) if texte else {}
+    except ValueError:
         return {}
     return prefs if isinstance(prefs, dict) else {}
 
@@ -65,15 +70,12 @@ def load_preferences():
 def maj_preferences(**sections):
     """Met à jour une ou plusieurs sections des préférences (`son={...}`, `composition={...}`)."""
     prefs = {**load_preferences(), **sections}
-    provisoire = PREFERENCES_FILE + ".tmp"
-    with open(provisoire, "w", encoding="utf-8") as f:
-        json.dump(prefs, f, indent=2, ensure_ascii=False)
-    os.replace(provisoire, PREFERENCES_FILE)
+    stockage().ecrire_reglage("preferences", json.dumps(prefs, indent=2, ensure_ascii=False))
 
 
-def resume_sauvegarde():
+def resume_sauvegarde(code=None):
     """Résumé de la partie sauvegardée pour l'écran d'accueil, ou None : (partie, texte, date)."""
-    s = load_game()
+    s = load_game(code)
     if s is None:
         return None
     vivants = sum(d["vivant"] for d in s["joueurs"].values())
@@ -81,53 +83,49 @@ def resume_sauvegarde():
         "nuit": f"Nuit {s['jour']}", "reveil": f"Réveil, jour {s['jour']}", "election_maire": f"Élection du maire, jour {s['jour']}",
         "conseil": f"Conseil, jour {s['jour']}", "tir_chasseur": f"Dernière balle, jour {s['jour']}", "fin": "Partie terminée",
     }
-    date = datetime.fromtimestamp(os.path.getmtime(SAVE_FILE)).strftime("%d/%m à %H:%M")
+    modifiee = stockage().modifie_le(code)
+    if modifiee is not None and modifiee.tzinfo is not None:
+        modifiee = modifiee.astimezone(fuseau())
+    date = modifiee.strftime("%d/%m à %H:%M") if modifiee else "date inconnue"
     return s, f"{phases.get(s['phase'], 'Partie')} · {vivants} / {len(s['joueurs'])} en vie", date
 
 
 def save_joueurs(noms):
     """Retient les noms de la dernière partie pour les proposer à la suivante."""
-    with open(JOUEURS_FILE, "w", encoding="utf-8") as f:
-        json.dump(list(noms), f, ensure_ascii=False)
+    stockage().ecrire_reglage("joueurs", json.dumps(list(noms), ensure_ascii=False))
 
 
 def load_joueurs():
-    if os.path.exists(JOUEURS_FILE):
-        try:
-            with open(JOUEURS_FILE, "r", encoding="utf-8") as f:
-                noms = json.load(f)
-        except (OSError, ValueError):
-            return []
-        return [n for n in noms if isinstance(n, str)]
-    return []
+    texte = stockage().lire_reglage("joueurs")
+    try:
+        noms = json.loads(texte) if texte else []
+    except ValueError:
+        return []
+    return [n for n in noms if isinstance(n, str)] if isinstance(noms, list) else []
 
 
 def archiver_partie(s, issue):
-    """Écrit le journal complet dans historique/ (une seule fois par partie terminée)."""
+    """Range le journal complet de la partie terminée (une seule fois par partie)."""
     if s.get("archive"):
         return
-    os.makedirs(HISTORIQUE_DIR, exist_ok=True)
-    maintenant = datetime.now()
-    fichier = os.path.join(HISTORIQUE_DIR, f"partie_{maintenant:%Y%m%d_%H%M%S}.json")
+    date = maintenant()
     donnees = {
-        "date": maintenant.isoformat(timespec="seconds"),
+        "date": date.isoformat(timespec="seconds"),
         "issue": issue,
         "joueurs": s["joueurs"],
         "journal": s["journal"],
     }
-    with open(fichier, "w", encoding="utf-8") as f:
-        json.dump(donnees, f, indent=2, ensure_ascii=False)
-    s["archive"] = fichier
+    s["archive"] = stockage().ajouter_archive(s.get("code"), date, json.dumps(donnees, indent=2, ensure_ascii=False))
 
 
-def lister_historique():
-    """Parties archivées, de la plus récente à la plus ancienne (les fichiers illisibles sont ignorés)."""
+def lister_historique(code=None):
+    """Parties archivées, de la plus récente à la plus ancienne (les contenus illisibles sont ignorés).
+    Avec une base, seules les archives du `code` donné sont listées."""
     parties = []
-    for fichier in sorted(glob.glob(os.path.join(HISTORIQUE_DIR, "partie_*.json")), reverse=True):
+    for texte in stockage().lister_archives(code):
         try:
-            with open(fichier, "r", encoding="utf-8") as f:
-                p = json.load(f)
-        except (OSError, ValueError):
+            p = json.loads(texte)
+        except ValueError:
             continue
         if isinstance(p, dict) and {"issue", "joueurs", "journal"} <= p.keys():
             parties.append(p)

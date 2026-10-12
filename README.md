@@ -37,7 +37,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 | 🐺 | **Loup-Garou** | Loups | Se retrouve avec la meute et vote chaque nuit (dès la deuxième) pour dévorer un villageois. |
 | 🧑‍🌾 | **Villageois** | Village | Aucun pouvoir : il dort, débat et vote le jour. |
 | 🔮 | **Voyante** | Village | Une nuit sur deux par défaut, sonde un joueur et découvre son rôle. |
-| 🧪 | **Sorcière** | Village | Dispose de potions de soin (une par défaut) pour sauver la victime des loups, sans savoir qui a été désigné : elle choisit à l'aveugle de l'utiliser ou non. En option, elle a aussi des potions de mort pour empoisonner un joueur (ni le salvateur ni le soin ne l'en protègent). |
+| 🧪 | **Sorcière** | Village | Dispose de potions de soin (une par défaut) pour sauver la victime des loups, sans savoir qui a été désigné : elle choisit à l'aveugle de l'utiliser ou non. En option, elle a aussi des potions de mort pour empoisonner un joueur (ni le salvateur ni le soin ne l'en protègent), et elle peut apprendre, la nuit suivante, qui elle a sauvé. |
 | 🏹 | **Cupidon** | Village | La première nuit, lie deux joueurs par l'amour (lui compris). |
 | 🔫 | **Chasseur** | Village | À sa mort, tire une dernière balle sur le joueur de son choix. |
 | 🛡️ | **Salvateur** | Village | Protège un joueur chaque nuit, jamais le même deux nuits de suite. |
@@ -63,8 +63,8 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 - **Le maire** est élu au premier jour ; s'il meurt, il choisit lui-même son successeur.
 - **Égalité loups / villageois** : la partie continue tant que le maire n'est pas un loup ; elle s'arrête dès que les loups sont plus nombreux, ou aussi nombreux avec un loup pour maire.
 - **Loups en désaccord** : si les loups ne se mettent pas d'accord sur une victime, personne n'est dévoré cette nuit-là. Les loups peuvent désigner n'importe quel autre joueur vivant, y compris l'un des leurs.
-- **Couple tiré au sort** : Cupidon est remplacé par un villageois (la case est grisée et le dit) ; la Voyante peut alors, une fois, découvrir le couple au lieu de sonder un rôle.
-- **Les amoureux** (Cupidon, ou tirés au sort si l'option est activée) apprennent leur amour par une fenêtre « Vous êtes en couple » la première fois qu'ils se réveillent, puis meurent ensemble et gagnent s'ils sont les derniers survivants (deux, ou trois en mode trouple). Si le couple mêle un loup et un villageois, il forme un camp à part : tant qu'il vit, ni le village ni la meute ne peuvent gagner, et le couple doit éliminer tous les autres.
+- **Couple tiré au sort** : Cupidon est remplacé par un villageois (sa case est grisée et le dit à l'étape Rôles) ; avec le BONUS activé par défaut, la Voyante peut alors, une fois, découvrir le couple au lieu de sonder un rôle.
+- **Les amoureux** (Cupidon, ou tirés au sort si l'option est activée) apprennent leur amour par une fenêtre « Vous êtes en couple » la première fois qu'ils jouent à partir de la nuit 1 (jamais à la nuit 0, même avec un couple tiré au sort), puis meurent ensemble et gagnent s'ils sont les derniers survivants (deux, ou trois en mode trouple). Si le couple mêle un loup et un villageois, il forme un camp à part : tant qu'il vit, ni le village ni la meute ne peuvent gagner, et le couple doit éliminer tous les autres.
 - **La meute** : chaque loup découvre ses complices dans une fenêtre « Vous êtes la meute » (ou « Tu es le dernier loup ») la première fois qu'il joue ; si la fenêtre du couple doit s'ouvrir à ce tour, celle de la meute attend la nuit suivante.
 - **Le chasseur** peut emporter quelqu'un avec lui en mourant, ou renoncer à tirer.
 - **Les solitaires** (Loup Blanc) ne gagnent qu'en éliminant tout le monde : tant qu'ils vivent, ni le village ni la meute ne peut conclure.
@@ -78,8 +78,8 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 
 - **Reprise visible** : quand une partie est sauvegardée, l'accueil la résume (nuit ou conseil, joueurs en vie, date) et propose « Reprendre la partie » ; « Nouvelle partie » demande confirmation avant de la remplacer.
 - **Menu d'accueil** : un village qui défile (jour, nuit, loups, victoire) avec deux boutons, « Nouvelle partie » et « Historique ». L'écran Historique affiche chaque partie archivée sous forme de carte (date, joueurs, rôles, camp vainqueur, bordure colorée selon le vainqueur) avec le journal détaillé en cases nuit/jour.
-- **Documentation** : depuis le menu d'accueil, un onglet « Les rôles » avec une dalle par rôle (résumé, force loups / village, information, chaos) et un onglet « Comment jouer » (principe, déroulement, victoire, maire, passage de l'appareil).
-- **Rappel des règles en partie** : un volet de la barre latérale rappelle le déroulement, les conditions de victoire et les rôles du paquet.
+- **Documentation** : depuis le menu d'accueil, un onglet « Les rôles » avec une dalle par rôle (résumé, force loups / village, information, chaos) et un onglet « Comment jouer » (principe, déroulement, victoire, maire, passage de l'appareil) et un onglet « Les options » qui décrit tous les réglages de la partie.
+- **Rappel des règles en partie** : un volet de la barre latérale rappelle les conditions de victoire et les rôles du paquet (la liste des rôles disparaît en composition secrète).
 - **Bilan de fin de partie** : chiffres clés (nuits, morts, loups démasqués, innocents condamnés...), distinctions (première victime, erreur judiciaire, loup le plus discret...), frise des disparitions, puis « Rejouer avec les mêmes joueurs » ou retour au menu.
 - **Préférences durables** : les noms des joueurs (`joueurs.json`), les réglages du son et la dernière composition (`preferences.json`) sont gardés d'une session à l'autre ; ces fichiers sont ignorés par git. Une fois le son activé, il le reste jusqu'à ce qu'on le coupe.
 - **Cartes de rôle illustrées** : chaque rôle a son illustration vectorielle (icônes game-icons.net, voir les crédits), sur la carte de nuit, les bulles de la composition et la page Documentation.
@@ -174,18 +174,23 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 │       │   ├── bilan.py         #   bilan de fin de partie (chiffres, distinctions, frise)
 │       │   ├── statistiques.py  #   statistiques sur les parties archivées
 │       │   ├── journal.py       #   journal et instantanés de la chronologie
+│       │   ├── migrations.py    #   mise à niveau des anciennes sauvegardes (VERSION)
 │       │   └── persistance.py   #   sauvegarde, archives et lecture de l'historique
 │       └── ui/                  # Interface Streamlit
 │           ├── styles.py        #   CSS et décors SVG
 │           ├── composants.py    #   cartes, bandeaux, dalles de sélection...
 │           ├── nuit_roles.py    #   tour de nuit de chaque rôle (NUIT_ROLES)
-│           ├── regles.py        #   texte des règles (tutoriel et rappel en partie)
+│           ├── regles.py        #   texte des règles, rappel en partie, description des options (OPTIONS_DOC)
 │           ├── barre_laterale.py#   rechargement d'étape, barre ouverte
-│           └── ecrans/          #   accueil, installation, nuit, jour, fin, documentation
+│           └── ecrans/          #   accueil, installation, nuit, jour, fin, documentation, statistiques
+├── CHANGELOG.md                 # Journal des changements : une entrée par PR (vérifié par la CI)
+├── CLAUDE.md                    # Règles de travail pour Claude Code (dont la mise à jour des .md à chaque PR)
 ├── .claude/skills/projet-gevaudan/SKILL.md  # Guide du projet pour Claude Code (architecture, règles, conventions)
+├── .github/                     # CI (tests + contrôle du journal) et modèle de pull request
 ├── outils/                      # Génération des assets (icônes, sons, favicon) et simulation d'équilibre
 ├── docs/
-│   ├── equilibre-roles.md       # Force, information et chaos de chaque rôle (proposition)
+│   ├── equilibre-roles.md       # Force, information et chaos de chaque rôle (généré par outils/ecrire_doc_equilibre.py)
+│   ├── accessibilite.md         # État des lieux de l'accessibilité (ce qui est fait, ce qui n'est pas vérifié)
 │   ├── banniere.svg             # Bannière de nuit du README
 │   └── banniere-jour.svg        # Bannière de jour du README
 ├── musique.mp3                  # (optionnel) musique de fond, à ajouter toi-même
@@ -207,7 +212,8 @@ uv run --python 3.12 --with pytest --with streamlit python -m pytest
 
 - `tests/test_partie.py`, `test_options.py`, `test_roles.py`, `test_journal.py`, `test_persistance.py` : tests unitaires du moteur, sans Streamlit. Chaque test tourne dans un dossier temporaire (`save.json` et `historique/` du dépôt ne sont jamais touchés).
 - `tests/test_ui_smoke.py` : joue une partie complète au hasard (graine fixe) avec le banc d'essai `streamlit.testing`, pour repérer une exception d'affichage ou un écran sans issue. Il est ignoré si Streamlit n'est pas installé.
-- La CI (`.gitlab-ci.yml` et `.github/workflows/tests.yml`) lance cette suite sur chaque merge request / pull request.
+- `tests/test_accessibilite.py` (contrastes des couleurs de texte), `test_equilibre.py`, `test_migrations.py`, `test_verifier_changelog.py` : garde-fous sur les données, les anciennes sauvegardes et le journal.
+- La CI (`.gitlab-ci.yml` et `.github/workflows/tests.yml`) lance cette suite sur chaque merge request / pull request, puis vérifie qu'une PR qui touche à `src/` ou `tests/` ajoute une entrée à `CHANGELOG.md` (label `sans-changelog` pour une PR purement mécanique).
 
 ## Illustrations et sons
 
@@ -221,12 +227,17 @@ uv run --python 3.12 --with numpy python outils/simuler_equilibre.py       # mes
 uv run --python 3.12 --with cairosvg python outils/generer_favicon.py      # icône d'onglet
 ```
 
+## Mémoire du projet : une PR, une entrée de journal
+
+À chaque pull request : une entrée dans `CHANGELOG.md` (ce qui change, la décision et sa raison, les pièges), puis mise à jour de ce README et du skill `.claude/skills/projet-gevaudan/SKILL.md` si une règle, une option, un rôle ou l'architecture change. Le détail est dans `CLAUDE.md`, la case à cocher dans `.github/pull_request_template.md`, et `outils/verifier_changelog.py` fait échouer la CI quand l'entrée manque.
+
 ## Faire évoluer l'état de partie
 
 Toute clé obligatoire ajoutée à l'état (`nouvelle_partie`) exige une migration dans `src/loup_garou/moteur/migrations.py` : incrémenter `VERSION`, ajouter une fonction à `MIGRATIONS` qui donne une valeur par défaut aux parties déjà sauvegardées. Sans cela, la reprise d'une ancienne sauvegarde plante. Voir aussi `docs/accessibilite.md` pour l'état de l'accessibilité.
 
 ## Ajouter un rôle
 
+0. Penser à la mémoire du projet : entrée dans `CHANGELOG.md`, ligne dans le tableau des rôles ci-dessus.
 1. Déclarer le rôle dans le registre `ROLES` de `src/loup_garou/roles.py` (dataclass `Role`) : nom, emoji, dégradé de la carte, camp, état de départ, priorité de nuit, description (une ou deux phrases, affichées en infobulle dans l'écran de composition), sa catégorie (`categorie` : info, pouvoir, chaos ou loups), son illustration (une entrée dans `ICONES` de `outils/importer_icones.py`, puis relancer le script) et ses mesures d'équilibre (relancer `outils/simuler_equilibre.py`, qui réécrit `assets/equilibre.json` ; un test exige que chaque rôle y figure). Pour les jauges d'équilibre, ajouter aussi ses notes dans `src/loup_garou/equilibre.py`.
 2. Écrire sa fonction de tour de nuit dans `src/loup_garou/ui/nuit_roles.py` et l'inscrire dans le dictionnaire `NUIT_ROLES`. Un rôle absent de `NUIT_ROLES` dort comme un villageois. Un rôle qui se joue à plusieurs cartes (Sœurs, Frères) renseigne `lot` : cocher la case en ajoute `lot` cartes.
 

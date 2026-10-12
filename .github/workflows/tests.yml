@@ -30,6 +30,17 @@ jobs:
       - run: uv run ruff check
       - run: uv run pytest -v
 
+  image:
+    # L'image de production se construit et répond au point de santé.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t gevaudan .
+      - run: docker run -d --name gevaudan -p 8501:8501 gevaudan
+      - run: curl --fail --retry 30 --retry-delay 2 --retry-connrefused http://localhost:8501/_stcore/health
+      - if: failure()
+        run: docker logs gevaudan
+
   journal:
     # Mémoire du projet : une PR qui touche au code doit ajouter une entrée à CHANGELOG.md.
     if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'sans-changelog')

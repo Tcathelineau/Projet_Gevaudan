@@ -194,6 +194,7 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 ├── CLAUDE.md                    # Règles de travail pour Claude Code (dont la mise à jour des .md à chaque PR)
 ├── .claude/skills/projet-gevaudan/SKILL.md  # Guide du projet pour Claude Code (architecture, règles, conventions)
 ├── .github/                     # CI (tests + contrôle du journal) et modèle de pull request
+├── tests_e2e/                   # Test de bout en bout dans un navigateur (Playwright), lancé à part : `uv run pytest tests_e2e`
 ├── outils/                      # Génération des assets (icônes, sons, favicon) et simulation d'équilibre
 ├── docs/
 │   ├── equilibre-roles.md       # Force, information et chaos de chaque rôle (généré par outils/ecrire_doc_equilibre.py)
@@ -223,6 +224,7 @@ uv run ruff check    # lint : erreurs de syntaxe, imports inutilisés, noms ind�
 - `tests/test_partie.py`, `test_options.py`, `test_roles.py`, `test_journal.py`, `test_persistance.py` : tests unitaires du moteur, sans Streamlit. Chaque test tourne dans un dossier temporaire (`save.json` et `historique/` du dépôt ne sont jamais touchés).
 - `tests/test_ui_smoke.py` : joue une partie complète au hasard (graine fixe) avec le banc d'essai `streamlit.testing`, pour repérer une exception d'affichage ou un écran sans issue. Il est ignoré si Streamlit n'est pas installé.
 - `tests/test_accessibilite.py` (contrastes des couleurs de texte), `test_equilibre.py`, `test_migrations.py`, `test_verifier_changelog.py` : garde-fous sur les données, les anciennes sauvegardes et le journal.
+- `tests_e2e/` : une partie jouée dans un vrai navigateur (Playwright) contre un vrai serveur Streamlit : assistant de composition, nuit avec la fenêtre de la meute, conseil, vote, reprise après rechargement, thème sombre, absence de défilement horizontal sur téléphone. Lancement : `uv sync --group e2e && uv run playwright install chromium && uv run pytest tests_e2e` (en local, `E2E_CHANNEL=chrome` utilise le Chrome installé, sans rien télécharger). Captures dans `tests_e2e/captures/` (ignoré par git, conservé comme artefact par la CI).
 - `tests/test_stockage.py` : le stockage SQL (plusieurs parties, archives par code, ménage, codes). Il tourne sur SQLite, et aussi sur Postgres quand `TEST_DATABASE_URL` est définie (service Postgres de la CI GitHub).
 - La CI (`.gitlab-ci.yml` et `.github/workflows/tests.yml`) lance cette suite sur chaque merge request / pull request, puis vérifie qu'une PR qui touche à `src/` ou `tests/` ajoute une entrée à `CHANGELOG.md` (label `sans-changelog` pour une PR purement mécanique).
 

@@ -41,6 +41,25 @@ jobs:
       - if: failure()
         run: docker logs gevaudan
 
+  e2e:
+    # Une vraie partie dans un vrai navigateur (Playwright + Chromium) : CSS, fenêtres, fragments, reprise après rechargement.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked --group e2e
+      - run: uv run playwright install --with-deps chromium
+      - run: uv run pytest tests_e2e -v
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: captures-e2e
+          path: tests_e2e/captures
+          if-no-files-found: ignore
+
   journal:
     # Mémoire du projet : une PR qui touche au code doit ajouter une entrée à CHANGELOG.md.
     if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'sans-changelog')

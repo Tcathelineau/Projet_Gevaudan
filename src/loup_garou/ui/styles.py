@@ -360,12 +360,13 @@ def css_cartes():
         .apercu-centre .jauge { margin: .3rem 0 .1rem; }
         .apercu-centre .jauge-entete { font-size: .85rem; }
         /* Fenêtre « Vous êtes en couple » : tout en rose. */
-        div[role="dialog"]:has(.dialogue-couple) {
+        /* Streamlit 1.65 : la boîte est un <section role="dialog"> dans un <div> qui porte le fond blanc ; avant : <div role="dialog">. */
+        div[role="dialog"]:has(.dialogue-couple), [data-testid="stDialog"]:has(.dialogue-couple) > div {
             background: radial-gradient(circle at 50% 0%, #6b2148, #260b19 80%) !important;
             border: 2px solid #f06fb5; border-radius: 18px;
             box-shadow: 0 0 44px rgba(240,111,181,.5), 0 0 0 4px rgba(240,111,181,.12);
         }
-        div[role="dialog"]:has(.dialogue-couple) h2 {
+        [role="dialog"]:has(.dialogue-couple) h2 {
             color: #ffd0e6; font-family: 'Cinzel', serif; text-align: center; width: 100%;
             text-shadow: 0 0 14px rgba(240,111,181,.7);
         }
@@ -377,19 +378,20 @@ def css_cartes():
             text-shadow: 0 0 18px rgba(240,111,181,.55);
         }
         .dc-texte { font-size: 1.1rem; line-height: 1.4; }
-        div[role="dialog"]:has(.dialogue-couple) button {
+        [role="dialog"]:has(.dialogue-couple) button {
             background: #b3335a; border-color: #f06fb5; color: #fff; font-weight: 600;
         }
-        div[role="dialog"]:has(.dialogue-couple) button:hover { background: #cf4271; border-color: #ffb3d9; color: #fff; }
+        [role="dialog"]:has(.dialogue-couple) button:hover { background: #cf4271; border-color: #ffb3d9; color: #fff; }
         @keyframes battement { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.16); } }
         @media (prefers-reduced-motion: reduce) { .dc-coeurs { animation: none; } }
         /* Fenêtre de découverte de la meute : même gabarit que celle du couple, en rouge sombre. */
-        div[role="dialog"]:has(.dialogue-meute) {
+        /* Streamlit 1.65 : la boîte est un <section role="dialog"> dans un <div> qui porte le fond blanc ; avant : <div role="dialog">. */
+        div[role="dialog"]:has(.dialogue-meute), [data-testid="stDialog"]:has(.dialogue-meute) > div {
             background: radial-gradient(circle at 50% 0%, #5a1519, #1d0709 80%) !important;
             border: 2px solid #c8454b; border-radius: 18px;
             box-shadow: 0 0 44px rgba(200,69,75,.45), 0 0 0 4px rgba(200,69,75,.12);
         }
-        div[role="dialog"]:has(.dialogue-meute) h2 {
+        [role="dialog"]:has(.dialogue-meute) h2 {
             color: #ffd2d2; font-family: 'Cinzel', serif; text-align: center; width: 100%;
             text-shadow: 0 0 14px rgba(200,69,75,.7);
         }
@@ -401,10 +403,10 @@ def css_cartes():
             text-shadow: 0 0 18px rgba(200,69,75,.55);
         }
         .dm-texte { font-size: 1.1rem; line-height: 1.4; }
-        div[role="dialog"]:has(.dialogue-meute) button {
+        [role="dialog"]:has(.dialogue-meute) button {
             background: #9c2d33; border-color: #e0777c; color: #fff; font-weight: 600;
         }
-        div[role="dialog"]:has(.dialogue-meute) button:hover { background: #b8383f; border-color: #ffb3b6; color: #fff; }
+        [role="dialog"]:has(.dialogue-meute) button:hover { background: #b8383f; border-color: #ffb3b6; color: #fff; }
         /* Cartes de réglages : centrées, une par thème ; grisées quand le rôle concerné n'est pas dans la partie. */
         div[class*="st-key-carte_opt_"] {
             max-width: 560px; margin: .9rem auto; padding: .7rem 1rem 1rem; align-items: center; text-align: center;

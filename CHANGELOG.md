@@ -11,6 +11,10 @@ Ce fichier est la mémoire du projet : **chaque pull request y ajoute une entré
 
 ---
 
+## 2026-10-13
+
+- **Test de bout en bout dans un navigateur** : `tests_e2e/` (Playwright, serveur Streamlit réel, `E2E_CHANNEL=chrome` pour utiliser le Chrome local), groupe de dépendances `e2e`, job CI `e2e` (Chromium installé par `playwright install --with-deps`, captures conservées comme artefact). Scénarios : assistant de composition, nuit 0 avec la fenêtre de la meute (ouverte puis fermée pour de bon), jour 0, nuit 1, réveil, maire, vote, sentence, nuit suivante ; reprise après rechargement ; thème sombre et langue ; pas de défilement horizontal à 375 px. **Bug trouvé par ce test** : depuis `uv.lock` (Streamlit 1.65), les fenêtres du couple et de la meute s'affichaient en blanc avec un texte pâle illisible (Streamlit 1.65 rend `<section role="dialog">` dans un `<div>` à fond blanc ; le CSS ciblait `div[role="dialog"]`) ; CSS corrigé (`[role="dialog"]` et `[data-testid="stDialog"] > div`) et test qui vérifie le fond. Piège : un serveur lancé depuis un dossier sans `.streamlit/` perd le thème sombre.
+
 ## 2026-10-12
 
 - **Hébergement : image Docker neutre** : `Dockerfile` (python 3.12 slim, `uv sync --locked --no-dev`, utilisateur sans droits, `HEALTHCHECK` sur `/_stcore/health`, écoute sur `$PORT`), `.dockerignore`, `docker-compose.yml` (application + Postgres 16), `docs/deploiement.md` (variables, points d'attention : base persistante, WebSocket, une seule instance, RGPD ; tableau de choix de plateforme à revérifier), `gatherUsageStats = false` dans `.streamlit/config.toml`. CI : job `image` qui construit l'image, la lance et sonde le point de santé. Décision : aucune plateforme choisie (demande de l'utilisateur), Community Cloud est américain non configurable (doc officielle Streamlit). Vérifié en local sans Docker (démon éteint) : lancement avec la ligne de commande de l'image sur un environnement `--no-dev`, point de santé OK. Jamais lancé : `docker build`, `docker compose up`.

@@ -118,8 +118,8 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 # Installe uv si ce n'est pas déjà fait
 brew install uv
 
-# Lance directement l'app (uv installe Streamlit et le bon Python à la volée)
-uv run --python 3.12 --with streamlit streamlit run src/loup_garou_app.py
+# Lance l'app (uv lit pyproject.toml et uv.lock : bon Python, versions épinglées, environnement .venv créé tout seul)
+uv run streamlit run src/loup_garou_app.py
 ```
 
 Une seule commande, à chaque fois : pas de venv à créer ni à activer.
@@ -137,9 +137,9 @@ brew install python@3.12
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Installe les dépendances
+# Installe les dépendances (versions non épinglées : uv.lock ne sert qu'avec uv)
 pip install --upgrade pip
-pip install streamlit
+pip install "streamlit>=1.58,<2"
 
 # Lance l'app
 streamlit run src/loup_garou_app.py
@@ -183,6 +183,10 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 │           ├── regles.py        #   texte des règles, rappel en partie, description des options (OPTIONS_DOC)
 │           ├── barre_laterale.py#   rechargement d'étape, barre ouverte
 │           └── ecrans/          #   accueil, installation, nuit, jour, fin, documentation, statistiques
+├── pyproject.toml               # Dépendances, groupes dev / outils, réglages pytest et ruff
+├── uv.lock                      # Versions épinglées de toutes les dépendances (à committer)
+├── .python-version              # Python 3.12 pour uv
+├── .pre-commit-config.yaml      # Lint avant commit, contrôle du journal avant push (facultatif)
 ├── CHANGELOG.md                 # Journal des changements : une entrée par PR (vérifié par la CI)
 ├── CLAUDE.md                    # Règles de travail pour Claude Code (dont la mise à jour des .md à chaque PR)
 ├── .claude/skills/projet-gevaudan/SKILL.md  # Guide du projet pour Claude Code (architecture, règles, conventions)
@@ -207,7 +211,8 @@ Le dossier `moteur/` ne dépend ni de Streamlit ni de `ui/` : les règles se lis
 ## Tests
 
 ```bash
-uv run --python 3.12 --with pytest --with streamlit python -m pytest
+uv run pytest        # tests (uv sync installe pytest et ruff)
+uv run ruff check    # lint : erreurs de syntaxe, imports inutilisés, noms indéfinis
 ```
 
 - `tests/test_partie.py`, `test_options.py`, `test_roles.py`, `test_journal.py`, `test_persistance.py` : tests unitaires du moteur, sans Streamlit. Chaque test tourne dans un dossier temporaire (`save.json` et `historique/` du dépôt ne sont jamais touchés).
@@ -221,11 +226,18 @@ Les illustrations viennent de [game-icons.net](https://game-icons.net) (licence 
 
 ```bash
 python3 outils/importer_icones.py                                          # icônes des rôles
-uv run --python 3.12 --with numpy --with lameenc python outils/importer_musiques.py   # musiques (CC0)
-uv run --python 3.12 --with numpy python outils/generer_sons.py            # bruitages
-uv run --python 3.12 --with numpy python outils/simuler_equilibre.py       # mesures d'équilibre (3 min)
-uv run --python 3.12 --with cairosvg python outils/generer_favicon.py      # icône d'onglet
+uv run --group outils python outils/importer_musiques.py   # musiques (CC0)
+uv run --group outils python outils/generer_sons.py            # bruitages
+uv run --group outils python outils/simuler_equilibre.py       # mesures d'équilibre (3 min)
+uv run --group outils python outils/generer_favicon.py      # icône d'onglet
 ```
+
+## Dépendances et qualité
+
+- Les dépendances vivent dans `pyproject.toml` ; `uv.lock` épingle les versions exactes (CI et machines des développeurs identiques). Ajouter une dépendance : `uv add <paquet>` (met à jour les deux fichiers, à committer ensemble). La CI échoue si `uv.lock` n'est plus d'accord avec `pyproject.toml` (`uv sync --locked`).
+- Groupe `dev` (installé par défaut) : pytest et ruff. Groupe `outils` (`uv sync --group outils`) : numpy, lameenc et cairosvg pour les scripts de `outils/`.
+- Lint : `uv run ruff check` (erreurs de syntaxe, imports inutilisés, noms indéfinis ; règles volontairement minimales). Hooks facultatifs : `uv tool install pre-commit && pre-commit install`.
+- Pas de typage statique pour l'instant : le code est surtout de l'interface Streamlit sur un état en dictionnaire, où un vérificateur de types apporterait peu pour un coût élevé.
 
 ## Mémoire du projet : une PR, une entrée de journal
 

@@ -1,0 +1,36 @@
+[project]
+name = "projet-gevaudan"
+version = "0.1.0"
+description = "Loup-Garou grandeur nature en hotseat, mené par une application Streamlit."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "streamlit>=1.58,<2",
+]
+
+[dependency-groups]
+# Tests et qualité (installés par défaut avec `uv sync`).
+dev = [
+    "pytest>=8",
+    "ruff>=0.8",
+]
+# Générateurs d'assets et simulation d'équilibre (outils/), à la demande : `uv sync --group outils`.
+outils = [
+    "numpy",
+    "lameenc",
+    "cairosvg",
+]
+
+[tool.uv]
+package = false  # application, pas une bibliothèque : rien à installer, seules les dépendances comptent
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 140
+
+[tool.ruff.lint]
+# Erreurs de syntaxe et pyflakes (imports inutilisés, noms indéfinis) : le minimum qui attrape de vrais bugs.
+select = ["E9", "F"]

@@ -8,7 +8,7 @@ description: Connaissance du projet Gévaudan (Loup-Garou en Streamlit, jeu hots
 Application Streamlit de Loup-Garou en **hotseat** : un seul appareil passe de main en main, sans maître du jeu. Dépôt `github.com/Tcathelineau/Projet_Gevaudan` (compte personnel Tcathelineau, pas l'identité git professionnelle).
 
 ```bash
-uv run --python 3.12 --with streamlit streamlit run src/loup_garou_app.py
+uv run streamlit run src/loup_garou_app.py   # uv lit pyproject.toml et uv.lock ; première fois : uv sync
 ```
 
 ## 1. Esprit du projet
@@ -137,6 +137,7 @@ Créé par `nouvelle_partie`, sauvegardé dans `save.json` après chaque rendu (
 - **Ne jamais ajouter au commit** `.DS_Store` ni les fichiers `historique/partie_*.json` laissés par les parties de test de l'utilisateur ; ajouter les fichiers par nom, pas `git add -A`.
 - Réponses à l'utilisateur en **français**, concises ; prose sans tiret cadratin ni flèche.
 - **Mémoire du projet** : chaque PR ajoute une entrée à `CHANGELOG.md` et met à jour README et ce skill si une règle, une option, un rôle ou l'architecture change (règle dans `CLAUDE.md`, case dans `.github/pull_request_template.md`, contrôle CI `outils/verifier_changelog.py`, label `sans-changelog` pour l'exception).
+- **Avant une PR** : `uv run ruff check` et `uv run pytest` ; dépendances par `uv add` (committer `pyproject.toml` et `uv.lock`).
 - Commits : trailer `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` ; corps de PR terminé par la ligne « Generated with Claude Code » ; sections « Résumé », « À savoir », « À tester ». Un push volumineux qui échoue (HTTP 400) : `git -c http.postBuffer=524288000 push`.
 - **Son pendant les tests** : le laisser désactivé (c'est le défaut) ; l'utilisateur travaille en open space.
 - Tests : l'utilisateur teste lui-même l'interface dans son navigateur ; ne pas lancer de test navigateur pour chaque PR (coût en tokens). Vérifier par `pyflakes`, import des modules et, pour le moteur, des tests unitaires ; une partie complète peut se jouer sans navigateur avec `streamlit.testing.v1.AppTest` (limites : `st.rerun` après un formulaire laisse l'arbre périmé, `selectbox(index=None)` ne se pilote pas : injecter la valeur dans `session_state`).
@@ -159,7 +160,7 @@ Constat tiré du code : tout l'état tient dans un `save.json` unique et global 
 
 1. **Stockage** : mettre `moteur/persistance.py` derrière une interface, avec un backend SQLite puis Postgres ; une clé de partie (identifiant ou code court) au lieu du fichier unique ; archives et statistiques en base plutôt qu'en commits ; préférences par navigateur plutôt que fichier global.
 2. **Hébergement** : `Dockerfile`, HTTPS, secrets, domaine, sauvegardes ; Streamlit Community Cloud est le plus simple mais son disque est, à vérifier, non persistant (donc dépend du point 1) ; sinon conteneur sur Fly.io, Render ou Cloud Run (prix et limites à vérifier à la source avant de choisir).
-3. **Packaging et qualité** : `pyproject.toml` et `uv.lock` (la CI a déjà buté sur l'absence de fichier de dépendances), lint (ruff) et typage léger en CI, pre-commit, test de bout en bout navigateur (Playwright) sur les parcours clés.
+3. **Packaging et qualité** : FAIT le 2026-10-12 (`pyproject.toml`, `uv.lock`, ruff en CI, pre-commit ; pas de typage statique, jugé peu rentable ici). Reste : test de bout en bout navigateur (Playwright) sur les parcours clés.
 4. **Données personnelles** : les archives contiennent des pseudos ; prévoir mention, durée de conservation, suppression. L'état complet (rôles en clair) ne doit jamais partir vers un autre appareil en mode multi-appareils.
 5. **Mode multi-appareils** (le plus gros saut) : chacun sur son téléphone, état partagé côté serveur, notifications de conseil. Contredit l'ADN hotseat : à ne lancer que si voulu ; Streamlit (un état par onglet, relances) y est mal adapté, un backend dédié est probable.
 6. **Accessibilité et mobile** : audit réel (axe-core, lecteur d'écran), écrans de nuit et de conseil à contrôler sur mobile, PWA et maintien de l'écran allumé pour les longues parties (voir `docs/accessibilite.md`).

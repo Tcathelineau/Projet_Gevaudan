@@ -1,0 +1,14 @@
+# Installation : uv tool install pre-commit && pre-commit install
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.0
+    hooks:
+      - id: ruff-check
+  - repo: local
+    hooks:
+      - id: journal
+        name: CHANGELOG.md mis à jour (pour une PR de code)
+        entry: python3 outils/verifier_changelog.py origin/main
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

@@ -17,6 +17,10 @@ Avant toute modification, charger le skill `projet-gevaudan` (`.claude/skills/pr
 
 La CI (`outils/verifier_changelog.py`) refuse une PR qui modifie `src/` ou `tests/` sans toucher à `CHANGELOG.md`. Pour une PR purement mécanique, poser le label `sans-changelog`.
 
+## Avant d'ouvrir une PR
+
+`uv run ruff check` puis `uv run pytest` doivent passer. Une dépendance se change avec `uv add` / `uv remove` : committer `pyproject.toml` et `uv.lock` ensemble.
+
 ## Façon de travailler (rappel)
 
 - Une branche et une PR par changement ; titre explicite ; corps avec « Résumé », « À savoir », « À tester ». L'utilisateur fusionne.

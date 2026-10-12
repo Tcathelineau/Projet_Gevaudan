@@ -3,7 +3,7 @@
 Des joueurs automatiques (aucune stratégie fine) jouent des milliers de parties ; une régression logistique
 donne, pour chaque rôle, son effet sur la chance de victoire du village. Résultat : src/loup_garou/assets/equilibre.json.
 
-Usage : uv run --python 3.12 --with numpy python outils/simuler_equilibre.py [--parties 2000] [--croyance 0.6]
+Usage : uv run --group outils python outils/simuler_equilibre.py [--parties 2000] [--croyance 0.6]
 
 Hypothèses du joueur automatique (limites : voir docs/equilibre-roles.md) :
 - les loups dévorent au hasard parmi les non-loups, et votent au hasard parmi les non-loups ;

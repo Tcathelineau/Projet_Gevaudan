@@ -87,7 +87,7 @@ La parité compte beaucoup (comme l'observe eblong) : les tables paires sont plu
 - **Calibrage** : il pose que les compositions recommandées sont équilibrées en moyenne ; changer ce choix décale toutes les jauges.
 - **Incertitude** : l'écart-type d'une mesure de marge est d'environ 0,8 point (6000 parties). Les écarts de 1 à 2 points entre rôles ne sont pas significatifs.
 
-Pour refaire les mesures : `uv run --python 3.12 --with numpy python outils/simuler_equilibre.py` (environ 5 minutes), puis `python3 outils/ecrire_doc_equilibre.py`.
+Pour refaire les mesures : `uv run --group outils python outils/simuler_equilibre.py` (environ 5 minutes), puis `python3 outils/ecrire_doc_equilibre.py`.
 
 ## Sources
 

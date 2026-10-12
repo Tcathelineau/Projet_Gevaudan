@@ -1,6 +1,6 @@
 """Compose l'icône de l'application (loup hurlant, or sur nuit bleue) : src/loup_garou/assets/favicon.png.
 
-Usage : uv run --python 3.12 --with cairosvg python outils/generer_favicon.py
+Usage : uv run --group outils python outils/generer_favicon.py
 """
 
 import re

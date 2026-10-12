@@ -1,6 +1,6 @@
 """Synthétise les bruitages du jeu (hurlement, victoires ; aucun échantillon tiers) dans src/loup_garou/assets/sons/.
 
-Usage : uv run --python 3.12 --with numpy python outils/generer_sons.py
+Usage : uv run --group outils python outils/generer_sons.py
 Les musiques, elles, viennent de morceaux libres de droits : voir outils/importer_musiques.py.
 """
 

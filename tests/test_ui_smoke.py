@@ -909,15 +909,28 @@ def test_la_composition_secrete_masque_les_roles_du_paquet():
 
 
 def test_l_echeance_du_conseil_s_affiche_puis_signale_son_depassement():
-    from datetime import datetime, timedelta
+    from datetime import timedelta
+
+    from loup_garou.config import maintenant
 
     roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
-    fin = datetime.now() + timedelta(hours=2)
+    fin = maintenant() + timedelta(hours=2)
     s = _conseil(roles, echeance={"jour": 1, "fin": fin.isoformat(timespec="seconds"), "minutes": 120})
     page = " ".join(m.value for m in _app(s).markdown)
     assert f"avant {fin:%H:%M}" in page and "encore 1 h" in page
-    s["echeance"]["fin"] = (datetime.now() - timedelta(minutes=5)).isoformat(timespec="seconds")
+    s["echeance"]["fin"] = (maintenant() - timedelta(minutes=5)).isoformat(timespec="seconds")
     assert "Échéance dépassée" in " ".join(m.value for m in _app(s).markdown)
+
+
+def test_une_echeance_sans_fuseau_est_lue_dans_le_fuseau_de_l_application():
+    from datetime import timedelta
+
+    from loup_garou.config import maintenant
+
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    fin = (maintenant() + timedelta(hours=2)).replace(tzinfo=None)  # sauvegarde d'avant les fuseaux
+    s = _conseil(roles, echeance={"jour": 1, "fin": fin.isoformat(timespec="seconds"), "minutes": 120})
+    assert "encore 1 h" in " ".join(m.value for m in _app(s).markdown)
 
 
 def test_les_reglages_sont_rangés_en_cartes():

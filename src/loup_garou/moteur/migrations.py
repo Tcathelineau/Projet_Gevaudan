@@ -7,10 +7,11 @@ on incrémente `VERSION`, on ajoute une fonction à `MIGRATIONS`, et `load_game`
 import copy
 from collections import Counter
 
+from loup_garou.moteur.codes import nouveau_code
 from loup_garou.options import OPTIONS_DEFAUT
 from loup_garou.roles import ROLES
 
-VERSION = 1
+VERSION = 2
 
 
 def _v1(s):
@@ -35,7 +36,15 @@ def _v1(s):
         _v1(instantane["etat"])
 
 
-MIGRATIONS = [(1, _v1)]
+def _v2(s):
+    """Version 2 : chaque partie porte un code (reprise parmi plusieurs parties). Les instantanés gardent le même code,
+    sinon recharger une étape ferait perdre le code à la partie."""
+    s.setdefault("code", nouveau_code())
+    for instantane in s.get("instantanes", []):
+        instantane["etat"]["code"] = s["code"]
+
+
+MIGRATIONS = [(1, _v1), (2, _v2)]
 
 
 def migrer(s):

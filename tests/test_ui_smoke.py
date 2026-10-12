@@ -909,15 +909,28 @@ def test_la_composition_secrete_masque_les_roles_du_paquet():
 
 
 def test_l_echeance_du_conseil_s_affiche_puis_signale_son_depassement():
-    from datetime import datetime, timedelta
+    from datetime import timedelta
+
+    from loup_garou.config import maintenant
 
     roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
-    fin = datetime.now() + timedelta(hours=2)
+    fin = maintenant() + timedelta(hours=2)
     s = _conseil(roles, echeance={"jour": 1, "fin": fin.isoformat(timespec="seconds"), "minutes": 120})
     page = " ".join(m.value for m in _app(s).markdown)
     assert f"avant {fin:%H:%M}" in page and "encore 1 h" in page
-    s["echeance"]["fin"] = (datetime.now() - timedelta(minutes=5)).isoformat(timespec="seconds")
+    s["echeance"]["fin"] = (maintenant() - timedelta(minutes=5)).isoformat(timespec="seconds")
     assert "Échéance dépassée" in " ".join(m.value for m in _app(s).markdown)
+
+
+def test_une_echeance_sans_fuseau_est_lue_dans_le_fuseau_de_l_application():
+    from datetime import timedelta
+
+    from loup_garou.config import maintenant
+
+    roles = {"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"}
+    fin = (maintenant() + timedelta(hours=2)).replace(tzinfo=None)  # sauvegarde d'avant les fuseaux
+    s = _conseil(roles, echeance={"jour": 1, "fin": fin.isoformat(timespec="seconds"), "minutes": 120})
+    assert "encore 1 h" in " ".join(m.value for m in _app(s).markdown)
 
 
 def test_les_reglages_sont_rangés_en_cartes():
@@ -1115,3 +1128,59 @@ def test_le_couple_tire_au_sort_ne_se_decouvre_qu_a_la_nuit_1():
     s["jour"] = 1
     _app(s)
     assert s["joueurs"]["B"].get("couple_vu")  # annoncé à la nuit 1
+
+
+# --- plusieurs parties en base ----------------------------------------------
+
+def _app_en_base(tmp_path, monkeypatch, partie=None, parametres=None, **session):
+    from loup_garou.moteur import stockage as module_stockage
+
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path}/ui.db")
+    module_stockage._stockage_sql.cache_clear()
+    sys.path.insert(0, SRC)
+    at = AppTest.from_file(ENTREE, default_timeout=60)
+    for cle, valeur in (parametres or {}).items():
+        at.query_params[cle] = valeur
+    if partie is not None:
+        at.session_state["partie"] = partie
+    for cle, valeur in session.items():
+        at.session_state[cle] = valeur
+    return at.run()
+
+
+def test_en_base_l_accueil_propose_de_reprendre_avec_un_code(tmp_path, monkeypatch):
+    at = _app_en_base(tmp_path, monkeypatch)
+    assert not at.exception
+    assert any("code" in e.label.lower() for e in at.expander)
+    assert "accueil_btn_reprendre" not in {b.key for b in at.button}
+
+
+def test_en_base_le_code_dans_l_adresse_reprend_la_partie(tmp_path, monkeypatch):
+    from loup_garou.moteur.partie import nouvelle_partie
+    from loup_garou.moteur.persistance import save_game
+
+    roles = {"loup": 1, "villageois": 3}
+    s = nouvelle_partie(["A", "B", "C", "D"], roles)
+    at = _app_en_base(tmp_path, monkeypatch)  # prépare la base
+    save_game(s)
+    at = _app_en_base(tmp_path, monkeypatch, parametres={"partie": s["code"]})
+    assert "accueil_btn_reprendre" in {b.key for b in at.button}
+    at.button(key="accueil_btn_reprendre").click().run()
+    assert at.session_state["partie"]["code"] == s["code"]
+    assert at.query_params["partie"] == [s["code"]] or at.query_params["partie"] == s["code"]
+
+
+def test_en_base_une_partie_qui_commence_met_son_code_dans_l_adresse_et_le_montre(tmp_path, monkeypatch):
+    s = _conseil({"A": "loup", "B": "villageois", "C": "villageois", "D": "villageois"})
+    at = _app_en_base(tmp_path, monkeypatch, partie=s, options_ouvert=True)
+    assert not at.exception
+    code = s["code"]
+    assert at.query_params["partie"] in (code, [code])
+    assert any(code[:4] in c.value for c in at.sidebar.code)
+
+
+def test_en_base_un_code_mal_forme_est_refuse(tmp_path, monkeypatch):
+    at = _app_en_base(tmp_path, monkeypatch)
+    at.text_input(key="code_reprise").set_value("abc").run()
+    at.button(key="btn_code_reprise").click().run()
+    assert any("bonne forme" in e.value for e in at.error)

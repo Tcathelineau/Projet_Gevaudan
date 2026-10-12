@@ -6,7 +6,10 @@ from collections import Counter
 
 import streamlit as st
 
-from loup_garou.moteur.persistance import clear_save, date_partie, gagnant_partie, lister_historique, resume_sauvegarde
+from loup_garou.moteur.codes import afficher_code, normaliser_code
+from loup_garou.moteur.persistance import (
+    clear_save, date_partie, gagnant_partie, lister_historique, multi_parties, resume_sauvegarde,
+)
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import scene_ciel, silhouettes_vent
 from loup_garou.ui.illustrations import svg_role
@@ -42,6 +45,23 @@ def aller_a(ecran):
     st.rerun()
 
 
+def code_demande():
+    """Code de partie lu dans l'adresse (?partie=CODE), ou None."""
+    return normaliser_code(st.query_params.get("partie"))
+
+
+def _saisie_code(libelle_bouton, cle):
+    """Champ pour retrouver une partie (ou ses archives) par son code : il va dans l'adresse, puis la page se relance."""
+    saisi = st.text_input("Code de partie", key=f"code_{cle}", placeholder="K7M2-QX9P", max_chars=12)
+    if st.button(libelle_bouton, key=f"btn_code_{cle}"):
+        code = normaliser_code(saisi)
+        if code is None:
+            st.error("Ce code n'a pas la bonne forme (8 caractères, par exemple K7M2-QX9P).")
+        else:
+            st.query_params["partie"] = code
+            st.rerun()
+
+
 def ecran_accueil():
     st.markdown(CSS_SANS_SIDEBAR, unsafe_allow_html=True)
     with st.container(key="scene_accueil"):
@@ -51,12 +71,15 @@ def ecran_accueil():
             '<div class="acc-titre">Projet Gévaudan</div></div>',
             unsafe_allow_html=True,
         )
-        sauvegarde = resume_sauvegarde()
+        sauvegarde = resume_sauvegarde(code_demande())
         with st.container(key="accueil_boutons"):
             if sauvegarde:
                 _bloc_reprise(sauvegarde)
             elif st.button("🐺 Nouvelle partie", key="accueil_btn_nouvelle", type="primary"):
                 aller_a("installation")
+            if not sauvegarde and multi_parties():
+                with st.expander("🔑 Reprendre une partie avec son code"):
+                    _saisie_code("Retrouver la partie", "reprise")
             if st.button("📜 Historique", key="accueil_btn_historique"):
                 aller_a("historique")
             if st.button("📖 Documentation", key="accueil_btn_documentation"):
@@ -79,7 +102,8 @@ def _bloc_reprise(sauvegarde):
     if st.session_state.get("remplacer_demande"):
         st.warning("La partie sauvegardée sera perdue.")
         if st.button("Oui, nouvelle partie", key="accueil_btn_remplacer"):
-            clear_save()
+            clear_save(partie.get("code"))
+            st.query_params.pop("partie", None)
             st.session_state.remplacer_demande = False
             aller_a("installation")
         if st.button("Non, la garder", key="accueil_btn_garder"):
@@ -113,7 +137,14 @@ def ecran_historique():
         aller_a("accueil")
     scene_ciel("nuit", "Historique des parties", "Les parties terminées, de la plus récente à la plus ancienne")
 
-    parties = lister_historique()
+    code = code_demande()
+    if multi_parties():
+        st.caption(
+            "Les archives sont rattachées au code de la partie : retrouve celles d'une partie terminée avec son code."
+            + (f" Code actuel : {afficher_code(code)}." if code else "")
+        )
+        _saisie_code("Afficher les archives", "historique")
+    parties = lister_historique(code)
     onglet_parties, onglet_stats = st.tabs(["📜 Parties", "📊 Statistiques"])
     with onglet_stats:
         afficher_statistiques(parties)

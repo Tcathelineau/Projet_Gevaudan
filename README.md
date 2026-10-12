@@ -94,6 +94,7 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 - **Rechargement d'étape** : le menu Option de la barre latérale permet de revenir au début d'une nuit ou à l'annonce d'un jour (plantage, erreur de clic).
 - **Historique de partie** : chaque action (votes des loups, visions, protections, morts, tirs, élection du maire…) est journalisée, affichée nuit par nuit à la fin, archivée à la fin de la partie dans `historique/partie_AAAAMMJJ_HHMMSS.json` (les parties abandonnées ne sont pas conservées) et téléchargeable en JSON.
 - **Sauvegarde automatique** (`save.json`) : la partie reprend là où elle s'est arrêtée, même après avoir fermé le serveur. La sauvegarde est versionnée et mise à niveau à la lecture (une partie commencée avec une ancienne version reste jouable), écrite sans risque de fichier tronqué, et un fichier illisible est mis de côté (`save.json.corrompue`...) au lieu de faire planter l'application.
+- **Plusieurs parties en parallèle (hébergement)** : avec une base de données (`DATABASE_URL`, voir « Stockage et hébergement »), chaque partie a un code court (ex. `K7M2-QX9P`) affiché dans le menu Option et placé dans l'adresse (`?partie=CODE`) ; ouvrir cette adresse, ou saisir le code sur l'accueil, reprend la partie depuis n'importe quel appareil. Sans base, tout reste comme avant : une seule partie, en fichiers.
 - **Abandon confirmé** : abandonner une partie en cours demande une confirmation.
 
 <p align="center">
@@ -173,9 +174,11 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 │       │   ├── partie.py        #   nouvelle partie, morts, résolution de la nuit, victoire
 │       │   ├── bilan.py         #   bilan de fin de partie (chiffres, distinctions, frise)
 │       │   ├── statistiques.py  #   statistiques sur les parties archivées
+│       │   ├── codes.py         #   code de partie (génération, normalisation, affichage)
 │       │   ├── journal.py       #   journal et instantanés de la chronologie
 │       │   ├── migrations.py    #   mise à niveau des anciennes sauvegardes (VERSION)
-│       │   └── persistance.py   #   sauvegarde, archives et lecture de l'historique
+│       │   ├── persistance.py   #   sauvegarde, archives et lecture de l'historique (validation, migration)
+│       │   └── stockage.py      #   où vivent les données : fichiers (local) ou base SQL (hébergé)
 │       └── ui/                  # Interface Streamlit
 │           ├── styles.py        #   CSS et décors SVG
 │           ├── composants.py    #   cartes, bandeaux, dalles de sélection...
@@ -218,6 +221,7 @@ uv run ruff check    # lint : erreurs de syntaxe, imports inutilisés, noms ind�
 - `tests/test_partie.py`, `test_options.py`, `test_roles.py`, `test_journal.py`, `test_persistance.py` : tests unitaires du moteur, sans Streamlit. Chaque test tourne dans un dossier temporaire (`save.json` et `historique/` du dépôt ne sont jamais touchés).
 - `tests/test_ui_smoke.py` : joue une partie complète au hasard (graine fixe) avec le banc d'essai `streamlit.testing`, pour repérer une exception d'affichage ou un écran sans issue. Il est ignoré si Streamlit n'est pas installé.
 - `tests/test_accessibilite.py` (contrastes des couleurs de texte), `test_equilibre.py`, `test_migrations.py`, `test_verifier_changelog.py` : garde-fous sur les données, les anciennes sauvegardes et le journal.
+- `tests/test_stockage.py` : le stockage SQL (plusieurs parties, archives par code, ménage, codes). Il tourne sur SQLite, et aussi sur Postgres quand `TEST_DATABASE_URL` est définie (service Postgres de la CI GitHub).
 - La CI (`.gitlab-ci.yml` et `.github/workflows/tests.yml`) lance cette suite sur chaque merge request / pull request, puis vérifie qu'une PR qui touche à `src/` ou `tests/` ajoute une entrée à `CHANGELOG.md` (label `sans-changelog` pour une PR purement mécanique).
 
 ## Illustrations et sons
@@ -231,6 +235,23 @@ uv run --group outils python outils/generer_sons.py            # bruitages
 uv run --group outils python outils/simuler_equilibre.py       # mesures d'équilibre (3 min)
 uv run --group outils python outils/generer_favicon.py      # icône d'onglet
 ```
+
+## Stockage et hébergement
+
+Deux stockages, choisis par l'environnement (`src/loup_garou/moteur/stockage.py`) :
+
+| | Fichiers (défaut, local) | Base SQL (`DATABASE_URL` définie) |
+|---|---|---|
+| Parties | une seule, `save.json` | plusieurs en parallèle, une ligne par code de partie |
+| Reprise | automatique sur l'accueil | par l'adresse `?partie=CODE` ou la saisie du code |
+| Archives | `historique/` (toutes visibles) | table `archives`, visibles seulement avec le code de la partie |
+| Préférences, derniers noms | `preferences.json`, `joueurs.json` | non gardés côté serveur (ils appartiendraient à tous les groupes) |
+
+- `DATABASE_URL` : `sqlite:///loup_garou.db` (un fichier, utile pour essayer) ou `postgres://utilisateur:motdepasse@hote/base` (les formes `postgres://` et `postgresql://` des hébergeurs sont acceptées). Les tables sont créées au premier démarrage.
+- `FUSEAU` : fuseau d'affichage des heures (défaut `Europe/Paris`) ; un conteneur est en UTC.
+- **Conservation** : une partie jamais rouverte depuis 30 jours et une archive de plus d'un an sont supprimées (ménage fait à chaque création de partie ; réglages `PARTIES_CONSERVEES_JOURS` et `ARCHIVES_CONSERVEES_JOURS` dans `config.py`). Les archives contiennent des pseudos : à mentionner si l'app devient publique.
+- **Le code est un lien secret** : la sauvegarde contient les rôles en clair et le code (8 caractères parmi 31, environ 8,5 · 10¹¹ possibilités) est la seule protection. Ne pas le publier.
+- Pour essayer en local avec une base : `DATABASE_URL=sqlite:///loup_garou.db uv run streamlit run src/loup_garou_app.py`.
 
 ## Dépendances et qualité
 

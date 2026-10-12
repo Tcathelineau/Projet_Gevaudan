@@ -6,6 +6,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "streamlit>=1.58,<2",
+    "sqlalchemy>=2,<3",       # stockage SQL (hébergement) : SQLite ou Postgres, mêmes requêtes
+    "psycopg[binary]>=3.2",   # pilote Postgres (DATABASE_URL=postgres://...)
+    "tzdata",                 # fuseaux horaires sur les images minimales (Docker)
 ]
 
 [dependency-groups]

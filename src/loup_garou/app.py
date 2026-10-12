@@ -3,7 +3,8 @@
 import streamlit as st
 
 from loup_garou.moteur.partie import camp, vivants
-from loup_garou.moteur.persistance import clear_save, save_game
+from loup_garou.moteur.codes import afficher_code
+from loup_garou.moteur.persistance import clear_save, multi_parties, save_game
 from loup_garou.options import opt
 from loup_garou.roles import ROLES
 from loup_garou.ui.barre_laterale import garder_sidebar_ouverte, panneau_rechargement
@@ -47,6 +48,9 @@ def main():
         return
 
     s = st.session_state.partie
+    # Le code dans l'adresse (?partie=CODE) permet de reprendre cette partie, depuis n'importe quel appareil.
+    if s.get("code") and st.query_params.get("partie") != s["code"]:
+        st.query_params["partie"] = s["code"]
 
     with st.sidebar:
         # Réservé en premier : sa position ne bouge pas, donc le son en cours n'est pas relancé à chaque clic.
@@ -130,6 +134,10 @@ def main():
                     st.markdown("**🔊 Son** (désactivé par défaut)")
                     cases_a_cocher()
                     panneau_rechargement(s)
+                    if multi_parties() and s.get("code"):
+                        st.markdown("**🔑 Code de la partie**")
+                        st.code(afficher_code(s["code"]), language=None)
+                        st.caption("Ouvre l'adresse de cette page (elle contient le code) pour reprendre la partie plus tard.")
                     if s["phase"] == "fin":
                         sortir = st.button("🏠 Retour au menu", key="abandon")
                     elif st.session_state.get("abandon_demande"):
@@ -144,7 +152,7 @@ def main():
                             st.rerun()
                         sortir = False
                     if sortir:
-                        clear_save()
+                        clear_save(s.get("code"))
                         vider_session()
                         st.rerun()
             ouvert = st.session_state.get("options_ouvert", False)

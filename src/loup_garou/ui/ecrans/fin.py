@@ -7,7 +7,8 @@ import streamlit as st
 
 from loup_garou.moteur.bilan import CAUSES, bilan_partie, coulisses
 from loup_garou.moteur.partie import nouvelle_partie
-from loup_garou.moteur.persistance import clear_save
+from loup_garou.moteur.codes import afficher_code
+from loup_garou.moteur.persistance import clear_save, multi_parties
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import scene_victoire
 from loup_garou.ui.sons import vider_session
@@ -93,8 +94,8 @@ def _potions_restantes(s):
     return (f"Il restait {soin} potion(s) de soin et {mort} potion(s) de mort à la fin de la partie.",)
 
 
-def _quitter():
-    clear_save()
+def _quitter(s):
+    clear_save(s.get("code"))
     vider_session()
 
 
@@ -127,6 +128,8 @@ def ecran_fin(s):
     )
     if s.get("archive"):
         st.caption(f"Archive enregistrée dans {s['archive']}")
+        if multi_parties() and s.get("code"):
+            st.caption(f"Code de la partie : {afficher_code(s['code'])}. Note-le pour retrouver ses archives plus tard.")
 
     col_rejouer, col_menu = st.columns(2)
     if col_rejouer.button(
@@ -134,11 +137,11 @@ def ecran_fin(s):
         disabled="composition" not in s, use_container_width=True,
     ):
         nouvelle = nouvelle_partie(list(s["joueurs"]), s["composition"], s.get("options"))
-        _quitter()
+        _quitter(s)
         st.session_state.partie = nouvelle
         st.rerun()
     if col_menu.button("🏠 Retour au menu", key="fin_menu", use_container_width=True):
-        _quitter()
+        _quitter(s)
         st.rerun()
 
 

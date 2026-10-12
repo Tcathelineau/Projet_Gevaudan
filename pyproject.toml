@@ -17,6 +17,11 @@ dev = [
     "pytest>=8",
     "ruff>=0.8",
 ]
+# Test de bout en bout dans un navigateur (tests_e2e/) : `uv sync --group e2e`, puis `uv run playwright install chromium`
+# (ou, en local, E2E_CHANNEL=chrome pour utiliser le Chrome installé sans rien télécharger).
+e2e = [
+    "playwright>=1.49",
+]
 # Générateurs d'assets et simulation d'équilibre (outils/), à la demande : `uv sync --group outils`.
 outils = [
     "numpy",

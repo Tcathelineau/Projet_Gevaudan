@@ -1,0 +1,17 @@
+**/.venv
+**/__pycache__
+.git
+.github
+.pytest_cache
+.ruff_cache
+tests
+docs
+outils
+historique
+save.json
+**/save.json
+preferences.json
+joueurs.json
+*.db
+musique.mp3
+.DS_Store

@@ -197,9 +197,11 @@ Dans les deux cas, ton navigateur s'ouvre automatiquement sur `http://localhost:
 ├── outils/                      # Génération des assets (icônes, sons, favicon) et simulation d'équilibre
 ├── docs/
 │   ├── equilibre-roles.md       # Force, information et chaos de chaque rôle (généré par outils/ecrire_doc_equilibre.py)
+│   ├── deploiement.md           # Docker, variables d'environnement, points d'attention, choix d'une plateforme
 │   ├── accessibilite.md         # État des lieux de l'accessibilité (ce qui est fait, ce qui n'est pas vérifié)
 │   ├── banniere.svg             # Bannière de nuit du README
 │   └── banniere-jour.svg        # Bannière de jour du README
+├── Dockerfile, docker-compose.yml, .dockerignore  # Image de production et essai local avec Postgres
 ├── musique.mp3                  # (optionnel) musique de fond, à ajouter toi-même
 ├── save.json                    # Sauvegarde de la partie en cours (générée automatiquement)
 ├── historique/                  # Archives JSON des parties terminées (versionnées dans le dépôt)
@@ -251,6 +253,7 @@ Deux stockages, choisis par l'environnement (`src/loup_garou/moteur/stockage.py`
 - `FUSEAU` : fuseau d'affichage des heures (défaut `Europe/Paris`) ; un conteneur est en UTC.
 - **Conservation** : une partie jamais rouverte depuis 30 jours et une archive de plus d'un an sont supprimées (ménage fait à chaque création de partie ; réglages `PARTIES_CONSERVEES_JOURS` et `ARCHIVES_CONSERVEES_JOURS` dans `config.py`). Les archives contiennent des pseudos : à mentionner si l'app devient publique.
 - **Le code est un lien secret** : la sauvegarde contient les rôles en clair et le code (8 caractères parmi 31, environ 8,5 · 10¹¹ possibilités) est la seule protection. Ne pas le publier.
+- **Docker** : `Dockerfile`, `docker-compose.yml` (application + Postgres) et `docs/deploiement.md` (variables, points d'attention, choix d'une plateforme).
 - Pour essayer en local avec une base : `DATABASE_URL=sqlite:///loup_garou.db uv run streamlit run src/loup_garou_app.py`.
 
 ## Dépendances et qualité

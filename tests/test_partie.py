@@ -6,9 +6,9 @@ from loup_garou.config import HISTORIQUE_DIR
 from loup_garou.moteur.partie import (
     camp, composition_recommandee, condamnes_de_la_veille, enregistrer_condamne, fin_de_tour, nouvelle_partie,
     resoudre_nuit, servante_prend_role, terminer_partie, tirer_echeance, tuer, vainqueur, victimes_loups, vivants,
-    bouc_emissaire, epargner_idiot, ours_grogne, voisins_vivants,
+    bouc_emissaire, epargner_idiot, meme_camp, ours_grogne, voisins_vivants,
 )
-from loup_garou.roles import ROLES_SPECIAUX
+from loup_garou.roles import ROLES, ROLES_SPECIAUX
 
 
 # --- nouvelle_partie -------------------------------------------------------
@@ -508,3 +508,110 @@ def test_la_petite_fille_surprise_est_devoree_malgre_les_protections(faire_parti
     resoudre_nuit(s)
     assert "B" in s["morts_nuit"]
     assert s["petite_fille_surprise"] is None
+
+
+# --- Détective, Ange, Assassin, Pyromane -----------------------------------------------------
+
+def test_l_etat_de_depart_d_un_role_n_est_pas_partage_entre_parties():
+    a = nouvelle_partie(["A", "B", "C"], {"loup": 1, "pyromane": 1, "villageois": 1})
+    b = nouvelle_partie(["A", "B", "C"], {"loup": 1, "pyromane": 1, "villageois": 1})
+    a["arroses"].append("B")
+    assert b["arroses"] == [] and ROLES["pyromane"].etat_initial["arroses"] == []
+
+
+def test_le_detective_compare_les_camps(faire_partie):
+    s = faire_partie({"A": "loup", "B": "villageois", "C": "villageois", "D": "loup_blanc", "E": "assassin", "F": "chien_loup"})
+    s["joueurs"]["F"]["camp_choisi"] = "loups"
+    assert meme_camp(s, "B", "C")
+    assert not meme_camp(s, "A", "B")
+    assert meme_camp(s, "A", "D")  # le Loup Blanc fait partie de la meute
+    assert meme_camp(s, "A", "F")  # camp choisi par le Chien-Loup
+    assert not meme_camp(s, "E", "B")  # l'Assassin forme un camp à part
+    assert not meme_camp(s, "E", "A")
+
+
+def test_l_ange_gagne_s_il_est_devore_la_nuit_1(faire_partie):
+    s = nuit(faire_partie, roles={"A": "loup", "B": "ange", "C": "villageois", "D": "villageois"}, votes=("B",))
+    resoudre_nuit(s)
+    assert s["morts_nuit"] == ["B"] and s["ange_gagnant"] == "B"
+    assert vainqueur(s) == "B (Ange) l'emporte : il s'est fait éliminer avant la fin du premier vote."
+
+
+def test_l_ange_gagne_s_il_est_condamne_au_premier_vote(faire_partie):
+    s = faire_partie({"A": "loup", "B": "ange", "C": "villageois", "D": "villageois"})
+    s["jour"] = 1
+    tuer(s, "B", "est éliminé par le village", "village")
+    assert "(Ange) l'emporte" in vainqueur(s)
+
+
+def test_l_ange_qui_survit_au_premier_vote_n_est_plus_qu_un_villageois(faire_partie):
+    s = faire_partie({"A": "loup", "B": "ange", "C": "villageois", "D": "villageois"})
+    s["jour"] = 2
+    tuer(s, "B", "est éliminé par le village", "village")
+    assert not s.get("ange_gagnant") and vainqueur(s) is None
+
+
+def test_les_loups_ne_peuvent_pas_devorer_l_assassin(faire_partie):
+    s = nuit(faire_partie, roles={"A": "loup", "B": "assassin", "C": "villageois", "D": "villageois"}, votes=("B",))
+    resoudre_nuit(s)
+    assert s["morts_nuit"] == [] and s["joueurs"]["B"]["vivant"]
+
+
+def test_le_couteau_de_l_assassin_echappe_au_soin_et_a_la_protection(faire_partie):
+    s = nuit(faire_partie, roles={"A": "loup", "B": "assassin", "C": "villageois", "D": "salvateur"}, votes=("D",))
+    s["cible_assassin"] = "C"
+    s["protege_nuit"] = "C"
+    s["soin_sorciere"] = True
+    resoudre_nuit(s)
+    assert s["morts_nuit"] == ["C"] and s["cible_assassin"] is None
+    assert s["morts"][-1]["genre"] == "assassin"
+
+
+def test_l_incendie_du_pyromane_consume_tous_les_arroses_hors_de_portee_du_soin(faire_partie):
+    s = nuit(faire_partie, roles={"A": "loup", "B": "pyromane", "C": "villageois", "D": "villageois", "E": "salvateur"}, votes=("E",))
+    s["arroses"] = ["C", "D"]
+    s["pyro_embrase"] = True
+    s["protege_nuit"] = "C"
+    s["soin_sorciere"] = True
+    resoudre_nuit(s)
+    assert sorted(s["morts_nuit"]) == ["C", "D"]
+    assert s["arroses"] == [] and s["pyro_embrase"] is False
+    assert s["morts"][-1]["genre"] == "pyromane"
+
+
+def test_sans_embrasement_les_arroses_attendent_et_les_morts_sortent_de_la_liste(faire_partie):
+    s = nuit(faire_partie, roles={"A": "loup", "B": "pyromane", "C": "villageois", "D": "villageois"}, votes=("C",))
+    s["arroses"] = ["C", "D"]
+    resoudre_nuit(s)
+    assert s["morts_nuit"] == ["C"] and s["arroses"] == ["D"]
+
+
+def test_les_solitaires_gagnent_seuls_et_bloquent_les_autres(faire_partie):
+    s = faire_partie({"A": "loup", "B": "pyromane", "C": "villageois"})
+    assert vainqueur(s) is None
+    tuer(s, "A", "meurt", "village")
+    tuer(s, "C", "meurt", "village")
+    assert vainqueur(s) == "B (Pyromane) l'emporte seul."
+    s2 = faire_partie({"A": "assassin", "B": "villageois"})
+    tuer(s2, "B", "meurt", "assassin")
+    assert vainqueur(s2) == "A (Assassin) l'emporte seul."
+
+
+def test_les_issues_des_solitaires_sont_reconnues():
+    from loup_garou.moteur.persistance import gagnant_partie
+    from loup_garou.moteur.statistiques import a_gagne
+
+    assert gagnant_partie("Zoé (Assassin) l'emporte seul.")[0] == "assassin"
+    assert gagnant_partie("Zoé (Pyromane) l'emporte seul.")[0] == "pyromane"
+    assert gagnant_partie("B (Ange) l'emporte : il s'est fait éliminer avant la fin du premier vote.")[0] == "ange"
+    assert a_gagne("pyromane", {"role": "pyromane"}) and not a_gagne("pyromane", {"role": "villageois"})
+    assert a_gagne("loupblanc", {"role": "loup_blanc"}) and a_gagne("ange", {"role": "ange"})
+
+
+def test_une_ancienne_sauvegarde_recoit_l_etat_des_nouveaux_roles():
+    from loup_garou.moteur.migrations import migrer
+
+    s = {"version": 2, "joueurs": {}, "phase": "nuit", "jour": 1, "code": "K7M2QX9P", "instantanes": [{"id": "nuit_1", "etat": {}}]}
+    migrer(s)
+    assert s["arroses"] == [] and s["pyro_embrase"] is False and s["cible_assassin"] is None
+    assert s["instantanes"][0]["etat"]["arroses"] == []

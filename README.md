@@ -56,6 +56,10 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 | 🤡 | **Idiot du village** | Village | Condamné par le village, il révèle son rôle et survit (une fois), mais ne vote plus. |
 | 🐐 | **Bouc émissaire** | Village | En cas d'égalité des voix, c'est lui qui est condamné (bouton « Égalité des voix » au vote). |
 | ⚖️ | **Juge bègue** | Village | Une fois par partie, exige (de nuit, en secret) un second vote du village au conseil suivant. |
+| 🔎 | **Détective** | Village | Une nuit sur deux (dès la deuxième), compare deux joueurs : il apprend s'ils sont du même camp ou non, sans savoir lequel est lequel. |
+| 😇 | **Ange** | Solitaire (un temps) | Gagne seul s'il est éliminé avant la fin du premier vote (dévoré la nuit 1, ou condamné au premier conseil). S'il y survit, il devient simple villageois. |
+| 🔪 | **Assassin** | Solitaire | Une nuit sur deux, poignarde un joueur (ni le soin ni la protection n'y changent rien) ; les loups ne peuvent pas le dévorer. Il gagne seul, en dernier survivant. |
+| 🔥 | **Pyromane** | Solitaire | Chaque nuit, arrose d'essence un ou deux joueurs, puis décide d'embraser tous les arrosés d'un coup (le soin n'y change rien). Il gagne seul, en dernier survivant. |
 
 ## 📜 Les règles gérées par l'app
 
@@ -67,7 +71,11 @@ Le jeu se vit **grandeur nature**, sur plusieurs heures ou plusieurs jours : l'a
 - **Les amoureux** (Cupidon, ou tirés au sort si l'option est activée) apprennent leur amour par une fenêtre « Vous êtes en couple » la première fois qu'ils jouent à partir de la nuit 1 (jamais à la nuit 0, même avec un couple tiré au sort), puis meurent ensemble et gagnent s'ils sont les derniers survivants (deux, ou trois en mode trouple). Si le couple mêle un loup et un villageois, il forme un camp à part : tant qu'il vit, ni le village ni la meute ne peuvent gagner, et le couple doit éliminer tous les autres.
 - **La meute** : chaque loup découvre ses complices dans une fenêtre « Vous êtes la meute » (ou « Tu es le dernier loup ») la première fois qu'il joue ; si la fenêtre du couple doit s'ouvrir à ce tour, celle de la meute attend la nuit suivante.
 - **Le chasseur** peut emporter quelqu'un avec lui en mourant, ou renoncer à tirer.
-- **Les solitaires** (Loup Blanc) ne gagnent qu'en éliminant tout le monde : tant qu'ils vivent, ni le village ni la meute ne peut conclure.
+- **Les solitaires** (Loup Blanc, Assassin, Pyromane) ne gagnent qu'en éliminant tout le monde : tant qu'ils vivent, ni le village ni la meute ne peut conclure. Avec plusieurs solitaires, le dernier debout l'emporte.
+- **Ange** : gagne s'il meurt, quelle qu'en soit la cause, à la nuit 1 ou au conseil du jour 1 (adaptation de la règle du jeu de société : « éliminé dès le premier vote »). Après cela il n'est plus qu'un villageois. Sa victoire arrête la partie.
+- **Assassin** : adaptation à l'app (la version Minecraft de Squeezie repose sur des combats) ; son couteau échappe à la sorcière et au salvateur comme le poison.
+- **Pyromane** : d'après la version Squeezie (arroser un ou deux joueurs chaque nuit, puis brûler tout de suite ou attendre pour en brûler davantage) ; l'incendie se résout au matin, hors de portée du soin et de la protection, et seuls les arrosés encore en vie brûlent.
+- **Détective** : invention propre à l'app, sans source de règle : il compare deux joueurs et reçoit « même camp » ou « camps différents ». Un solitaire (Assassin, Pyromane) forme un camp à part ; le Loup Blanc compte avec la meute.
 - **Camp secret** : à la mort du Chien-Loup, son camp n'est pas dévoilé avant la fin de la partie.
 - **Louveteau** : sa mort double les victimes des loups la nuit suivante. La meute désigne alors deux joueurs ; en cas d'égalité à la limite des deux, seuls les joueurs strictement plus désignés meurent. La potion de la sorcière ne sauve que la victime la plus désignée.
 - **Servante dévouée** : la nuit qui suit un vote, elle choisit (ou non) de reprendre le rôle d'un joueur condamné la veille ; elle découvre sa nouvelle carte tout de suite et la joue dès la nuit suivante. Le panneau du lendemain annonce que la servante a pris le rôle du condamné, sans donner son nom ni dire quel rôle elle a pris. Le camp du condamné a été révélé normalement au vote.

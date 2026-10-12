@@ -15,11 +15,11 @@ def camp_effectif(d):
 
 
 def a_gagne(vainqueur, d):
-    """Ce joueur est-il du camp vainqueur ? (le couple et le Loup Blanc gagnent à part)"""
+    """Ce joueur est-il du camp vainqueur ? (le couple et les solitaires gagnent à part)"""
     if vainqueur == "couple":
         return bool(d.get("amoureux"))
-    if vainqueur == "loupblanc":
-        return d["role"] == "loup_blanc"
+    if vainqueur in ("loupblanc", "assassin", "pyromane", "ange"):
+        return d["role"] == ("loup_blanc" if vainqueur == "loupblanc" else vainqueur)
     if vainqueur in ("village", "loups"):
         return camp_effectif(d) == ("village" if vainqueur == "village" else "loups")
     return False

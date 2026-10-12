@@ -1,186 +1,214 @@
 {
   "meta": {
-    "parties_par_mesure": 6000,
+    "parties_par_mesure": 5000,
     "croyance": 0.6,
     "flair": 0.092,
     "table_reference": "14 joueurs, 3 loups",
-    "reference_village": 0.22483333333333333
+    "reference_village": 0.2254
   },
   "modele": {
-    "intercept": 0.1506387120132941,
-    "joueurs": 1.8080696134162835,
-    "joueurs2": 0.06065288496699943,
+    "intercept": -0.44364398489430135,
+    "joueurs": 1.6020267692451717,
+    "joueurs2": -0.01876437876495563,
     "roles": {
-      "loup": -1.2550367899725812,
-      "sorciere": 0.2082255478482937,
-      "voyante": 0.38926728486983947,
-      "cupidon": 0.1419577612047257,
-      "chasseur": 0.3803387723585329,
-      "salvateur": 0.07216122900444727,
-      "enfant_sauvage": -0.5161587882896036,
-      "voleur": 0.4118967121409701,
-      "renard": 0.2936133968144401,
-      "loup_blanc": -0.7983418686080012,
-      "chien_loup": -0.5395740169092368,
-      "louveteau": -1.4705578924565033,
-      "soeur": 0.15475025881779889,
-      "frere": 0.24079669928230502,
-      "servante": 0.01397771631517431,
-      "juge_begue": 0.23632706883509236,
-      "montreur_ours": 0.4071946027169479,
-      "petite_fille": 0.22304941549616283,
-      "corbeau": 0.08967813723253938,
-      "idiot": 0.016242501398467127,
-      "bouc_emissaire": -0.24343674174411395
+      "loup": -0.8887376872524942,
+      "sorciere": 0.14439583553303162,
+      "voyante": 0.28193628616925,
+      "cupidon": 0.09709418465696876,
+      "chasseur": 0.3667371810727933,
+      "salvateur": 0.0729187529900729,
+      "enfant_sauvage": -0.3977663430758445,
+      "voleur": 0.28679555876909424,
+      "renard": 0.2753860692209787,
+      "loup_blanc": -0.6109896788481226,
+      "chien_loup": -0.40925779747249746,
+      "louveteau": -1.0941038865311263,
+      "soeur": 0.10749349148849659,
+      "frere": 0.16708238573866002,
+      "servante": -0.0046251443598400105,
+      "juge_begue": 0.11411713440861619,
+      "montreur_ours": 0.30564712020802215,
+      "petite_fille": 0.14582642314525002,
+      "corbeau": 0.12182460156502757,
+      "idiot": 0.024148534306201456,
+      "bouc_emissaire": -0.15682120656993884,
+      "detective": 0.15425271989708667,
+      "ange": -0.2676041303651774,
+      "assassin": -0.2631304250262836,
+      "pyromane": 0.1695766521032402
     }
   },
   "roles": {
     "loup": {
-      "impact_pts": -31.4,
+      "impact_pts": -22.2,
       "info": 0,
       "chaos": 0,
-      "marge_pts": -18.0
+      "marge_pts": -18.4
     },
     "sorciere": {
-      "impact_pts": 5.2,
+      "impact_pts": 3.6,
       "info": 0,
       "chaos": 0,
-      "marge_pts": 5.8
+      "marge_pts": 6.3
     },
     "voyante": {
-      "impact_pts": 9.7,
-      "info": 70,
+      "impact_pts": 7.0,
+      "info": 72,
       "chaos": 0,
-      "marge_pts": 13.2
+      "marge_pts": 12.9
     },
     "cupidon": {
-      "impact_pts": 3.5,
+      "impact_pts": 2.4,
       "info": 0,
-      "chaos": 63,
-      "marge_pts": 7.4
+      "chaos": 22,
+      "marge_pts": 7.6
     },
     "chasseur": {
-      "impact_pts": 9.5,
+      "impact_pts": 9.2,
       "info": 0,
-      "chaos": 53,
+      "chaos": 19,
       "marge_pts": 10.1
     },
     "salvateur": {
       "impact_pts": 1.8,
       "info": 0,
       "chaos": 0,
-      "marge_pts": 3.4
+      "marge_pts": 3.6
     },
     "enfant_sauvage": {
-      "impact_pts": -12.9,
+      "impact_pts": -9.9,
       "info": 0,
-      "chaos": 28,
+      "chaos": 10,
       "marge_pts": -7.8
     },
     "voleur": {
-      "impact_pts": 10.3,
+      "impact_pts": 7.2,
       "info": 0,
       "chaos": 0,
-      "marge_pts": 8.9
+      "marge_pts": 8.5
     },
     "renard": {
-      "impact_pts": 7.3,
-      "info": 91,
+      "impact_pts": 6.9,
+      "info": 92,
       "chaos": 0,
-      "marge_pts": 17.6
+      "marge_pts": 17.0
     },
     "loup_blanc": {
-      "impact_pts": -20.0,
+      "impact_pts": -15.3,
       "info": 0,
-      "chaos": 100,
-      "marge_pts": -10.4
+      "chaos": 35,
+      "marge_pts": -10.6
     },
     "chien_loup": {
-      "impact_pts": -13.5,
+      "impact_pts": -10.2,
       "info": 0,
-      "chaos": 33,
+      "chaos": 12,
       "marge_pts": -8.6
     },
     "louveteau": {
-      "impact_pts": -36.8,
+      "impact_pts": -27.4,
       "info": 0,
-      "chaos": 14,
-      "marge_pts": -18.2
+      "chaos": 5,
+      "marge_pts": -18.3
     },
     "soeur": {
-      "impact_pts": 3.9,
-      "info": 22,
+      "impact_pts": 2.7,
+      "info": 23,
       "chaos": 0,
-      "marge_pts": 4.7
+      "marge_pts": 4.6
     },
     "frere": {
-      "impact_pts": 6.0,
+      "impact_pts": 4.2,
       "info": 32,
       "chaos": 0,
-      "marge_pts": 7.3
+      "marge_pts": 7.2
     },
     "servante": {
-      "impact_pts": 0.3,
+      "impact_pts": -0.1,
       "info": 0,
-      "chaos": 51,
-      "marge_pts": 0.5
+      "chaos": 18,
+      "marge_pts": 0.0
     },
     "juge_begue": {
-      "impact_pts": 5.9,
+      "impact_pts": 2.9,
       "info": 0,
-      "chaos": 66,
-      "marge_pts": 7.9
+      "chaos": 23,
+      "marge_pts": 8.0
     },
     "montreur_ours": {
-      "impact_pts": 10.2,
-      "info": 91,
+      "impact_pts": 7.6,
+      "info": 93,
       "chaos": 0,
-      "marge_pts": 18.3
+      "marge_pts": 17.5
     },
     "petite_fille": {
-      "impact_pts": 5.6,
+      "impact_pts": 3.6,
       "info": 100,
-      "chaos": 47,
-      "marge_pts": 14.7
+      "chaos": 17,
+      "marge_pts": 13.3
     },
     "corbeau": {
-      "impact_pts": 2.2,
-      "info": 11,
+      "impact_pts": 3.0,
+      "info": 13,
       "chaos": 0,
-      "marge_pts": 1.5
+      "marge_pts": 1.9
     },
     "idiot": {
-      "impact_pts": 0.4,
+      "impact_pts": 0.6,
       "info": 0,
-      "chaos": 21,
-      "marge_pts": 2.0
+      "chaos": 7,
+      "marge_pts": 1.8
     },
     "bouc_emissaire": {
-      "impact_pts": -6.1,
+      "impact_pts": -3.9,
       "info": 0,
-      "chaos": 46,
+      "chaos": 16,
       "marge_pts": -5.6
+    },
+    "detective": {
+      "impact_pts": 3.9,
+      "info": 71,
+      "chaos": 0,
+      "marge_pts": 11.0
+    },
+    "ange": {
+      "impact_pts": -6.7,
+      "info": 0,
+      "chaos": 4,
+      "marge_pts": -3.1
+    },
+    "assassin": {
+      "impact_pts": -6.6,
+      "info": 0,
+      "chaos": 57,
+      "marge_pts": 2.3
+    },
+    "pyromane": {
+      "impact_pts": 4.2,
+      "info": 0,
+      "chaos": 100,
+      "marge_pts": 6.2
     }
   },
   "options": {
     "cadence_voyante": {
-      "1": 0.3176681679941914,
-      "3": -0.21707167248922232
+      "1": 0.3253980595255911,
+      "3": -0.19905231870589363
     },
     "cadence_loup_blanc": {
-      "1": 0.22124987128475215,
-      "3": -0.8275179443696477
+      "1": 0.2490222187274571,
+      "3": -0.8419512855145217
     },
-    "potions_sorciere": 0.0510575410891867,
-    "potions_mort": 0.07617250035182521,
-    "maire_depart_faux": 0.04249259721093046,
-    "couple_hasard": 0.34769703039019795,
-    "trouple": 0.062150129126642084
+    "potions_sorciere": 0.04534311471953478,
+    "potions_mort": 0.07926552651472762,
+    "maire_depart_faux": 0.03417399980594382,
+    "couple_hasard": 0.3537303385936321,
+    "trouple": 0.048884857436988116
   },
   "validation": {
-    "brier": 0.007315011660818092,
-    "pente_calibration": 0.9956552357711518,
-    "compositions": 3000,
+    "brier": 0.009623797862640955,
+    "pente_calibration": 1.0420807919963662,
+    "compositions": 2400,
     "parties_par_composition": 25
   }
 }

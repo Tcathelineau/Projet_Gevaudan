@@ -24,6 +24,10 @@ Les icônes des rôles viennent de [game-icons.net](https://game-icons.net), sou
 - `petite_fille` : « spy » par Delapouite, https://game-icons.net/1x1/delapouite/spy.html
 - `idiot` : « jester-hat » par Delapouite, https://game-icons.net/1x1/delapouite/jester-hat.html
 - `bouc_emissaire` : « ram » par Lorc, https://game-icons.net/1x1/lorc/ram.html
+- `detective` : « magnifying-glass » par Lorc, https://game-icons.net/1x1/lorc/magnifying-glass.html
+- `ange` : « angel-wings » par Lorc, https://game-icons.net/1x1/lorc/angel-wings.html
+- `assassin` : « dripping-knife » par Lorc, https://game-icons.net/1x1/lorc/dripping-knife.html
+- `pyromane` : « molotov » par Lorc, https://game-icons.net/1x1/lorc/molotov.html
 - `logo` : « wolf-howl » par Lorc, https://game-icons.net/1x1/lorc/wolf-howl.html
 
 ## Musiques

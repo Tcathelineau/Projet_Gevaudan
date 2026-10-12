@@ -6,7 +6,7 @@ import random
 import streamlit as st
 
 from loup_garou.moteur.journal import log
-from loup_garou.moteur.partie import camp, condamnes_de_la_veille, fin_de_tour, servante_prend_role, vivants
+from loup_garou.moteur.partie import camp, condamnes_de_la_veille, fin_de_tour, meme_camp, servante_prend_role, vivants
 from loup_garou.options import nuit_active, opt, prochaine_nuit, taille_couple
 from loup_garou.roles import ROLES
 from loup_garou.ui.composants import (
@@ -216,6 +216,111 @@ def _nuit_voyante(s, nom, cle):
             log(s, f"La voyante {nom} sonde {vu} : {ROLES[s['joueurs'][vu]['role']].nom}.")
             st.session_state[f"vu_{cle}"] = vu
             st.rerun()
+
+
+def _nuit_detective(s, nom, cle):
+    """Une nuit sur deux (dès la nuit 1) : compare deux joueurs et apprend s'ils sont du même camp."""
+    if s["jour"] == 0:
+        plaquette("Première nuit : ton enquête commence à la nuit prochaine.", icone="🔎")
+        bouton_fin(s, cle)
+        return
+    candidats = [n for n in vivants(s) if n != nom]
+    resultat = st.session_state.get(f"detective_{cle}")
+    if not resultat and not nuit_active(s, 2):
+        plaquette(f"Pas d'enquête cette nuit. Prochaine enquête : nuit {prochaine_nuit(s, 2)}.", icone="🔎")
+        bouton_fin(s, cle)
+    elif resultat:
+        a, b, meme = resultat
+        if meme:
+            plaquette(f"{a} et {b} sont du même camp.", icone="🔎", ton="succes")
+        else:
+            plaquette(f"{a} et {b} sont de camps différents.", icone="🔎", ton="succes")
+        bouton_fin(s, cle)
+    elif len(candidats) < 2:
+        plaquette("Il n'y a plus deux joueurs à comparer.", icone="🔎")
+        bouton_fin(s, cle)
+    else:
+        st.markdown("**Quels deux joueurs compares-tu ?**")
+        st.caption("Tu apprends s'ils sont du même camp, sans savoir lequel est lequel.")
+        choix = selection_et_validation("detec", cle, candidats, 2, "🔎 Comparer {sel}", "🔎 Comparer", f"comparer_{cle}")
+        if choix:
+            a, b = choix
+            meme = meme_camp(s, a, b)
+            log(s, f"Le Détective {nom} compare {a} et {b} : {'même camp' if meme else 'camps différents'}.")
+            st.session_state[f"detective_{cle}"] = (a, b, meme)
+            st.session_state.pop(f"sel_detec_{cle}", None)
+            st.rerun()
+
+
+def _nuit_ange(s, nom, cle):
+    """Rappelle son but : se faire éliminer avant la fin du premier vote ; sinon il est un simple villageois."""
+    if s["jour"] == 0:
+        plaquette(
+            "Ton but : te faire éliminer avant la fin du premier vote (dévoré la nuit prochaine ou condamné au premier "
+            "conseil). Tu gagnes alors seul. Si tu y survis, tu deviens simple Villageois.", icone="😇",
+        )
+    elif s["jour"] == 1:
+        plaquette("Dernière chance : tu peux encore être dévoré cette nuit, ou condamné au conseil de demain.", icone="😇")
+    else:
+        plaquette("Tu as survécu au premier vote : tu es désormais un simple Villageois. Dors.", icone="😇")
+    bouton_fin(s, cle)
+
+
+def _nuit_assassin(s, nom, cle):
+    """Une nuit sur deux (dès la nuit 1) : poignarde un joueur, hors de portée du soin et de la protection."""
+    if s["jour"] == 0:
+        plaquette("Première nuit : tu frapperas dès la nuit prochaine. Les loups ne peuvent pas te dévorer.", icone="🔪")
+        bouton_fin(s, cle)
+    elif not nuit_active(s, 2):
+        plaquette(f"Tu te caches cette nuit. Prochain coup : nuit {prochaine_nuit(s, 2)}.", icone="🔪")
+        bouton_fin(s, cle)
+    else:
+        st.markdown("**Qui poignardes-tu ?**")
+        st.caption("Le soin et la protection n'y peuvent rien. Tu gagnes seul, en dernier survivant.")
+        choix = selection_et_validation(
+            "assas", cle, [n for n in vivants(s) if n != nom], 1, "🔪 Poignarder {sel}", "🔪 Poignarder", f"assassin_{cle}",
+        )
+        if choix:
+            s["cible_assassin"] = choix[0]
+            log(s, f"L'Assassin {nom} poignarde {choix[0]}.")
+            st.session_state.pop(f"sel_assas_{cle}", None)
+            fin_de_tour(s)
+            st.rerun()
+        if st.button("Épargner tout le monde", key=f"assassin_rien_{cle}"):
+            log(s, f"L'Assassin {nom} ne frappe personne.")
+            fin_de_tour(s)
+            st.rerun()
+
+
+def _nuit_pyromane(s, nom, cle):
+    """Chaque nuit (dès la nuit 1) : arrose un ou deux joueurs, puis peut embraser tous les arrosés d'un coup."""
+    if s["jour"] == 0:
+        plaquette("Première nuit : tu t'équipes. Tu arroseras dès la nuit prochaine.", icone="🔥")
+        bouton_fin(s, cle)
+        return
+    arroses = [n for n in s.get("arroses", []) if s["joueurs"][n]["vivant"]]
+    cle_faits = f"pyro_faits_{cle}"
+    faits = st.session_state.get(cle_faits, 0)
+    if arroses:
+        plaquette(f"Arrosés : {', '.join(arroses)}.", icone="🛢️")
+    else:
+        plaquette("Personne n'est encore arrosé.", icone="🛢️")
+    if arroses and st.button("🔥 Embraser tous les arrosés", type="primary", key=f"embraser_{cle}"):
+        s["pyro_embrase"] = True
+        log(s, f"Le Pyromane {nom} embrase {', '.join(arroses)}.")
+        fin_de_tour(s)
+        st.rerun()
+    candidats = [n for n in vivants(s) if n != nom and n not in arroses]
+    if faits < 2 and candidats:
+        restant = 2 - faits
+        st.markdown(f"**Qui arroses-tu ?** ({restant} possible{'s' if restant > 1 else ''} cette nuit)")
+        cible = grille_dalles("pyro", f"{cle}_{faits}", candidats)
+        if cible:
+            s.setdefault("arroses", []).append(cible)
+            log(s, f"Le Pyromane {nom} arrose {cible}.")
+            st.session_state[cle_faits] = faits + 1
+            st.rerun()
+    bouton_fin(s, cle)
 
 
 def _nuit_sorciere(s, nom, cle):
@@ -563,6 +668,10 @@ NUIT_ROLES = {
     "idiot": _nuit_idiot,
     "bouc_emissaire": _nuit_bouc_emissaire,
     "corbeau": _nuit_corbeau,
+    "detective": _nuit_detective,
+    "ange": _nuit_ange,
+    "assassin": _nuit_assassin,
+    "pyromane": _nuit_pyromane,
     "petite_fille": _nuit_petite_fille,
     "chasseur": _nuit_chasseur,
     "villageois": _nuit_villageois,

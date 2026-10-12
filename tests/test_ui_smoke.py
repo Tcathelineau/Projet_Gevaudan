@@ -63,9 +63,14 @@ def test_accueil_et_historique_s_affichent():
 
 
 # Deux tables qui, à elles deux, font jouer tous les rôles (les 18 joueurs ne tiennent pas avec tout coché).
+NOUVEAUX = ("n_detective", "n_ange", "n_assassin", "n_pyromane")
 TABLES = [
-    pytest.param(("n_frere", "n_soeur"), 7, id="sans_fratries"),
-    pytest.param(("n_soeur", "n_voleur", "n_loup_blanc", "n_chien_loup", "n_bouc_emissaire", "n_idiot"), 11, id="avec_freres"),
+    pytest.param(("n_frere", "n_soeur", *NOUVEAUX), 7, id="sans_fratries"),
+    pytest.param(("n_soeur", "n_voleur", "n_loup_blanc", "n_chien_loup", "n_bouc_emissaire", "n_idiot", *NOUVEAUX), 11, id="avec_freres"),
+    pytest.param(
+        ("n_frere", "n_soeur", "n_voleur", "n_chien_loup", "n_idiot", "n_bouc_emissaire", "n_enfant_sauvage", "n_servante",
+         "n_juge_begue", "n_montreur_ours", "n_petite_fille", "n_corbeau", "n_renard", "n_salvateur"), 3, id="avec_les_solitaires",
+    ),
 ]
 
 
@@ -284,7 +289,7 @@ def test_distribuer_retient_les_noms():
 
     _creer_partie(nb_joueurs=7, nb_loups=1, sans=tuple(f"n_{r}" for r in (
         "sorciere", "voyante", "cupidon", "chasseur", "salvateur", "enfant_sauvage", "voleur", "renard",
-        "loup_blanc", "chien_loup", "louveteau", "soeur", "frere", "servante", "juge_begue")))
+        "loup_blanc", "chien_loup", "louveteau", "soeur", "frere", "servante", "juge_begue")) + NOUVEAUX)
     assert sorted(load_joueurs()) == [f"J{i}" for i in range(1, 8)]
 
 
@@ -997,7 +1002,7 @@ def test_la_derniere_composition_est_proposee_a_la_partie_suivante():
 
     _creer_partie(nb_joueurs=9, nb_loups=2, sans=("n_voleur", "n_frere", "n_soeur", "n_loup_blanc", "n_chien_loup",
                                                   "n_bouc_emissaire", "n_idiot", "n_servante", "n_juge_begue",
-                                                  "n_louveteau", "n_enfant_sauvage", "n_petite_fille", "n_corbeau"))
+                                                  "n_louveteau", "n_enfant_sauvage", "n_petite_fille", "n_corbeau", *NOUVEAUX))
     prefs = json.load(open("preferences.json", encoding="utf-8"))["composition"]
     assert prefs["nb"] == 9 and prefs["n_loup"] == 2 and prefs["roles"]["renard"] is True
     os.remove("save.json")  # la partie jouée serait sinon proposée à la reprise
@@ -1184,3 +1189,92 @@ def test_en_base_un_code_mal_forme_est_refuse(tmp_path, monkeypatch):
     at.text_input(key="code_reprise").set_value("abc").run()
     at.button(key="btn_code_reprise").click().run()
     assert any("bonne forme" in e.value for e in at.error)
+
+
+# --- Détective, Ange, Assassin, Pyromane -----------------------------------------------------
+
+def test_le_detective_compare_deux_joueurs_et_apprend_s_ils_sont_du_meme_camp():
+    roles = {"A": "loup", "B": "detective", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B"))
+    assert not at.exception
+    at.button(key="pick_detec_1_0_C").click().run()
+    at.button(key="pick_detec_1_0_D").click().run()
+    at.button(key="comparer_1_0").click().run()
+    assert "C et D sont du même camp" in " ".join(m.value for m in at.markdown)
+    assert any("compare C et D" in e["texte"] for e in at.session_state["partie"]["journal"])
+
+
+def test_le_detective_voit_des_camps_differents():
+    roles = {"A": "loup", "B": "detective", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B"))
+    at.button(key="pick_detec_1_0_A").click().run()
+    at.button(key="pick_detec_1_0_C").click().run()
+    at.button(key="comparer_1_0").click().run()
+    assert "A et C sont de camps différents" in " ".join(m.value for m in at.markdown)
+
+
+def test_le_detective_se_repose_une_nuit_sur_deux():
+    roles = {"A": "loup", "B": "detective", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _tour_de_nuit(roles, "B")
+    s["jour"] = 2
+    at = _app(s)
+    assert "Pas d'enquête cette nuit" in " ".join(m.value for m in at.markdown)
+
+
+def test_l_ange_connait_son_but_puis_devient_villageois():
+    roles = {"A": "loup", "B": "ange", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _tour_de_nuit(roles, "B")
+    s["jour"] = 0
+    assert "te faire éliminer avant la fin du premier vote" in " ".join(m.value for m in _app(s).markdown)
+    s["jour"] = 2
+    assert "simple Villageois" in " ".join(m.value for m in _app(s).markdown)
+
+
+def test_l_ange_condamne_au_premier_vote_gagne_la_partie():
+    roles = {"A": "loup", "B": "ange", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _conseil(roles)
+    at = _app(s)
+    at.button(key="pick_vote_1_B").click().run()
+    at.button(key="valider_vote").click().run()
+    assert "(Ange) l'emporte" in (at.session_state["partie"].get("message_fin") or "") or at.session_state["partie"].get("ange_gagnant") == "B"
+    assert not at.exception
+
+
+def test_l_assassin_poignarde_une_nuit_sur_deux():
+    roles = {"A": "loup", "B": "assassin", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B"))
+    at.button(key="pick_assas_1_0_C").click().run()
+    at.button(key="assassin_1_0").click().run()
+    s = at.session_state["partie"]
+    assert s["morts_nuit"] == ["C"] and any("poignarde C" in e["texte"] for e in s["journal"])  # la nuit se résout aussitôt
+    s2 = _tour_de_nuit(roles, "B")
+    s2["jour"] = 2
+    assert "Tu te caches cette nuit" in " ".join(m.value for m in _app(s2).markdown)
+
+
+def test_l_assassin_peut_epargner_tout_le_monde():
+    roles = {"A": "loup", "B": "assassin", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B"))
+    at.button(key="assassin_rien_1_0").click().run()
+    assert not at.session_state["partie"].get("cible_assassin")
+
+
+def test_le_pyromane_arrose_deux_joueurs_puis_embrase():
+    roles = {"A": "loup", "B": "pyromane", "C": "villageois", "D": "villageois", "E": "villageois"}
+    at = _app(_tour_de_nuit(roles, "B"))
+    assert "Embraser" not in " ".join(b.label for b in at.button)  # rien à embraser tant que personne n'est arrosé
+    at.button(key="pick_pyro_1_0_0_C").click().run()
+    assert at.session_state["partie"]["arroses"] == ["C"]
+    at.button(key="pick_pyro_1_0_1_D").click().run()
+    s = at.session_state["partie"]
+    assert s["arroses"] == ["C", "D"]
+    assert not any(k.startswith("pick_pyro_") for k in (b.key or "" for b in at.button))  # deux arrosages par nuit au plus
+    at.button(key="embraser_1_0").click().run()
+    s = at.session_state["partie"]
+    assert sorted(s["morts_nuit"]) == ["C", "D"] and s["arroses"] == [] and any("embrase C, D" in e["texte"] for e in s["journal"])
+
+
+def test_le_pyromane_garde_ses_arroses_d_une_nuit_a_l_autre():
+    roles = {"A": "loup", "B": "pyromane", "C": "villageois", "D": "villageois", "E": "villageois"}
+    s = _tour_de_nuit(roles, "B", arroses=["C"])
+    assert "Arrosés : C" in " ".join(m.value for m in _app(s).markdown)

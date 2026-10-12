@@ -37,6 +37,10 @@ ICONES = {
     "petite_fille": ("delapouite", "spy"),
     "idiot": ("delapouite", "jester-hat"),
     "bouc_emissaire": ("lorc", "ram"),
+    "detective": ("lorc", "magnifying-glass"),
+    "ange": ("lorc", "angel-wings"),
+    "assassin": ("lorc", "dripping-knife"),
+    "pyromane": ("lorc", "molotov"),
     "logo": ("lorc", "wolf-howl"),
 }
 

@@ -7,6 +7,8 @@ CAUSES = {
     "loups": ("🐺", "dévoré par les loups"),
     "loup_blanc": ("🌕", "dévoré par le Loup Blanc"),
     "poison": ("☠️", "empoisonné"),
+    "assassin": ("🔪", "poignardé par l'Assassin"),
+    "pyromane": ("🔥", "brûlé par le Pyromane"),
     "village": ("⚖️", "éliminé par le village"),
     "tir": ("🔫", "abattu par le chasseur"),
     "chagrin": ("💔", "mort de chagrin"),

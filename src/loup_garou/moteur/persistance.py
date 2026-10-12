@@ -139,6 +139,12 @@ def date_partie(p):
         return "date inconnue"
 
 
+# Rôles qui gagnent à part : (clé de camp vainqueur, emoji, nom du rôle).
+SOLITAIRES = (
+    ("loupblanc", "🌕", "Loup Blanc"), ("assassin", "🔪", "Assassin"), ("pyromane", "🔥", "Pyromane"), ("ange", "😇", "Ange"),
+)
+
+
 def gagnant_partie(issue):
     """(clé CSS, emoji, mot-clé) du camp vainqueur d'après le message de fin."""
     if issue.startswith("Le village a gagné"):
@@ -147,6 +153,9 @@ def gagnant_partie(issue):
         return "loups", "🐺", "Loups"
     if issue.startswith("Les amoureux"):
         return "couple", "💘", "Couple"
+    for cle, emoji, nom in SOLITAIRES:  # « Zoé (Pyromane) l'emporte seul. », « Zoé (Ange) l'emporte : ... »
+        if f"({nom}) l'emporte" in issue:
+            return cle, emoji, nom
     if "l'emporte seul" in issue:
         return "loupblanc", "🌕", "Loup Blanc"
     return "autre", "🏁", "Fin"

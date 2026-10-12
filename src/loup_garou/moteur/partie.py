@@ -1,5 +1,6 @@
 """Règles du jeu : création d'une partie, morts, résolution de la nuit, conditions de victoire."""
 
+import copy
 import random
 from collections import Counter
 from datetime import timedelta
@@ -52,7 +53,7 @@ def nouvelle_partie(noms, composition, options=None):
         "dernier_maire": None,
     }
     for role in ROLES.values():
-        etat.update(role.etat_initial)
+        etat.update(copy.deepcopy(role.etat_initial))  # une liste partagée entre parties se remplirait de partie en partie
     etat["options"] = {**OPTIONS_DEFAUT, **(options or {})}
     etat["potions_sorciere"] = etat["options"]["potions_sorciere"]
     etat["potions_mort_sorciere"] = etat["options"]["potions_mort"]
@@ -82,6 +83,19 @@ def camp(s, nom):
     """Camp effectif d'un joueur : celui qu'il a choisi (Chien-Loup) sinon celui de son rôle."""
     d = s["joueurs"][nom]
     return d.get("camp_choisi") or ROLES[d["role"]].camp
+
+
+def camp_enquete(s, nom):
+    """Camp vu par le Détective : loups ou village (selon le camp effectif), les solitaires hors meute forment chacun un camp à part."""
+    role = ROLES[s["joueurs"][nom]["role"]]
+    if role.solitaire and role.camp != "loups":
+        return f"solitaire_{role.key}"
+    return camp(s, nom)
+
+
+def meme_camp(s, a, b):
+    """Réponse du Détective : `a` et `b` sont-ils du même camp ?"""
+    return camp_enquete(s, a) == camp_enquete(s, b)
 
 
 def _convertir_enfant_sauvage(s, morts):
@@ -124,6 +138,11 @@ def tuer(s, nom, cause="meurt", genre="autre"):
             "moment": "nuit" if s["phase"] == "nuit" else "jour",
         })
     _convertir_enfant_sauvage(s, morts)
+    for mort in morts:
+        # L'Ange gagne s'il est éliminé avant la fin du premier vote (nuit 1 et conseil du jour 1), quelle qu'en soit la cause.
+        if s["joueurs"][mort]["role"] == "ange" and s["jour"] <= 1 and not s.get("ange_gagnant"):
+            s["ange_gagnant"] = mort
+            log(s, f"L'Ange {mort} a été éliminé avant la fin du premier vote : il remporte la partie.")
     for mort in morts:
         if ROLES[s["joueurs"][mort]["role"]].tir_a_la_mort:
             s.setdefault("tirs_en_attente", []).append(mort)
@@ -201,6 +220,8 @@ def bouc_emissaire(s):
 
 
 def vainqueur(s):
+    if s.get("ange_gagnant"):
+        return f"{s['ange_gagnant']} (Ange) l'emporte : il s'est fait éliminer avant la fin du premier vote."
     en_vie = vivants(s)
     loups = [n for n in en_vie if camp(s, n) == "loups"]
     autres = [n for n in en_vie if camp(s, n) != "loups"]
@@ -268,6 +289,9 @@ def resoudre_nuit(s):
         elif len(victimes) < attendues:
             log(s, "Les loups ne s'accordent que sur une victime.")
         for i, victime in enumerate(victimes):
+            if s["joueurs"][victime]["role"] == "assassin":
+                log(s, f"{victime} était la cible des loups mais l'Assassin est insensible à leurs crocs.")
+                continue
             sauveurs = []
             if i == 0 and s["soin_sorciere"]:
                 sauveurs.append("la potion de la sorcière")
@@ -284,6 +308,14 @@ def resoudre_nuit(s):
         # Le poison échappe à la potion de soin et au salvateur.
         if s.get("cible_poison"):
             morts += tuer(s, s["cible_poison"], "est empoisonné par la sorcière", "poison")
+        # Le couteau de l'Assassin échappe lui aussi à la sorcière et au salvateur.
+        if s.get("cible_assassin"):
+            morts += tuer(s, s["cible_assassin"], "est poignardé par l'Assassin", "assassin")
+        # L'incendie du Pyromane consume tous les arrosés encore en vie, hors de portée du soin et de la protection.
+        if s.get("pyro_embrase"):
+            for arrose in s.get("arroses", []):
+                morts += tuer(s, arrose, "est brûlé par le Pyromane", "pyromane")
+            s["arroses"] = []
         # La Petite Fille surprise pendant son espionnage est dévorée : ni soin ni protection n'y changent rien.
         if s.get("petite_fille_surprise"):
             morts += tuer(s, s["petite_fille_surprise"], "est surprise par les loups pendant qu'elle les espionnait", "loups")
@@ -298,6 +330,9 @@ def resoudre_nuit(s):
     s["protege_nuit"] = None
     s["soin_sorciere"] = False
     s["cible_poison"] = None
+    s["cible_assassin"] = None
+    s["pyro_embrase"] = False
+    s["arroses"] = [n for n in s.get("arroses", []) if s["joueurs"][n]["vivant"]]
     s["petite_fille_surprise"] = None
     s["ordre_nuit"] = []
     s["tour"] = 0

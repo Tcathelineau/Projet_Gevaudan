@@ -1,31 +1,31 @@
-image: python:3.12-slim
+image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 stages:
   - test
+
+variables:
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
 
 tests:
   stage: test
   cache:
     paths:
-      - .cache/pip
-  variables:
-    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  before_script:
-    - pip install pytest streamlit
+      - .cache/uv
   script:
-    - python -m pytest -v
+    - uv sync --locked
+    - uv run ruff check
+    - uv run pytest -v
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 journal:
   stage: test
-  image: python:3.12-slim
   variables:
     GIT_DEPTH: "0"
   before_script:
     - apt-get update -qq && apt-get install -y -qq git
   script:
-    - python outils/verifier_changelog.py "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - python3 outils/verifier_changelog.py "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_LABELS !~ /sans-changelog/

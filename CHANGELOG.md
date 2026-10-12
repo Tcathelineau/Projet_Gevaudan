@@ -13,6 +13,8 @@ Ce fichier est la mémoire du projet : **chaque pull request y ajoute une entré
 
 ## 2026-10-12
 
+- **Packaging** : `pyproject.toml` (dépendances, groupes `dev` et `outils`, réglages pytest et ruff, remplace `pytest.ini`), `uv.lock` épinglé, `.python-version`, CI GitHub et GitLab passées sur `uv sync --locked` + `ruff check` + `pytest` (corrige l'erreur « No file matched requirements.txt or pyproject.toml » de `setup-python`), `.pre-commit-config.yaml` facultatif. Commandes de lancement simplifiées : `uv run streamlit run src/loup_garou_app.py`. Streamlit borné à `>=1.58,<2` (versions testées 1.58 et 1.65). Pas de mypy : état en dictionnaire et interface Streamlit, peu de bénéfice pour un coût élevé.
+
 - **Mémoire du projet** : ce journal, `CLAUDE.md`, le modèle de PR et le contrôle CI `outils/verifier_changelog.py` (une PR qui touche `src/` ou `tests/` doit modifier `CHANGELOG.md`). README et skill remis à jour (documentation à 3 onglets, options, fenêtres couple et meute, chantiers connus). Ajout au skill d'une feuille de route vers une app « pro » (§8 : stockage, hébergement, packaging, données personnelles, multi-appareils, accessibilité). `docs/accessibilite.md` et `docs/equilibre-roles.md` signalent les fenêtres non vérifiées et les options non simulées.
 
 ## 2026-10-08

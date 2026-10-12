@@ -4,7 +4,7 @@ Source : FreePD (https://freepd.com, musique en domaine public CC0), via le miro
 Chaque piste est convertie en mono 22 kHz, ramenée à un volume commun, fondue en entrée et en sortie,
 puis encodée en MP3 64 kbit/s dans src/loup_garou/assets/sons/.
 
-Usage : uv run --python 3.12 --with numpy --with lameenc python outils/importer_musiques.py
+Usage : uv run --group outils python outils/importer_musiques.py
 Nécessite `afconvert` (macOS) ou `ffmpeg` pour décoder les MP3 d'origine.
 """
 

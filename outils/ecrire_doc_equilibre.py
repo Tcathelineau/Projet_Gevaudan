@@ -48,6 +48,10 @@ REMARQUES = {
     "corbeau": "Deux voix de plus, désignées au hasard ou sur un suspect : un coup de pouce, pas une arme.",
     "idiot": "Survit à une condamnation : il gaspille un vote du village sans l'éclairer.",
     "bouc_emissaire": "Handicap pour le village : une égalité des voix sacrifie un innocent.",
+    "detective": "Une nuit sur deux : un groupe de deux joueurs de camps différents devient suspect (le simulateur suit cette piste comme celle du Renard).",
+    "ange": "Gagne s'il meurt avant la fin du premier vote : les automates ne cherchent pas à se faire condamner, donc sa victoire est rare.",
+    "assassin": "Solitaire : un couteau toutes les deux nuits. Les automates le votent au hasard, il élimine surtout des innocents.",
+    "pyromane": "Solitaire : arrose deux joueurs par nuit et embrase dès trois arrosés. Il retire des loups au passage, mais gagne rarement seul.",
 }
 
 lignes = []
@@ -55,7 +59,7 @@ for c in sorted(d["roles"], key=lambda c: -d["roles"][c]["impact_pts"]):
     r, role = d["roles"][c], ROLES[c]
     ensemble = f" ({r['impact_pts'] * role.lot:+.0f} les {role.lot})" if role.lot > 1 else ""
     lignes.append(
-        f"| {role.emoji} {role.nom}{' (par carte)' if role.lot > 1 else ''} | {'Loups' if role.camp == 'loups' else 'Village'} "
+        f"| {role.emoji} {role.nom}{' (par carte)' if role.lot > 1 else ''} | {'Loups, solitaire' if role.solitaire and role.camp == 'loups' else 'Solitaire' if role.solitaire else 'Loups' if role.camp == 'loups' else 'Village'} "
         f"| **{r['impact_pts']:+.0f}**{ensemble} | {r['marge_pts']:+.0f} | {r['info']} % | {r['chaos']} % | {UW.get(c, '-')} "
         f"| {REMARQUES.get(c, '')} |"
     )

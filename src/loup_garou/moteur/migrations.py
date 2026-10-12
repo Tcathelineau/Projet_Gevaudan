@@ -11,7 +11,7 @@ from loup_garou.moteur.codes import nouveau_code
 from loup_garou.options import OPTIONS_DEFAUT
 from loup_garou.roles import ROLES
 
-VERSION = 2
+VERSION = 3
 
 
 def _v1(s):
@@ -44,7 +44,16 @@ def _v2(s):
         instantane["etat"]["code"] = s["code"]
 
 
-MIGRATIONS = [(1, _v1), (2, _v2)]
+def _v3(s):
+    """Version 3 : état de départ des rôles ajoutés depuis (Assassin, Pyromane) pour les parties déjà sauvegardées."""
+    for role in ROLES.values():
+        for cle, valeur in role.etat_initial.items():
+            s.setdefault(cle, copy.deepcopy(valeur))
+    for instantane in s.get("instantanes", []):
+        _v3(instantane["etat"])
+
+
+MIGRATIONS = [(1, _v1), (2, _v2), (3, _v3)]
 
 
 def migrer(s):

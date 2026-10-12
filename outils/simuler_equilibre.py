@@ -26,8 +26,8 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from loup_garou.moteur.partie import (  # noqa: E402
-    bouc_emissaire, camp, condamnes_de_la_veille, enregistrer_condamne, epargner_idiot, nouvelle_partie, ours_grogne,
-    resoudre_nuit, servante_prend_role, tuer, vainqueur, vivants,
+    bouc_emissaire, camp, condamnes_de_la_veille, enregistrer_condamne, epargner_idiot, meme_camp, nouvelle_partie,
+    ours_grogne, resoudre_nuit, servante_prend_role, tuer, vainqueur, vivants,
 )
 from loup_garou.options import nuit_active, opt  # noqa: E402
 from loup_garou.roles import ROLES  # noqa: E402
@@ -183,6 +183,23 @@ class Bots:
                     innocents = [m for m in vivants(s) if m != n and camp(s, m) != "loups"]
                     if meute:  # deux silhouettes : un loup et un innocent
                         self.en_attente.append((n, "groupe", [rng.choice(meute)] + ([rng.choice(innocents)] if innocents else [])))
+            elif role == "detective" and nuit_active(s, 2) and len(vivants(s)) > 2:
+                a, b = rng.sample([m for m in vivants(s) if m != n], 2)
+                if not meme_camp(s, a, b):
+                    self.en_attente.append((n, "groupe", [a, b]))  # un loup parmi les deux
+                elif a in self.loups_connus or b in self.loups_connus:
+                    self.en_attente.append((n, "loup", b if a in self.loups_connus else a))
+                elif a in self.blanchis or b in self.blanchis:
+                    self.en_attente.append((n, "clair", [a, b]))
+            elif role == "assassin" and nuit_active(s, 2):
+                s["cible_assassin"] = rng.choice([m for m in vivants(s) if m != n])
+            elif role == "pyromane" and s["jour"] > 0:
+                libres = [m for m in vivants(s) if m != n and m not in s["arroses"]]
+                for cible in rng.sample(libres, min(2, len(libres))):
+                    s["arroses"].append(cible)
+                restants = [m for m in vivants(s) if m != n and m not in s["arroses"]]
+                if len([m for m in s["arroses"] if s["joueurs"][m]["vivant"]]) >= 3 or not restants:
+                    s["pyro_embrase"] = True
             elif role == "corbeau" and s["jour"] > 0:
                 pistes = [m for m in vivants(s) if m != n]
                 suspects = [m for m in pistes if m in self.loups_connus or m in self.groupe_suspect]
@@ -220,7 +237,7 @@ class Bots:
 
 def evenements(s, issue):
     """Événements imprévus d'une partie : morts hors loups et vote, changements de camp, votes en plus, victoire à part."""
-    n = sum(m["genre"] in ("tir", "poison", "chagrin", "loup_blanc") for m in s["morts"])
+    n = sum(m["genre"] in ("tir", "poison", "chagrin", "loup_blanc", "assassin", "pyromane") for m in s["morts"])
     for d in s["joueurs"].values():
         n += bool(d.get("enfant_sauvage")) + (d.get("camp_choisi") == "loups") + bool(d.get("servante"))
         n += bool(d.get("voleur") and ROLES[d["role"]].camp == "loups")

@@ -160,7 +160,8 @@ def _liste_parties(parties):
     victoires = Counter(gagnant_partie(p["issue"])[0] for p in parties)
     bilan = [f"{len(parties)} parties"]
     for cle, emoji, mot in (("village", "🏡", "Village"), ("loups", "🐺", "Loups"),
-                            ("couple", "💘", "Couple"), ("loupblanc", "🌕", "Loup Blanc")):
+                            ("couple", "💘", "Couple"), ("loupblanc", "🌕", "Loup Blanc"),
+                            ("assassin", "🔪", "Assassin"), ("pyromane", "🔥", "Pyromane"), ("ange", "😇", "Ange")):
         if victoires[cle]:
             bilan.append(f"{emoji} {mot} {victoires[cle]}")
     st.caption(" · ".join(bilan))

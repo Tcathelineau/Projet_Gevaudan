@@ -658,6 +658,17 @@ def css_cartes():
         div[class*="st-key-dalles_maire_"] button::after { content: "👑"; }
         div[class*="st-key-dalles_serv_"] button::after { content: "🧹"; }
         div[class*="st-key-dalles_corb_"] button::after { content: "🐦"; }
+        div[class*="st-key-dalles_detec_"] button::after { content: "🔎"; }
+        div[class*="st-key-dalles_assas_"] button { background: rgba(110,30,30,.35); border-color: rgba(220,90,90,.55); }
+        div[class*="st-key-dalles_assas_"] button:hover {
+            background: rgba(160,40,40,.6); border-color: #e06666; box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(224,102,102,.45);
+        }
+        div[class*="st-key-dalles_assas_"] button::after { content: "🔪"; }
+        div[class*="st-key-dalles_pyro_"] button { background: rgba(130,60,10,.35); border-color: rgba(255,150,70,.55); }
+        div[class*="st-key-dalles_pyro_"] button:hover {
+            background: rgba(190,90,15,.6); border-color: #ff9a4a; box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 16px rgba(255,154,74,.45);
+        }
+        div[class*="st-key-dalles_pyro_"] button::after { content: "🛢️"; }
         div[class*="st-key-dalles_vote_"] button {
             background: rgba(120,60,20,.35);
             border-color: rgba(210,120,50,.55);
@@ -1186,6 +1197,9 @@ div[class*="st-key-histo_village_"] { --c: #4caf6a; }
 div[class*="st-key-histo_loups_"] { --c: #d64545; }
 div[class*="st-key-histo_loupblanc_"] { --c: #eceaf4; }
 div[class*="st-key-histo_couple_"] { --c: #f06fb5; }
+div[class*="st-key-histo_assassin_"] { --c: #e07070; }
+div[class*="st-key-histo_pyromane_"] { --c: #ff9a4a; }
+div[class*="st-key-histo_ange_"] { --c: #f0d890; }
 .hc-tete { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin-bottom: .6rem; }
 .hc-gagnant {
     padding: .2rem .8rem; border-radius: 999px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
